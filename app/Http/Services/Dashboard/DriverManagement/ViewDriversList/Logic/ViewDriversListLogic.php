@@ -1,0 +1,120 @@
+<?php
+namespace App\Http\Services\Dashboard\DriverManagement\ViewDriversList\Logic;
+use App\Models\Driver;
+use App\Models\Setting;
+use Yajra\DataTables\DataTables;
+use Illuminate\Http\JsonResponse;
+use App\Http\Repositories\RepositoryCaller;
+use App\Http\Core\InternalInterface\Service;
+use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+
+class ViewDriversListLogic implements Service {
+
+    private RepositoryCaller $repository ; // access to all model's repositories
+
+    public function __construct(
+    //---------------------------------------------------------------------------------------
+    private ViewDriversListInput $input,  /*| Pass Request To Service*/
+    //---------------------------------------------------------------------------------------
+    ){
+        $this->repository = new RepositoryCaller(); // init repository object
+    }
+
+
+    public function execute (): ResponseModel | JsonResponse {
+
+        // $query = $this->repository->DriverRepository()->readRepository()->getAllRecords();
+        // $filter = $request->filter;
+
+        // if(auth()->user)
+        $query = $this->repository->DriverRepository()->readRepository()
+        ->dataTableDriver( $this->input->getFilter()); 
+        
+
+
+        // $query = $query->where('user_type','handyman');
+        // if (auth()->user()->hasAnyRole(['admin'])) {
+        //     $query->withTrashed();
+        // }
+        // if(auth()->user()->hasRole('office')) {
+        //     $query->where('officeId', auth()->user()->id);
+        // }
+        
+        // if($request->list_status == null){
+        //     $query = $query->where('status',1)->whereNotNull('provider_id');
+        // }
+        // if($request->list_status == 'pending'){
+        //     $query = $query->where('status',0);
+        // }
+        // if($request->list_status == 'unassigned'){
+        //     $query = $query->where('status',1)->where('provider_id',NULL)->where('user_type','handyman');
+        // }
+        // if ($request->list_status == 'request') {
+        //     $query = $query->where(function($query) {
+        //         $query->where('status', 0)
+        //               ->where(function($query) {
+        //                   $query->whereNull('provider_id')
+        //                         ->orWhereNotNull('provider_id');
+        //               })
+        //               ->where('user_type', 'handyman');
+        //     });
+        // }
+
+        return DataTables::of($query)
+            ->addColumn('check', function ($row) {
+                return '<input type="checkbox" class="form-check-input select-table-row"  id="datatable-row-'.$row->id.'"  name="datatable_ids[]" value="'.$row->id.'" data-type="user" onclick="dataTableRowCheck('.$row->id.',this)">';
+            })
+            ->editColumn('firstName', function ($driver) {
+                return view('driver.driver', compact('driver'));
+            })
+            ->editColumn('address', function($query) {
+                return 'adddd ';//($query->address != null && isset($query->address)) ? $query->address : '-';
+            })
+
+            
+            ->editColumn('created_at', function($query) {
+                $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
+                $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
+               
+                $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
+                ? date(optional($datetime)->date_format, strtotime($query->created_at)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->created_at))
+                : $query->created_at;
+                return $formattedDate;
+            })
+
+            ->editColumn('isConected', function($query) {
+                if($query->isConected){
+                    $status = '<span class="badge badge-active">'.__('messages.Conected').'</span>';
+                    // $status = '<a class="btn-sm text-white btn-success"  href='.route('handyman.approve',$query->id).'>Accept</a>';
+}
+            else{
+                    $status = '<span class="badge badge-inactive">'.__('messages.disConected').'</span>';
+                }
+                return $status;
+            })
+
+            ->editColumn('office', function($driver) {
+           $office =  null;//$driver->office;
+            return ($office == null ) ?  '--' :   view('driver.office', compact('office'));
+            })
+            // ->editColumn('address', function($query) {
+            //     return ($query->address != null && isset($query->address)) ? $query->address : '-';
+            // })
+
+            // ->filterColumn('office',function($qry,$keyword){
+            //     $qry->whereHas('office',function ($q) use($keyword){
+            //         $q->where('officeName','like','%'.$keyword.'%');
+            //     });
+            // })
+            ->addColumn('phoneNumber',function($qry){
+                   return  $qry->phoneNumber;
+            })
+            ->addColumn('action', function($driver){
+                $auth_user= authSession();
+                return view('driver.action',compact('driver','auth_user'))->render();
+            })
+            ->addIndexColumn()
+            ->rawColumns(['check','display_name','action','isConected','created_at','contact_number','office' ])
+            ->make(true); 
+        }
+}

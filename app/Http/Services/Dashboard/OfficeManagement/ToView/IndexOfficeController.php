@@ -1,0 +1,31 @@
+<?php
+namespace App\Http\Services\Dashboard\OfficeManagement\ToView;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Core\Response\SendResponse;
+use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Http\Services\Dashboard\ServiceManagement\AddService\Request\AddServiceRequest;
+
+class IndexOfficeController extends Controller
+{
+    public function __invoke(Request $request)
+    {
+        $filter = [
+            'status' => $request->status,
+        ];
+        $pageTitle = __('messages.providers' );
+        if($request->status === 'pending'){
+            $pageTitle = __('messages.pending_list_form_title',['form' => __('messages.provider')] );
+        }
+        if($request->status === 'subscribe'){
+            $pageTitle = __('messages.list_form_title',['form' => __('messages.subscribe')] );
+        }
+
+        $auth_user = authSession();
+        $assets = ['datatable'];
+        $list_status = $request->status;
+        return view('office.index', compact('list_status','pageTitle','auth_user','assets','filter'));
+    }
+}
