@@ -91,9 +91,13 @@ abstract class RedisManagerData
             //   $areaKey = RedisKeyTemplate::AREA_DRIVERS->generateKey(['area' => $area]);
             //   Redis::zrem($areaKey, $driverId);
             Redis::zrem( $area , $driverId );
-            Redis::zrem("all_drivers_locations", $driverId);
+            // Redis::zrem("all_drivers_locations", $driverId);
             self::delete($keyDriverArea);
-            
+
+            // for driver location map in home page
+            self::delete('driver_location:'.$driverId);
+
+
             Log::info("maek driver offline");
         }
     }
@@ -104,10 +108,17 @@ abstract class RedisManagerData
         $area = RedisManagerData::get_driver_area( $driverId );
 
         Redis::geoadd( $area , $longitude , $latitude , $driverId );
-        Redis::geoadd("all_drivers_locations", $longitude, $latitude, $driverId);
-        Redis::expire("all_drivers_locations", 3600 * 12);
+
+        // Redis::geoadd("all_drivers_locations", $longitude, $latitude, $driverId);
+        // Redis::expire("all_drivers_locations", 3600 * 12);
         Redis::expire( $area , 3600 * 12 );
         Log::info("Driver $driverId added to area $area");
+
+        // driver loacation on map
+        Redis::hmset("driver_location:".$driverId, [
+            'longitude' => $longitude,
+            'latitude' =>  $latitude,
+          ]);
      // RedisManagerData::makeDriverOffline($driverId);
     }
 

@@ -601,20 +601,23 @@ Route::get('get/only-new-orders-by-status',GetOnlyNewOrdersByStatusController::c
 Route::get('/bassam', function(){
 
 
+
+
+
+
   $order = Booking::first();
   // for($i = 1 ;$i<=10;$i++){ 
-  $order->id = 20002;
-  $order->status = OrderStatus::$OnGoing;
+  $order->id = 8;
+  $order->status = OrderStatus::$Pending;
   // $order->user = User::first();
-  OrderRedisModel::storeWithPagenationService($order);
+  // OrderRedisModel::storeWithPagenationService($order);
   //}
   // OrderRedisModel::delete(1007, OrderStatus::$OnGoing);
 
-  // OrderRedisModel::updateStatus($order, OrderStatus::$Pending , OrderStatus::$OnGoing);
+  OrderRedisModel::updateStatus($order, OrderStatus::$OnGoing , OrderStatus::$Completed);
 
 
-  return response()->json(  OrderRedisModel::getByStatusAfterId(OrderStatus::$OnGoing ,1));
-
+  return response()->json(  OrderRedisModel::getByStatusAfterId(OrderStatus::$OnGoing ,0));
 
   Booking::create(        $data = [
     'startAddress'          =>"برامكة - سانا",

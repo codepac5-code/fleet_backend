@@ -390,46 +390,60 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
     }
 
     function fetchDriverLocations() {
-        fetch("{{ route('live-drivers-locations') }}")
-            .then(response => response.json())
-            .then(data => {
-                data.forEach(driver => {
-                    let driverId = driver.driver_id;
-                    let position = new google.maps.LatLng(parseFloat(driver.latitude), parseFloat(driver.longitude));
+    fetch("{{ route('live-drivers-locations') }}")
+        .then(response => response.json())
+        .then(data => {
+            const updatedDriverIds = new Set();
 
-                    if (markers[driverId]) {
-                        markers[driverId].setPosition(position);
-                    } else {
-                        let infoWindow = new google.maps.InfoWindow({
-                            content: `<div class="driver-info">
-                                <strong>👤 ${driver.name}</strong><br>
-                                📞 ${driver.phoneNumber}<br>
-                                🚗 ${driver.carBrand} - ${driver.carNumber}
-                            </div>`,
+            data.forEach(driver => {
+                let driverId = driver.driver_id;
+                let position = new google.maps.LatLng(parseFloat(driver.latitude), parseFloat(driver.longitude));
+                updatedDriverIds.add(driverId);
 
-                        });
+                if (markers[driverId]) {
+                    // السائق موجود مسبقًا ➔ نحدث موقعه فقط
+                    markers[driverId].setPosition(position);
+                } else {
+                    // سائق جديد ➔ نضيف علامة جديدة
+                    let infoWindow = new google.maps.InfoWindow({
+                        content: `<div class="driver-info">
+                            <strong>👤 ${driver.name}</strong><br>
+                            📞 ${driver.phoneNumber}<br>
+                            🚗 ${driver.carBrand} - ${driver.carNumber}
+                        </div>`,
+                    });
 
-                        let marker = new google.maps.Marker({
-                            position: position,
-                            map: map,
-                            icon: {
-                                url:  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkQoszVAKLbrUCvTZCrXBW6T_4QlpU2QiFK9yAC58jngsr8Ys-nBsqxrgbV_fphuH4QuM&usqp=CAU",
-                                scaledSize: new google.maps.Size(45, 45),
-                            },
-                            title: `🚖{{ __('messages.driver_number')}}: ${driverId}`,
-                        });
+                    let marker = new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        icon: {
+                            url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkQoszVAKLbrUCvTZCrXBW6T_4QlpU2QiFK9yAC58jngsr8Ys-nBsqxrgbV_fphuH4QuM&usqp=CAU",
+                            scaledSize: new google.maps.Size(45, 45),
+                        },
+                        title: `🚖{{ __('messages.driver_number')}}: ${driverId}`,
+                    });
 
-                        marker.addListener("mouseover", () => infoWindow.open(map, marker));
-                        marker.addListener("mouseout", () => infoWindow.close());
+                    marker.addListener("mouseover", () => infoWindow.open(map, marker));
+                    marker.addListener("mouseout", () => infoWindow.close());
 
-                        markers[driverId] = marker;
-                    }
-                });
+                    markers[driverId] = marker;
+                }
+            });
 
-                updateLastUpdatedTime();
-            })
-            .catch(error => console.error("error:", error));
-    }
+            // حذف السائقين الذين لم يعودوا موجودين
+            for (let id in markers) {
+                if (!updatedDriverIds.has(id)) {
+                    markers[id].setMap(null); // إزالة العلامة من الخريطة
+                    delete markers[id];       // إزالة من الكائن markers
+                }
+            }
+
+            updateLastUpdatedTime();
+        })
+        .catch(error => console.error("error:", error));
+}
+
+
 
     function refreshMap() {
         fetchDriverLocations();

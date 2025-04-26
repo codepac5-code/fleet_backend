@@ -140,12 +140,11 @@ class MakeOrderLogic implements Service {
             'minutePrice'=>$sub_service->minutePrice,
             ] , __('messages.order_created'));
         return $response->send_as_array();
-   }
+    }
 
 
    public function redisOrderDatabaseModel($order){
     $order->status = OrderStatus::$Pending;
     OrderRedisModel::storeWithPagenationService($order);
-
    }
 }

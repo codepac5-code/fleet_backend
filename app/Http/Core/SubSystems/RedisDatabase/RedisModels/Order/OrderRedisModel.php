@@ -23,11 +23,13 @@ abstract class OrderRedisModel  {
     public static function storeWithPagenationService(Booking $order): void
     {
 
-        if($order->driverId != null){
-            $order->driver = Driver::select(['firstName','lastName','photo',
-            'vehicleId'])->find($order->driverId)->with(['vehicle'])->get();
+        if ($order->driverId != null) {
+            $order->driver = Driver::select(['firstName', 'lastName', 'photo', 'vehicleId'])
+                ->where(['id' => $order->driverId])
+                ->with('vehicle')  
+                ->first(); 
         }
-
+        
         $order->user = User::select(['firstName','lastName','photo',
         'phoneNumber'])->find($order->userId);
         
