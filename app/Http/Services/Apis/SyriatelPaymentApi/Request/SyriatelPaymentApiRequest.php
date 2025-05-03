@@ -24,9 +24,7 @@ class SyriatelPaymentApiRequest extends BaseRequest
     {
         return
         [
-            "orderId"       => ['integer',"required"],
-            "phoneNumber"   => ['string',"required"],
-            "amount"        => ['string',"required"],
+            "amount"        => ['integer'   ,"required"],
         ];
     }
 

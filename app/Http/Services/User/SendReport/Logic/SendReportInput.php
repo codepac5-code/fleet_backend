@@ -14,7 +14,7 @@ class SendReportInput implements InputServiceInterface
     public function __construct($input){
         $this->photo        = $input["image"]       ?? null;
         $this->description  = $input["description"] ?? null;
-        $this->subject      = $input["reason"]     ?? null;
+        $this->subject      = $input["subject"]     ?? null;
     }
 
     public function getSubject()

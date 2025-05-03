@@ -25,9 +25,9 @@ class ConfirmPhone_AddBalanceRequest extends BaseRequest
         return
         [
             'type'            => ['required','string'],
-            "invoiceId"       => ['integer',"required"],
-            "operationNumber" => ['integer',"required"],
-            "code"            => ["required"],
+            // "invoiceId"       => ['integer',"required"],
+            // "operationNumber" => ['integer',"required"],
+            // "code"            => ["required"],
         ];
     }
 

@@ -39,7 +39,6 @@ class Driver extends Authenticatable
         'rating',
         'rideCount',
         'kmCount',
-        'officeDues',
         'phoneNumber',
         'is_registered',
         'walletBalance',
@@ -51,6 +50,7 @@ class Driver extends Authenticatable
         'ratingPoor',
         'car_owner',
         'fleetDues',
+        'officeDues',
         'vehicleId',
     ];
 

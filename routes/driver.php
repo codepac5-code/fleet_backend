@@ -12,6 +12,7 @@ use App\Http\Services\Driver\ChangeConnected\Controller\ChangeConnectedControlle
 use App\Http\Services\Driver\Profile\EditImageProfile\Controller\EditImageProfileController;
 use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Controller\ShowPoilceAndPrivceServiceController;
 use App\Http\Services\Driver\GetDriverNotification\Controller\GetDriverNotificationController;
+use App\Http\Services\Driver\GetDriverWalletHistory\Controller\GetDriverWalletHistoryController;
 use App\Http\Services\Driver\GetPublicDriverAppSettings\Controller\GetPublicDriverAppSettingsController;
 use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
 use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
@@ -24,6 +25,14 @@ Route::post('login', LoginController::class);
 
 Route::get('/policy',ShowPoilceAndPrivceServiceController::class);
 
+
+Route::group(['middleware' => ['set-localization']], function () {
+    Route::group(['prefix' => 'settings'], function () {
+        Route::get('/app-public-settings', GetPublicDriverAppSettingsController::class);
+    });
+    
+});
+
 Route::group(['middleware' => ['auth:driver','set-localization']],function () {
 
     Route::post('rating',RattingUserController::class);
@@ -35,7 +44,7 @@ Route::group(['middleware' => ['auth:driver','set-localization']],function () {
     Route::post('receive-cash',ReceiveCashController::class);
     Route::post('start-ride',RattingUserController::class);
     Route::post('addComplaint', SendReportController::class);
-    Route::get('wallet/history',GetWalletHistoryController::class);
+    Route::get('wallet/history',GetDriverWalletHistoryController::class);
 
     Route::get('get/payment/method',GetPaymentMethodController::class);
 
@@ -51,10 +60,6 @@ Route::group(['middleware' => ['auth:driver','set-localization']],function () {
         Route::get('/logout',LogoutController::class);
     });
 
-
-    Route::group(['prefix' => 'settings'], function () {
-        Route::get('/app-public-settings', GetPublicDriverAppSettingsController::class);
-    });
     
 
 });

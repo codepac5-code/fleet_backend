@@ -68,15 +68,60 @@ class GetPublicUserAppSettingsLogic implements Service {
             // 'swift_supported' => false,
         ];
 
-        
+                //////////////////////////// Em
+
+
+                $uae_ar = [
+                    'country_name' => 'الإمارات العربية المتحدة',
+                    'search_country' => 'ae',
+                    'continent' => 'آسيا',
+                    'currency_name' => 'الدرهم الإماراتي',
+                    'currency_symbol' => 'د.إ',
+                    'unit' => 'د.إ',
+                    'symbol' => 'د.إ',
+                    // 'currency_subunit' => 'فلس',
+                    // 'phone_format' => '+971 5# ### ####',
+                    // 'country_code' => 'AE',
+                    // 'calling_code' => '+971',
+                    // 'timezone' => 'Asia/Dubai',
+                    // 'flag' => 'https://flagcdn.com/ae.svg',
+                    // 'latitude' => 24.0000,
+                    // 'longitude' => 54.0000,
+                    // 'currency_decimals' => 2,
+                    // 'is_active' => true,
+                    // 'iban_supported' => true,
+                    // 'swift_supported' => true,
+                ];
+                
+                $uae_en = [
+                    'country_name' => 'United Arab Emirates',
+                    'search_country' => 'ae',
+                    'continent' => 'Asia',
+                    'currency_name' => 'UAE Dirham',
+                    'currency_symbol' => 'AED',
+                    'unit' => 'AED',
+                    'symbol' => 'AED',
+                    // 'currency_subunit' => 'Fils',
+                    // 'phone_format' => '+971 5# ### ####',
+                    // 'country_code' => 'AE',
+                    // 'calling_code' => '+971',
+                    // 'timezone' => 'Asia/Dubai',
+                    // 'flag' => 'https://flagcdn.com/ae.svg',
+                    // 'latitude' => 24.0000,
+                    // 'longitude' => 54.0000,
+                    // 'currency_decimals' => 2,
+                    // 'is_active' => true,
+                    // 'iban_supported' => true,
+                    // 'swift_supported' => true,
+                ];
         
         // $this->repository->PublicUserAppSettingRepository()->createRepository()
         // ->create([
         //     'type'=>'public_settings' ,
         //     'name'=>'country_settings',
         //     'key' =>'country',
-        //     'ar_value'=> json_encode($syria_ar) ,
-        //     'en_value'=> json_encode($syria_en)
+        //     'ar_value'=> json_encode($uae_ar) ,
+        //     'en_value'=> json_encode($uae_en)
         // ]);
 
 
@@ -105,8 +150,11 @@ class GetPublicUserAppSettingsLogic implements Service {
         ],$select);
 
         $public_settings = [
-            'country_settings' => json_decode($settings->value) 
+            'country_settings' => json_decode($settings->value) ,
+            'helpNumber' => '0933817393',
         ];
+
+
         $response  = new GetPublicUserAppSettingsOutput($public_settings  , 'get public user app settings');
         return $response->send_as_object();
    }

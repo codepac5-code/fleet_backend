@@ -25,14 +25,17 @@ class GetOrdersByStatusLogic implements Service {
 
     public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
 
+        $canceled_order_Ids = [] ;
         switch($this->input->getStatus()){
-            case 'pending' : $status = OrderStatus::$Pending;
+            case OrderStatus::$Pending :
+                 $status = OrderStatus::$Pending;
+                 $canceled_order_Ids  = OrderRedisModel::getCancelOrderIds();
             break;
 
-            case 'ongoing' :  $status = OrderStatus::$OnGoing;
+            case OrderStatus::$OnGoing :  $status = OrderStatus::$OnGoing;
             break;
 
-            case 'completed' :  $status = OrderStatus::$Completed;
+            case OrderStatus::$Completed :  $status = OrderStatus::$Completed;
             break;
 
             default : $status = ' ';
@@ -60,6 +63,8 @@ class GetOrdersByStatusLogic implements Service {
             'current_page' => ceil(($offset + 1) / $limit),
             'total_pages' => $total_pages,
             'count'  => $count ?? 0,
+            'canceled_order_Ids'=>$canceled_order_Ids ?? [],
+
             // 'ongoing_orders'   => $ongoing_orders,
             // 'pending_orders'   => $pending_orders,
             // 'ongoing_count'    => $ongoing_count ?? 0,

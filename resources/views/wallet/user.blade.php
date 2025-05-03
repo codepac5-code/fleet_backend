@@ -24,7 +24,44 @@
 
 
                         <div class="col-lg-12">
+                            <div class="col-lg-12">
+                                <div class="card card-block card-stretch">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{__('messages.pending_trans')}}</h5>
+                                        <div class="table-responsive-sm">
+                                            <table class="table mb-0">
+                                                <thead class="table-color-heading">
+                                                    <tr class="text-secondary">
+                                                        <th scope="col">{{__('messages.service')}}</th>
+                                                        <th scope="col">{{__('messages.date')}}</th>
+                                                        <th scope="col">{{__('messages.payment_status')}}</th>
+                                                        <th scope="col" class="text-right">{{__('messages.total_amount')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                {{-- <tbody>
+                                                    @if(count($customer_pending_trans) > 0)
+                                                        @foreach($customer_pending_trans as $pending)
+                                                            <tr class="white-space-no-wrap">
+                                                                <td>{{$pending->booking->service->name}}</td>
+                                                                <td> <div class="d-flex align-items-center">{{date("D, d M Y", strtotime($pending->booking->date))}}</div></td>
+                                                                <td>{{ $pending->payment_status}}</td>
+                                                                <td class="text-right">{{ getPriceFormat($pending->total_amount)}}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @else
+                                                    <tr>
+                                                        <td colspan="4" class="text-center font-weight-bold">{{__('messages.record_not_found')}}</td>
+                                                    </tr>
+                                                    @endif
+                                                </tbody> --}}
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="card card-block card-stretch">
+
+                                
                                 <div class="card-body">
                                 <h5 class="card-title">{{__('messages.payment_details')}}</h5>
                                     <div class="table-responsive">
@@ -73,41 +110,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-12">
-                            <div class="card card-block card-stretch">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{__('messages.pending_trans')}}</h5>
-                                    <div class="table-responsive-sm">
-                                        <table class="table mb-0">
-                                            <thead class="table-color-heading">
-                                                <tr class="text-secondary">
-                                                    <th scope="col">{{__('messages.service')}}</th>
-                                                    <th scope="col">{{__('messages.date')}}</th>
-                                                    <th scope="col">{{__('messages.payment_status')}}</th>
-                                                    <th scope="col" class="text-right">{{__('messages.total_amount')}}</th>
-                                                </tr>
-                                            </thead>
-                                            {{-- <tbody>
-                                                @if(count($customer_pending_trans) > 0)
-                                                    @foreach($customer_pending_trans as $pending)
-                                                        <tr class="white-space-no-wrap">
-                                                            <td>{{$pending->booking->service->name}}</td>
-                                                            <td> <div class="d-flex align-items-center">{{date("D, d M Y", strtotime($pending->booking->date))}}</div></td>
-                                                            <td>{{ $pending->payment_status}}</td>
-                                                            <td class="text-right">{{ getPriceFormat($pending->total_amount)}}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                @else
-                                                <tr>
-                                                    <td colspan="4" class="text-center font-weight-bold">{{__('messages.record_not_found')}}</td>
-                                                </tr>
-                                                @endif
-                                            </tbody> --}}
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                  
                     </div>
                 </div>
 

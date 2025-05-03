@@ -17,6 +17,9 @@ use App\Http\Services\Apis\ConfirmPaymentPhoneNumber\Logic\ConfirmPaymentPhoneNu
 use App\Http\Services\Apis\ConfirmPaymentPhoneNumber\Logic\ConfirmPaymentPhoneNumberLogic;
 use App\Http\Services\Apis\MTNConfirmPaymentPhoneNumber\Logic\MTNConfirmPaymentPhoneNumberInput;
 use App\Http\Services\Apis\MTNConfirmPaymentPhoneNumber\Logic\MTNConfirmPaymentPhoneNumberLogic;
+use App\Http\Services\Apis\SyriatelConfirmPhoneNumber\Logic\SyriatelConfirmPhoneNumberInput;
+use App\Http\Services\Apis\SyriatelConfirmPhoneNumber\Logic\SyriatelConfirmPhoneNumberLogic;
+use App\Http\Services\Apis\SyriatelConfirmPhoneNumber\Request\SyriatelConfirmPhoneNumberRequest;
 
 class ConfirmPhone_AddBalanceLogic {
 
@@ -29,8 +32,20 @@ class ConfirmPhone_AddBalanceLogic {
     }
 
 
-    public function  syriatel ($request) {
+    public function  syriatel (SyriatelConfirmPhoneNumberRequest $request) {
 
+        // validate input data and pass it to the service..
+        $input = new SyriatelConfirmPhoneNumberInput($request->validated());
+
+        $service = new SyriatelConfirmPhoneNumberLogic($input); // call the service's logic
+
+        // execute service and get result..
+       return $service->execute();
+
+
+        $response  = new ConfirmPhone_AddBalanceOutput( $invoice , 
+        '!تـم شـحن المحـفظة بنجــاح');
+        return $response->send_as_object();
     }
 
 

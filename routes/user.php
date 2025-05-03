@@ -30,6 +30,7 @@ use App\Http\Services\Dashboard\ServiceManagement\ViewService\Controller\ViewSer
 use App\Http\Services\User\UserAddressManagement\DeleteAddress\Controller\DeleteAddressController;
 use App\Http\Services\Apis\ConfirmPaymentPhoneNumber\Controller\ConfirmPaymentPhoneNumberController;
 use App\Http\Services\Apis\MTNConfirmPaymentPhoneNumber\Controller\MTNConfirmPaymentPhoneNumberController;
+use App\Http\Services\Apis\SyriatelConfirmPhoneNumber\Controller\SyriatelConfirmPhoneNumberController;
 use App\Http\Services\Dashboard\BannersManagement\CreateOrUpdateBanner\Controller\CreateOrUpdateBannerController;
 use App\Http\Services\User\ProfileManagement\EdateImageProfile\Controller\EdateImageProfileController;
 use App\Http\Services\User\Auth\UserResetPasswordService\Controller\UserResetPasswordServiceController;
@@ -38,6 +39,7 @@ use App\Http\Services\User\Auth\UserSendOtpServiceService\Controller\UserSendOtp
 use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Controller\ShowPoilceAndPrivceServiceController;
 use App\Http\Services\PoilceAndPrivceManagement\ViewPoilceAndPrivceService\Controller\ViewPoilceAndPrivceServiceController;
 use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
+use App\Http\Services\User\SendReport\Controller\SendReportController;
 use App\Http\Services\User\WalletManagement\AddBalanceByPaymentMethod\Controller\AddBalanceByPaymentMethodController;
 use App\Http\Services\User\WalletManagement\ConfirmPhone_AddBalance\Controller\ConfirmPhone_AddBalanceController;
 
@@ -48,6 +50,13 @@ Route::post('/register',UserRegisterController::class);
 Route::post('/login',LoginController::class);
 Route::get('/policy',ShowPoilceAndPrivceServiceController::class);
 
+
+Route::group(['middleware' => ['set-localization']], function () {
+    Route::group(['prefix' => 'settings'], function () {
+        Route::get('/app-public-settings', GetPublicUserAppSettingsController::class);
+    });
+    
+});
 
 Route::group(['middleware' => ['auth:user','set-localization']], function () {
 
@@ -60,9 +69,6 @@ Route::group(['middleware' => ['auth:user','set-localization']], function () {
     Route::get('wallet/history',GetWalletHistoryController::class);
 
     
-Route::group(['prefix' => 'settings'], function () {
-    Route::get('/app-public-settings', GetPublicUserAppSettingsController::class);
-});
 
 
 Route::get('coupon/calculation',GetCoponController::class);
@@ -95,13 +101,20 @@ Route::group(['prefix' => 'get'],function(){
 Route::group(['prefix' => 'wallet'], function () {
     Route::Post('/add-balance/by/paymentMethods' , AddBalanceByPaymentMethodController::class);
     Route::Post('/confirm-phoneNumber/add-balance-to-wallet' , ConfirmPhone_AddBalanceController::class);
+    
 });
 
+
+Route::post('ride-report', SendReportController::class);
+Route::post('addComplaint', SendReportController::class);
 
 Route::group(['prefix' => 'payment'], function () {
     Route::post('/fleet-wallet',FleetWalletPaymentController::class);
     Route::Post('/order' , PaymentServiceController::class);
     Route::Post('/confirm-phoneNumber/completed-order' , MTNConfirmPaymentPhoneNumberController::class);
+
+    // Route::Post('/confirm-syriatel-phoneNumber/completed-order' , SyriatelConfirmPhoneNumberController::class);
+
 });
 
 Route::group(['prefix' => 'order'], function () {
@@ -117,4 +130,3 @@ Route::post('banner/add', CreateOrUpdateBannerController::class)->name('banner.s
 
 
 Route::get('services',GetServicesController::class);
-Route::get('/settings', GetPublicUserAppSettingsController::class);

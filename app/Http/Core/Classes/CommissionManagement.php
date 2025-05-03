@@ -33,14 +33,19 @@ abstract class CommissionManagement {
         // 'driver_car_commission_precentage',
 
         if($driver->free_driver){
+            info('calculat free driver commission:');
             $order->fleetCommissionValue  = ($fleet->fleet_commission_value_with_driver / 100) * $order->totalAmount;
+            info('fleet commission:'. $order->fleetCommissionValue);
             $order->officeCommissionValue = 0;
             $order->driverCommissionValue = ($fleet->driver_commission_value / 100) * $order->totalAmount;
+            info('driver commission:'. $order->driverCommissionValue);
 
             $order->fleetCommissionPercentage  = $fleet->fleet_commission_value_with_driver;
             $order->officeCommissionPercentage = 0;
             $order->driverCommissionPercentage = $fleet->driver_commission_value;
             $order->save();
+            info('save in database:'. $order->driverCommissionValue);
+
         } 
         
         elseif($driver->car_owner && $driver->officeId != null){

@@ -12,11 +12,6 @@ class SendReportController extends Controller
     public function __invoke(SendReportRequest $request)
     {
 
-        if($request->hasFile('image')){
-            return response()->json(['message' => 'image not received']);
-        }
-        return response()->json(['message'=>'image not received']);
-
         // validate input data and pass it to the service..
         $input = new SendReportInput($request->validated());
 

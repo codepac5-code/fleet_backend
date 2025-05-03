@@ -133,7 +133,7 @@ class ReceiveCashLogic implements Service {
 
    private function handleFreeDriver($driver, $driverRepository ,$fleetOffice, $fleetCommission)
    {
-       if ($driver->walletBalance < $fleetCommission && $driver->walletBalance > 3000) {
+       if ($driver->walletBalance < $fleetCommission && $driver->walletBalance > 1000) {
            $deductedAmount = $driver->walletBalance;
            $remainingDues  = $fleetCommission - $deductedAmount;
            if($remainingDues >= 500){
@@ -156,11 +156,16 @@ class ReceiveCashLogic implements Service {
 
    private function handleOfficeDriver($driver,$driverRepository , $fleetOffice, $office , $fleetCommission , $officeCommission)
    {
-       if ($driver->walletBalance < $fleetCommission && $driver->walletBalance > 1500) {
+
+
+    
+       if ($driver->walletBalance < $fleetCommission && $driver->walletBalance > 1000) {
            $deductedAmount = $driver->walletBalance;
            $remainingDues = $fleetCommission - $deductedAmount;
            if($remainingDues >= 500){
-            $transfer = WalletManagement::transfer($driver, $fleetOffice, $deductedAmount, '# عمولة الطلب رقم');
+            $description = '# عمولة الطلب رقم';
+            $description_en = 'Order Commission No.';
+            $transfer = WalletManagement::transfer($driver, $fleetOffice, $deductedAmount,$description , $description_en);
             $driver = $transfer->getFromValue();
             $driver->fleetDues = $driver->fleetDues + $remainingDues;
             $officeDues = $this->calculateOfficeDues($driver, $office, $officeCommission);
@@ -172,7 +177,11 @@ class ReceiveCashLogic implements Service {
            }
        } 
        elseif($driver->walletBalance >= $fleetCommission) {
-        $transfer = WalletManagement::transfer($driver, $office, $fleetCommission, '# عمولة الطلب رقم');
+
+        $description = '# عمولة الطلب رقم';
+        $description_en = 'Order Commission No.';
+
+        $transfer = WalletManagement::transfer($driver, $office, $fleetCommission, $description , $description_en);
         $driver = $transfer->getFromValue();
         $officeDues = $this->calculateOfficeDues(  $driver , $office, $officeCommission);
         if($officeDues > 0){
@@ -197,16 +206,21 @@ class ReceiveCashLogic implements Service {
    {
 
     // wallet balance < from office 
-       if ($driver->walletBalance < $office_commission && $driver->walletBalance >= 1500) {
+       if ($driver->walletBalance < $office_commission && $driver->walletBalance >= 1000) {
            $deductedAmount = $driver->walletBalance;
            $remainingDues = $office_commission - $deductedAmount;
            if($remainingDues >= 500){
-            WalletManagement::transfer($driver, $office, $deductedAmount, '# عمولة الطلب رقم');
+            $description = '# عمولة الطلب رقم';
+            $description_en = 'Order Commission No.';
+
+            WalletManagement::transfer($driver, $office, $deductedAmount, $description ,$description_en);
             return $remainingDues;
            }
        }
        elseif($driver->walletBalance >= $office_commission) {
-            WalletManagement::transfer($driver, $office, $office_commission, '# عمولة الطلب رقم');
+        $description = '# عمولة الطلب رقم';
+        $description_en = 'Order Commission No.';
+            WalletManagement::transfer($driver, $office, $office_commission, $description , $description_en);
             return 0;
        }
        else{

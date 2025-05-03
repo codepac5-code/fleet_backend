@@ -40,8 +40,8 @@ class SendReportLogic implements Service {
         ->create([
             'subject'=>$this->input->getSubject(),
             'description'=>$this->input->getDescription(),
-            'photo'=>$path,
-            'userId'=>$user->id
+            'photo'=> $path,
+            'userId'=> $user->id
         ]);
 
         $response  = new SendReportOutput([] , 'report to ');

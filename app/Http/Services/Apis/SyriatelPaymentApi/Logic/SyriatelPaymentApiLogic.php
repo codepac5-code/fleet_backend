@@ -5,7 +5,7 @@ use App\Http\Core\Const\APIs\Syriatel_API;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
-use App\Http\Repositories\SyriatelInvoiceRepositories\SyriatelInvoiceRepositoryCaller;
+use App\Models\Booking;
 use Exception;
 
 class SyriatelPaymentApiLogic implements Service {
@@ -28,35 +28,56 @@ class SyriatelPaymentApiLogic implements Service {
         "password" => Syriatel_API::$Password
     ];
 
+    beginTransaction();
+
     // ----- get token..
 
     $syriatel_response = $this->makeSyraitelRequest( Syriatel_API::$GetTokenUrl , $body );
 
-    info('bbbbbb  '. $syriatel_response);
-    info('mmmmm  ');
 
-    if (isset($syriatel_response->errorCode) && $syriatel_response->errorCode == 0) {
+    info('syriatel_rrr-token--');
+    info(print_r($syriatel_response, true));
+
+    if (!(isset($syriatel_response->errorCode) && $syriatel_response->errorCode == 0)) {
         
+        info('syriatel_rrr---');
+        info(print_r($syriatel_response, true));
+        
+        make_exception($syriatel_response->errorDesc);
+        rollbackTransaction();
+         //    return response()->json(array("status" => 400, "message" => "error try agine", "data" => array("success" => false)));
+    }
+
+    $invoice_data = [
+        "orderId"       => Booking::first()->id,
+         "userId"       => $this->input->getUserId(),
+         "token"        => $syriatel_response->token,
+         "amount"       => $this->input->getAmount(),
+         'phoneNumber'  => $this->input->getPhoneNumber(),
+
+    ];
+
+    if($this->input->getOrderId()!= null)  {
         $syriatel_invoice = $this->repository->SyriatelInvoiceRepository()->readRepository()
         ->getByValue("orderId" , $this->input->getOrderId());
 
+   
     if (!$syriatel_invoice) {
 
-         $this->repository->SyriatelInvoiceRepository()->createRepository()
-         ->create([
-         "orderId"   => $this->input->getOrderId(),
-         "userId"    => $this->input->getUserId(),
-         "token"     => $syriatel_response->token
-         ]);
+        $syriatel_invoice = $this->repository->SyriatelInvoiceRepository()->createRepository()
+            ->create($invoice_data);
     }
-
+ } else {
+    $syriatel_invoice = $this->repository->SyriatelInvoiceRepository()->createRepository()
+    ->create($invoice_data);
+}
 
         $body = [
-            "customerMSISDN"     =>  "".$this->input->getPhoneNumber(),
-            "merchantMSISDN"     =>  "". $syriatel_invoice->merchantMSISDN,
-            "amount"             =>  $this->input->getAmount(),
-            "transactionID"      =>  "".$syriatel_invoice->id,
-            "token"              =>  $syriatel_response->token
+            "customerMSISDN"     =>  (string) $this->input->getPhoneNumber(),
+            "merchantMSISDN"     =>  (string) Syriatel_API::$MerchantMSISDN,
+            "amount"             =>  (string) $this->input->getAmount(),
+            "transactionID"      =>  (string) $syriatel_invoice->id,
+            "token"              =>  (string) $syriatel_response->token
         ];
 
 
@@ -66,31 +87,32 @@ class SyriatelPaymentApiLogic implements Service {
         if (isset($syriatel_response->errorCode) && $syriatel_response->errorCode == 0)
         {
 
-         $syriatel_invoice = $this->repository->SyriatelInvoiceRepository()->updateRepository()
-         ->update(['id' => $syriatel_response->id] ,
-         [
-             'phoneNumber' => $this->input->getPhoneNumber(),
-             'amount'      =>$this->input->getAmount()
-         ]);
+        //  $syriatel_invoice = $this->repository->SyriatelInvoiceRepository()->updateRepository()
+        //  ->update(['id' => $syriatel_response->id] ,
+        //  [
+        //      'phoneNumber' => $this->input->getPhoneNumber(),
+        //      'amount'      =>$this->input->getAmount()
+        //  ]);
         
-         info('222222'. $syriatel_response);
 
-         $response  = new SyriatelPaymentApiOutput($syriatel_response , '');
+
+         commitTransaction();
+         $response  = new SyriatelPaymentApiOutput([$syriatel_response,$syriatel_invoice] , 'done successully');
          return $response->send_as_object();                         // return response()->json(array("status" => 200, "message" => "create request Payment success", "data" => array("success" => true)));
          } 
         else {
+            
+            info('syriatel_rrr---');
+info(print_r($syriatel_response, true));
 
-        info('3333333'. $syriatel_response);
-        make_exception($syriatel_response);
+        make_exception($syriatel_response->errorDesc);
+        rollbackTransaction();
+
                         // return response()->json(array("status" => 400, "message" => $SyraitelResponse, "data" => array("success" => false)));
         }
                 
  //     return response()->json(array("status" => 200, "message" => "get token success", "data" => array("success" => true)));
 
-         }
-        info('444444: '. $syriatel_response);
-        make_exception($syriatel_response);
- //    return response()->json(array("status" => 400, "message" => "error try agine", "data" => array("success" => false)));
     
  //    } catch (Exception $e) {
  //                return response()->json($e->getMessage());
@@ -173,33 +195,37 @@ class SyriatelPaymentApiLogic implements Service {
 
 
    public function makeSyraitelRequest($url , $body) {
-    try{
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'User-Agent: Mozilla5.0',
-        ]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body) . '{"username": "FleetApp", "password": "Fleet@Syria#123"}');
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+try {
+    $ch = curl_init();
 
-        $response = curl_exec($ch);
+    $mergedBody = array_merge($body, [
+        "username" => Syriatel_API::$UserName,
+        "password" => Syriatel_API::$Password
+    ]);
 
-        // if (curl_errno($ch)) {
-        //     echo 'Error:' . curl_error($ch);
-        // }
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'User-Agent: Mozilla5.0',
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($mergedBody));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
-        curl_close($ch);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
 
-        return json_decode($response);
+    info("HTTP Status: $httpCode");
+    info("Raw Response: " . $response);
 
-        } catch (Exception $e) {
-            make_exception($e->getMessage());
-                 //   return response()->json($e->getMessage());
-        }
+    return json_decode($response);
+
+} catch (Exception $e) {
+    return response()->json($e->getMessage());
+}
 
    }
    

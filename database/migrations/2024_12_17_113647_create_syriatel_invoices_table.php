@@ -17,7 +17,8 @@ return new class extends Migration
             $table->string('code')->nullable();
             $table->string('token')->nullable();
             $table->decimal('amount');
-            $table->foreignId('orderId')->references('id')->on('bookings')->onDelete('cascade');
+            $table->foreignId('orderId')->nullable()->constrained('bookings')->cascadeOnDelete();  
+            // $table->foreignId('orderId')->references('id')->on('bookings')->onDelete('cascade');
             $table->foreignId('userId')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });

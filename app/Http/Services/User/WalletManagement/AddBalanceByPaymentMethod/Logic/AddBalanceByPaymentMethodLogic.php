@@ -9,6 +9,7 @@ use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Core\Response\SendResponse;
 use App\Http\Services\Apis\MTNPaymentApi\Logic\MTNPaymentApiInput;
 use App\Http\Services\Apis\MTNPaymentApi\Logic\MTNPaymentApiLogic;
+use App\Http\Services\Apis\SyriatelPaymentApi\Controller\SyriatelPaymentApiController;
 use App\Http\Services\Apis\SyriatelPaymentApi\Logic\SyriatelPaymentApiInput;
 use App\Http\Services\Apis\SyriatelPaymentApi\Logic\SyriatelPaymentApiLogic;
 
@@ -31,14 +32,12 @@ class AddBalanceByPaymentMethodLogic {
     }
     
    public function syriatel($request) {
-         // validate input data and pass it to the service..
-         $input = new SyriatelPaymentApiInput($request);
 
-         $service = new SyriatelPaymentApiLogic($input); // call the service's logic
+         $syrital_payment = SyriatelPaymentApiController::class ;
 
-         // execute service and get result..
-        return  $result = $service->execute();
+         return $syrital_payment;
    }
+
 
 
    public function mtn($request){
@@ -49,7 +48,7 @@ class AddBalanceByPaymentMethodLogic {
             $service = new MTNPaymentApiLogic($input); // call the service's logic
     
             // execute service and get result..
-            return $result = $service->execute();
+            return $service->execute();
    }
 
     public function cash($request){

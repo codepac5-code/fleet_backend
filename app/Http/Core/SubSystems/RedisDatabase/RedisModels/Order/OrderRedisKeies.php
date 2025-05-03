@@ -5,7 +5,7 @@ enum OrderRedisKeies : string
 {
 
 //----------------------<< fleet >>---------------------------------------------
-    case ORDER = 'order.{orderId}-info';     
+    case ORDER = 'order.{orderId}-card';     
     case ORDER_STATUS = 'orders:status:{status}';
 
     case ORDER_ONGOING_COUNT    = 'order-ongoing-count_office.{officeId}';

@@ -31,12 +31,10 @@ class GetWalletHistoryLogic implements Service {
         $data  ['walletBalance'] = $user->walletBalance;
         $data  ['transactions']  = $transactions ;
 
-        if( property_exists($user, 'officeDues')){
-            $data  ['officeDues']  = $user->officeDues ;
-        }
 
 
-        $response  = new GetWalletHistoryOutput($data , 'get wallet history');
+
+        $response  = new GetWalletHistoryOutput($data , 'get user wallet history');
         return $response->send_as_object();
    }
 }

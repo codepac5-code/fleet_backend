@@ -501,7 +501,7 @@ Route::get('uuu',function(){
 
   $orders = Booking::all();
   $pageTitle = 'Wallet Hestory';
-  $customerdata = User::find(1);
+  $customerdata = User::first();
   return view('wallet.user',compact('orders','pageTitle','customerdata'));
 })->name('uuu');
 
@@ -580,11 +580,10 @@ Route::get('live-drivers-locations',function(){
             'driver_id' => $driverId,
             'longitude' => $location['longitude'],
             'latitude' => $location['latitude'],
-            'name' => 'Bassam Nakkez',
+            'name' => 'Bassam',
             'phoneNumber'=>'0933817393',
             'carNumber'=>'7885200',
             'carBrand'=>'kia'
-
         ];
     }
 
@@ -602,22 +601,21 @@ Route::get('/bassam', function(){
 
 
 
-
-
-
-  $order = Booking::first();
+  $order = Booking::where('id', 9)->first();
   // for($i = 1 ;$i<=10;$i++){ 
-  $order->id = 8;
+  $order->id = 45;
   $order->status = OrderStatus::$Pending;
   // $order->user = User::first();
   // OrderRedisModel::storeWithPagenationService($order);
   //}
-  // OrderRedisModel::delete(1007, OrderStatus::$OnGoing);
+  // OrderRedisModel::delete(38, OrderStatus::$Pending);
 
-  OrderRedisModel::updateStatus($order, OrderStatus::$OnGoing , OrderStatus::$Completed);
+  // OrderRedisModel::updateStatus($order, OrderStatus::$Pending , OrderStatus::$OnGoing);
 
 
-  return response()->json(  OrderRedisModel::getByStatusAfterId(OrderStatus::$OnGoing ,0));
+  // OrderRedisModel::storeCancelOrderId(28);
+  return   OrderRedisModel::getCancelOrderIds();
+  return response()->json( OrderRedisModel::getByStatusPaginated(OrderStatus::$OnGoing ,0));
 
   Booking::create(        $data = [
     'startAddress'          =>"برامكة - سانا",
@@ -1088,24 +1086,15 @@ Route::get('push/driver/notification', function(){
 
 
 Route::get('push/user/notification', function(){
-    // broadcast(new DeleteOrder(1,1));
-  $user = User::find(1);
-  //PrivateNotification
-  // Notification::sendNow($user , new PrivateNotification(
-  //   new NotificationModel(
-  //           'Hello Driver!',
-  //           'hello from fleet app ',
-  //           '/storage/services/2.png'
-  //         )
-  // ));
-
-  // Notification::sendNow($user , new PrivateNotification(
-  //   new NotificationModel(
-  //           'Hello Driver!',
-  //           'hello from fleet app ',
-  //           '/storage/services/2.png'
-  //         )
-  // ));
+  $notificationModel = new NotificationModel(
+    'testd4s5d45s',
+   'test',
+   'e',
+   'eee',
+   'ddd',
+ );
+ $repo = new UserReadRepository();
+ $repo->notifyUser( 3,  $notificationModel  );
 
   return 'done';
 });

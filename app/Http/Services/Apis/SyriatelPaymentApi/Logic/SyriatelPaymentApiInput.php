@@ -2,6 +2,7 @@
 namespace App\Http\Services\Apis\SyriatelPaymentApi\Logic;
 
 use App\Http\Core\InternalInterface\InputServiceInterface;
+use Illuminate\Support\Facades\Auth;
 
 class SyriatelPaymentApiInput implements InputServiceInterface
 {
@@ -13,8 +14,8 @@ class SyriatelPaymentApiInput implements InputServiceInterface
 
     public function __construct( array $input)
     {
-        $this->orderId      = $input['orderId'];
-        $this->userId       = $input['userId'];
+        $this->orderId      = $input['orderId'] ?? null;
+        $this->userId       = Auth::user()->id;
         $this->phoneNumber  = $input['phoneNumber'];
         $this->amount       = $input['amount'];
 

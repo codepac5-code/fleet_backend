@@ -51,6 +51,7 @@ class CancelOrderLogic implements Service {
         
         // $new_count = FleetSystemOperationGo::add_orders_to_pinding_rides(-1);
         // StatisticsEvent::Pending_Ride->send_event_to_admin($new_count);
+
         $this->updateRedisDatabase_Order();
         
         $response  = new CancelOrderOutput([] , __('messages.order_cancelled'));
@@ -59,8 +60,11 @@ class CancelOrderLogic implements Service {
 
 
    private function updateRedisDatabase_Order(){
-    OrderRedisModel::delete($this->input->getOrderId() ,
+    $orderId = $this->input->getOrderId();
+
+    OrderRedisModel::delete($orderId ,
             OrderStatus::$Pending
         );
+    OrderRedisModel::storeCancelOrderId($orderId);
    }
 }

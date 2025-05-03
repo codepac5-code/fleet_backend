@@ -1,6 +1,5 @@
 <?php
 namespace App\Http\Services\User\MakeOrder\Logic;
-
 use Error;
 use App\Events\SearchOnDriver;
 use App\Http\Core\Classes\Operations\FleetSystemOperationGo;
@@ -15,6 +14,9 @@ use App\Http\Core\Const\Messages\SuccessMessages;
 use App\Http\Core\Const\Options\OrderStatus;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
+use App\Jobs\FollowOrder\MakePendingOrderCardJob;
+use App\Jobs\FollowOrder\PendingOrder;
+use App\Models\Booking;
 
 class MakeOrderLogic implements Service {
 
@@ -102,8 +104,9 @@ class MakeOrderLogic implements Service {
         SearchOnDriverJob::dispatch($data)
         ->onQueue('jobs');
 
-        $this->redisOrderDatabaseModel($order);
+        $this->redisOrderDatabaseModel($order->id);
 
+        // MakePendingOrderCardJob::dispatch($order->id);
         
         
         $new_count = FleetSystemOperationGo::add_orders_to_pinding_rides(1);
@@ -143,7 +146,8 @@ class MakeOrderLogic implements Service {
     }
 
 
-   public function redisOrderDatabaseModel($order){
+   public function redisOrderDatabaseModel($orderId){
+    $order = Booking::find($orderId);
     $order->status = OrderStatus::$Pending;
     OrderRedisModel::storeWithPagenationService($order);
    }

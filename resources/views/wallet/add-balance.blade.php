@@ -1,49 +1,57 @@
 <x-master-layout>
-    <div class="container-fluid">
+    <div class="container-fluid py-1">
         <div class="row justify-content-center">
 
-
-            <div class="col-12 text-center my-4">
-                <div class="wallet-icon-container">
-                    <i class="fas fa-wallet wallet-icon"></i>
-                </div>
-            </div>
-
+            <!-- اختيار نوع المستخدم -->
             <div class="col-lg-6">
-                <div class="card">
+                <div class="card shadow-lg border-0">
                     <div class="card-body">
-                        <h4 class="mb-3">{{ __('messages.add_balance') }}</h4>
-
-                        {{-- id="searchUserForm"  --}}
-                        <form  method="GET" action="{{ route('uuu') }}" enctype="multipart/form-data" id="vehicleForm">
+                        <h4 class="mb-4 text-center text-primary">{{ __('messages.add_balance') }}</h4>
+                        <form method="GET" action="{{ route('uuu') }}" enctype="multipart/form-data" id="userForm">
                             @csrf
-                            <div class="form-group">
-                                <label>{{ __('messages.select_type') }}</label>
-                                <select name="userType" id="userType" class="form-control">
-                                    <option value="user">{{ __('messages.user') }}</option>
-                                    <option value="driver">{{ __('messages.driver') }}</option>
-                                </select>
+
+                            <!-- اختيار نوع المستخدم -->
+                            <div class="form-group text-center">
+                                <label class="font-weight-bold mb-3">{{ __('messages.select_type') }}</label>
+                                <div class="user-type-icons d-flex justify-content-center gap-4">
+                                    <div class="icon" id="user" onclick="selectUserType('user')">
+                                        <i class="fas fa-user-circle fa-3x"></i>
+                                        <p class="mt-2">{{ __('messages.user') }}</p>
+                                    </div>
+                                    <div class="icon" id="driver" onclick="selectUserType('driver')">
+                                        <i class="fas fa-taxi fa-3x"></i>
+                                        <p class="mt-2">{{ __('messages.driver') }}</p>
+                                    </div>
+                                    <div class="icon" id="office" onclick="selectUserType('office')">
+                                        <i class="fas fa-building fa-3x"></i>
+                                        <p class="mt-2">{{ __('messages.office') }}</p>
+                                    </div>
+                                </div>
                             </div>
 
-
-                            <div class="form-group">
-                                <label>{{ __('messages.phone_number') }}</label>
-                                <input type="text" id="phoneNumber" class="form-control" placeholder="{{ __('messages.enter_phone') }}">
+                            <!-- حقل الإدخال -->
+                            <div class="form-group position-relative mt-4">
+                                <label id="inputLabel" class="font-weight-bold">{{ __('messages.phone_number') }}</label>
+                                <i class="fas fa-phone dynamic-icon" id="dynamicIcon"></i>
+                                <input type="text" id="inputField" name="identifier" class="form-control pl-5 large-input" placeholder="{{ __('messages.enter_phone') }}" required>
                             </div>
 
-                            
-                            <button type="submit" class="btn btn-primary btn-block">
+                            <input type="hidden" name="userType" id="userType" value="">
+
+                            <button type="submit" class="btn btn-primary btn-block mt-4 wallet-search-btn">
                                 <i class="fas fa-search"></i> {{ __('messages.search') }}
                             </button>
+                            
                         </form>
                     </div>
                 </div>
             </div>
 
-           <div class="col-lg-8 mt-4" id="userInfoSection" style="display: none;"> 
-                <div class="card">
+            <!-- معلومات المستخدم -->
+            <div class="col-lg-8 mt-5" id="userInfoSection" style="display: none;">
+                <div class="card shadow border-0">
                     <div class="card-body">
-                        <h4 class="mb-3">{{ __('messages.user_information') }}</h4>
+                        <h4 class="mb-3 text-primary">{{ __('messages.user_information') }}</h4>
                         <ul class="list-unstyled">
                             <li><strong>{{ __('messages.name') }}:</strong> <span id="userName"></span></li>
                             <li><strong>{{ __('messages.phone_number') }}:</strong> <span id="userPhone"></span></li>
@@ -53,221 +61,208 @@
                 </div>
             </div>
         </div>
-
-        <div class="row mt-4 d-flex justify-content-center">
-
-            <div class="col-lg-4 mt-4" id="walletCard" style="display: none;">
-                <div class="card wallet-card text-white bg-success shadow-lg rounded-4">
-                    <div class="card-body text-center">
-                        <i class="fas fa-wallet fa-3x mb-3 animated-icon"></i>
-                        <h5 class="fw-bold">{{ __('messages.wallet_balance') }}</h5>
-                        <h2 id="walletBalance" class="fw-bolder">0.00</h2>
-                        <button class="btn btn-light text-success fw-bold mt-3 px-4 py-2 add-balance-btn">
-                            <i class="fas fa-plus-circle me-2"></i> {{ __('messages.add_balance') }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        
-            <div class="col-lg-4 mt-4" id="earningsCard" style="display: none;">
-                <div class="card earnings-card text-white bg-primary shadow-lg rounded-4">
-                    <div class="card-body text-center">
-                        <i class="fas fa-money-bill-wave fa-3x mb-3 animated-icon"></i>
-                        <h5 class="fw-bold">{{ __('messages.total_earnings') }}</h5>
-                        <h2 id="totalEarnings" class="fw-bolder">0.00</h2>
-                        <button class="btn btn-light text-primary fw-bold mt-3 px-4 py-2 pay-earnings-btn">
-                            <i class="fas fa-credit-card me-2"></i> {{ __('messages.pay_earnings') }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-            <div class="table-responsive">
-                <table id="datatable" class="table table-striped border">
-                </table>
-              </div>
-        </div>
     </div>
 
+    <div class="col-12">
+        <div class="horizontal-separator"></div>
+    </div>
+                <!-- أيقونة المحفظة -->
+                <div class="col-12 text-center mb-4">
+                    <div class="wallet-icon-container">
+                        <i class="fas fa-wallet wallet-icon"></i>
+                    </div>
+                </div>
+    
 
-<script>
-    document.getElementById("searchUserForm").addEventListener("submit", function (e) {
+    <!-- الخطوط والأيقونات -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-        window.renderedDataTable = $('#datatable').DataTable({
-        processing: true,
-        serverSide: true,
-        autoWidth: false,
-        responsive: true,
-        dom: '<"row align-items-center"><"table-responsive my-3" rt><"row align-items-center" <"col-md-6" l><"col-md-6" p>><"clear">',
-        ajax: {
-            "type": "GET",
-            "url": "", 
-            "data": function (d) {
-                d.search = {
-                    value: $('.dt-search').val()
-                };
-            },
-        },
-        columns: [
-            {
-                name: 'check',
-                data: 'check',
-                title: '<input type="checkbox" class="form-check-input" name="select_all_table" id="select-all-table" onclick="selectAllTable(this)">',
-                exportable: false,
-                orderable: false,
-                searchable: false,
-            },
-            {
-                data: 'bookingId',
-                name: 'bookingId',
-                title: "{{__('messages.bookingId')}}"
-            },
-            {
-                data: 'payment_methode',
-                name: 'payment_methode',
-                title: "{{__('messages.payment_methode')}}"
-            },
-            {
-                data: 'amount',
-                name: 'amount',
-                title: "{{__('messages.amount')}}"
-            },
-            {
-                data: 'payment_status',
-                name: 'payment_status',
-                title: "{{__('messages.payment_status')}}"
-            },
-            {
-                data: 'discount',
-                name: 'discount',
-                title: "{{__('messages.discount')}}"
-            },
-            {
-                data: 'commission',
-                name: 'commission',
-                title: "{{__('messages.commission')}}"
-            },
-            {
-                data: 'Payment_datetime',
-                name: 'Payment_datetime',
-                title: "{{__('messages.Payment_datetime')}}"
-            },
-            {
-                data: 'action',
-                name: 'action',
-                orderable: false,
-                searchable: false,
-                title: "{{__('messages.action')}}"
-            }
-        ]
-    });
-    e.preventDefault();
-
-    let userType = document.getElementById("userType").value;
-    let phoneNumber = document.getElementById("phoneNumber").value;
-
-    fetch(`{{ route('wallet.getUserInfo') }}?userType=${userType}&phoneNumber=${phoneNumber}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById("userName").textContent = data.user.name;
-                document.getElementById("userPhone").textContent = data.user.phone;
-                document.getElementById("userAddress").textContent = data.user.address;
-                document.getElementById("walletBalance").textContent = data.user.wallet_balance;
-                document.getElementById("totalEarnings").textContent = (parseFloat(data.user.wallet_balance) * 1.2).toFixed(2); // مستحقات متوقعة
-
-                document.getElementById("userInfoSection").style.display = "block";
-                document.getElementById("walletCard").style.display = "block";
-                document.getElementById("earningsCard").style.display = "block";
-
-                let transactionsUrl = `{{ route('wallet.getTransactions') }}?userType=${userType}&phoneNumber=${phoneNumber}`;
-                renderedDataTable.ajax.url(transactionsUrl).load();
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-
-
-});
-
-</script>
-{{-- 
-<script>
-    // document.addEventListener('DOMContentLoaded', (event) => {
-  
-});
-
-</script> --}}
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f9f9f9;
+        }
+
+        
+        /* أيقونة المحفظة */
         .wallet-icon-container {
-            position: relative;
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #1e1e2f, #252540);
-            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffcc00, #ffc107, #fff3cd);
+            border-radius: 20px;
+            width: 100px;
+            height: 70px;
+            margin: auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: auto;
-            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
-            animation: pulse 1.5s infinite;
+            animation: bounce 2.5s infinite;
+            box-shadow: 0 10px 30px rgba(255, 204, 0, 0.4);
         }
 
         .wallet-icon {
-            font-size: 40px;
-            color: #ffc107;
+            font-size: 56px;
+            color: #1e1e2f;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.9; }
-            100% { transform: scale(1); opacity: 1; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
         }
+/* اختيار نوع المستخدم */
+.user-type-icons {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+}
 
-        .card {
-            border-radius: 12px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .wallet-card, .earnings-card {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+/* الأيقونة العادية */
+.icon {
+    background-color: #f8c7055b; /* اللون في الوضع الفاتح */
+    width: 120px;
+    height: 130px;
+    border-radius: 35px;
+    padding: 12px;
+    text-align: center;
     cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.wallet-card:hover, .earnings-card:hover {
+
+/* تأثير عند المرور فوق الأيقونة */
+.icon:hover {
     transform: translateY(-5px);
-    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-.animated-icon {
-    animation: pulse 1.5s infinite;
+/* التحديد عند اختيار الأيقونة */
+.icon.selected {
+    border-color: #ffcc00;
+    background: #fff3cd;
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+
+/* تحديد حجم النص لحقل الإدخال */
+.large-input {
+    font-size: 18px;  /* زيادة حجم النص */
+    padding: 12px;    /* توفير مسافة إضافية حول النص */
 }
 
-.add-balance-btn, .pay-earnings-btn {
-    border-radius: 50px;
+
+/* مظهر الأيقونات في الوضع الداكن */
+body.dark .icon {
+    background-color: #2b2b2b; /* خلفية داكنة */
+    color: #fff; /* نص أبيض */
+    border-color: #444; /* حدود داكنة */
+    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1); /* ظل خفيف */
+}
+
+/* تأثير عند المرور فوق الأيقونة في الوضع الداكن */
+body.dark .icon:hover {
+    background-color: #444444; /* تغيير الخلفية عند المرور */
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3); /* تأثير ظل أكبر */
+    transform: translateY(-5px);
+}
+
+/* التحديد في الوضع الداكن */
+body.dark .icon.selected {
+    border-color: #ffcc00;
+    background: #444444; /* خلفية داكنة مع تأثير مختار */
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
+}
+
+        /* حقل الإدخال */
+        .form-group {
+            position: relative;
+        }
+
+        .form-group i.dynamic-icon {
+            position: absolute;
+            left: 15px;
+            top: 70%;
+            transform: translateY(-50%);
+            color: #aaa;
+            font-size: 18px;
+        }
+
+        #inputField {
+    padding-left: 45px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    height: 50px;
+    transition: border 0.3s;
+}
+
+
+        #inputField:focus {
+            border-color: #ffcc00;
+            box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.2);
+        }
+
+        .wallet-search-btn {
+    background: linear-gradient(135deg, #ffcc00, #ffdd57);
+    border: none;
+    padding: 14px 24px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1e1e2f;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 6px 18px rgba(255, 204, 0, 0.3);
     transition: all 0.3s ease-in-out;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
-.add-balance-btn:hover {
-    background-color: #28a745;
-    color: white;
-    transform: scale(1.05);
+.wallet-search-btn:hover {
+    background: linear-gradient(135deg, #ffe066, #ffca2c);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(255, 204, 0, 0.5);
 }
 
-.pay-earnings-btn:hover {
-    background-color: #007bff;
-    color: white;
-    transform: scale(1.05);
-}
 
+        /* معلومات المستخدم */
+        #userInfoSection .card {
+            border-radius: 20px;
+            background: linear-gradient(135deg, #fffdf5, #ffffff);
+            border: 1px dashed #ffcc00;
+            box-shadow: 0 5px 20px rgba(255, 204, 0, 0.1);
+        }
+
+        #userInfoSection ul li {
+            font-size: 17px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #eee;
+        }
     </style>
+
+    <script>
+        function selectUserType(type) {
+            document.getElementById("userType").value = type;
+
+            const icons = document.querySelectorAll(".icon");
+            icons.forEach(icon => icon.classList.remove("selected"));
+            document.getElementById(type).classList.add("selected");
+
+            const label = document.getElementById("inputLabel");
+            const input = document.getElementById("inputField");
+            const icon = document.getElementById("dynamicIcon");
+
+            if (type === 'office') {
+                label.textContent = "{{ __('messages.email') }}";
+                input.placeholder = "{{ __('messages.enter_email') }}";
+                input.type = "email";
+                icon.className = "fas fa-envelope dynamic-icon";
+            } else {
+                label.textContent = "{{ __('messages.phone_number') }}";
+                input.placeholder = "{{ __('messages.enter_phone') }}";
+                input.type = "tel";
+                icon.className = "fas fa-phone dynamic-icon";
+            }
+        }
+    </script>
 </x-master-layout>

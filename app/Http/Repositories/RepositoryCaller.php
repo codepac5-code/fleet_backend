@@ -47,8 +47,10 @@ use App\Http\Repositories\Vehicle_SubServiceRepositories\Vehicle_SubServiceRepos
 use App\Http\Repositories\UserReportRepositories\UserReportRepositoryCaller; 
 use App\Http\Repositories\PublicUserAppSettingRepositories\PublicUserAppSettingRepositoryCaller; 
 use App\Http\Repositories\PublicDriverAppSettingRepositories\PublicDriverAppSettingRepositoryCaller; 
+use App\Http\Repositories\SyriatelInvoiceRepositories\SyriatelInvoiceRepositoryCaller; 
 class RepositoryCaller {
 
+	static public function SyriatelInvoiceRepository(){return (new SyriatelInvoiceRepositoryCaller);}
 	static public function PublicDriverAppSettingRepository(){return (new PublicDriverAppSettingRepositoryCaller);}
 	static public function PublicUserAppSettingRepository(){return (new PublicUserAppSettingRepositoryCaller);}
 	static public function UserReportRepository(){return (new UserReportRepositoryCaller);}

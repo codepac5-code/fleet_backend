@@ -26,7 +26,7 @@ class SendReportRequest extends BaseRequest
         [
             'image' => ['sometimes','image','mimes:jpeg,png,jpg','max:2048'],
             'subject'=>['sometimes','string'],
-            'reason'=>['sometimes','string'],
+            // 'reason'=>['sometimes','string'],
             'id'=>['sometimes','string'],
             'description'=>['sometimes','string'],
         ];

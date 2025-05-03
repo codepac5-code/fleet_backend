@@ -359,7 +359,30 @@ body.dark .modern-trip-card .action-btn:hover i {
 
         </style>
     </head>
+<script>
+    function decreaseCount(elementId) {
+    const element = document.getElementById(elementId);
+    let currentCount = parseInt(element.textContent, 10);
 
+    if (currentCount > 0) {
+        element.textContent = currentCount - 1;
+        return;
+    }
+
+    }
+    
+    function deletePendingOrder(orderId) {
+                        // const elementId = `pending-order-${orderId}`;
+    const element = document.getElementById('pending-order-'+orderId);
+
+    if (element) {
+        element.remove();
+        // decreaseCount('pending_count');
+        } 
+    }
+
+
+</script>
     <div class="container">
         
         <div class="trip-columns">
@@ -413,7 +436,6 @@ body.dark .modern-trip-card .action-btn:hover i {
             const loader = document.getElementById('scroll-loader-pending');
             if (loader) loader.remove();
         }
-
 
 
         function createOrderCard(order) {
@@ -503,7 +525,7 @@ body.dark .modern-trip-card .action-btn:hover i {
             isLoadingPending = true;
             showLoaderPending();
     
-            fetch(`{{ route('orders-by-status') }}?status=pending&page=${page}`)
+            fetch(`{{ route('orders-by-status') }}?status=Pending&page=${page}`)
                 .then(response => response.json())
                 .then(data => {
                     const pendingOrders = data.orders || [];
@@ -549,17 +571,27 @@ body.dark .modern-trip-card .action-btn:hover i {
 
 
 function fetchNewPendingOrders() {
-  fetch(`/get/only-new-orders-by-status?last_order_id=${lastPendingOrderId}&status=pending`)
+  fetch(`/get/only-new-orders-by-status?last_order_id=${lastPendingOrderId}&status=Pending`)
     .then(response => response.json())
     .then(data => {
       const newOrders = data.orders || [];
+      const canceled_order_Ids = data.canceled_order_Ids || [];
       const wrapper = document.getElementById('pending-orders-wrapper');
       removeLoaderPending();
 
+      if (canceled_order_Ids.length > 0) {
+
+        canceled_order_Ids.forEach(orderId => {
+            deletePendingOrder(orderId);
+        });
+    }
       if (newOrders.length === 0) {
         return;
       }
 
+
+
+      
 
       newOrders.forEach(order => {
         const orderHTML = createOrderCard(order);
@@ -599,7 +631,7 @@ function fetchNewPendingOrders() {
             const wrapper = document.getElementById('pending-orders-wrapper');
             lastPagePending = false;
             fetchNewPendingOrders(1);
-    }, 30000);
+    }, 10000);
 
 </script>
 </div>        
@@ -656,15 +688,8 @@ function fetchNewPendingOrders() {
                         if (loader) loader.remove();
                     }
 
-                    function deletePendingOrder(orderId) {
-                        // const elementId = `pending-order-${orderId}`;
-                    
-                        const element = document.getElementById('pending-order-'+orderId);
-                    
-                        if (element) {
-                            element.remove();
-                         } 
-                     }
+
+
 
                 
                     function createOngoingOrderCard(order) {
@@ -836,9 +861,13 @@ function fetchNewPendingOrders() {
                             .then(data => {
                                 const newOrders = data.orders || [];
                                 const wrapper = document.getElementById('ongoing-orders-wrapper');
-                
+
+
                                 if (newOrders.length === 0) return;
                 
+
+                          
+
                                 newOrders.forEach(order => {
                                     const orderHTML = createOngoingOrderCard(order);
                                     deletePendingOrder(order.id);
@@ -873,12 +902,11 @@ function fetchNewPendingOrders() {
                     setInterval(() => {
                         ongoingLastPage = false;
                         fetchNewOngoingOrders();
-                    }, 30000);
+                    }, 10000);
 </script>
                 
             </div>
 
-            <!-- مكتملة -->
             <div class="trip-column">
                 <h3>
                     <i class="fa fa-trophy"></i>
@@ -930,19 +958,21 @@ function fetchNewPendingOrders() {
                          if (loader) loader.remove();
                      }
 
+
+                     
                     function deleteOngoingOrder(orderId) {
                         // const elementId = `pending-order-${orderId}`;
                         const element = document.getElementById('ongoing-order-'+orderId);
                     
                         if (element) {
                             element.remove();
+                            decreaseCount('ongoing_count');
                          } 
                      }
                  
                      function createCompletedOrderCard(order) {
                          return ` 
                          <div class="modern-trip-card toggle-card">
-                             <!-- العنوان والحالة -->
                              <div class="trip-top card-toggle-header">
                                  <div class="trip-id">
                                      <i class="fas fa-hashtag"></i> ${order.id}
@@ -950,7 +980,6 @@ function fetchNewPendingOrders() {
                                  <div class="trip-status completed"><i class="fas fa-check-circle"></i> {{ __('messages.completed') }}</div>
                              </div>
                  
-                             <!-- المسار -->
                              <div class="trip-route card-toggle-header">
                                  <div>
                                      <i class="fas fa-map-marker-alt text-success"></i>
@@ -1014,7 +1043,6 @@ function fetchNewPendingOrders() {
                                      <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>${order.withOffice ? 'مكتب المليح' : 'لا يوجد مكتب'}</strong></div>
                                  </div>
                  
-                                 <!-- المبالغ -->
                                  <div class="trip-finance">
                                      <div class="finance-box discount">
                                          <i class="fas fa-percentage"></i>
@@ -1052,11 +1080,12 @@ function fetchNewPendingOrders() {
                          </div> `;
                      }
                  
+     
                      function fetchCompletedOrders(page) {
                          isCompletedLoading = true;
                          showCompletedLoader();
                  
-                         fetch(`{{ route('orders-by-status') }}?status=completed&page=${page}`)
+                         fetch(`{{ route('orders-by-status') }}?status=Completed&page=${page}`)
                              .then(response => response.json())
                              .then(data => {
                                  const completedOrders = data.orders || [];
@@ -1098,7 +1127,7 @@ function fetchNewPendingOrders() {
                      }
                  
                      function fetchNewCompletedOrders() {
-                         fetch(`/get/only-new-orders-by-status?last_order_id=${lastCompletedOrderId}&status=completed`)
+                         fetch(`/get/only-new-orders-by-status?last_order_id=${lastCompletedOrderId}&status=Completed`)
                              .then(response => response.json())
                              .then(data => {
                                  const newOrders = data.orders || [];

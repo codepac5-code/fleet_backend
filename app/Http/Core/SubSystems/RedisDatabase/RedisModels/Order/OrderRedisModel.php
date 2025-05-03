@@ -22,16 +22,74 @@ abstract class OrderRedisModel  {
 
     public static function storeWithPagenationService(Booking $order): void
     {
+        // $value = 
+        // [
+        //     "id"=> $order->id,
+        //     "startAt"=> $order->startAt,
+        //     "endAt"=> $order->endAt,
+        //     "amount"=> $order->amount,
+        //     "discount"=> $order->discount,
+        //     "time"=> $order->time,
+        //     "totalAmount"=> $order->totalAmount,
+        //     "rating"=> $order->rating,
+        //     "reason"=> $order->reason,
+        //     "couponId"   =>       $order->couponId,
+        //     "status" =>             $order->status,
+        //     "startAddress" =>       $order->startAddress,
+        //     "endAddress" =>       $order->endAddress,
+        //     "startLatitude" =>       $order->startLatitude,
+        //     "startLongitude" =>       $order->startLongitude,
+        //     "endLatitude" =>       $order->endLatitude,
+        //     "endLongitude" =>       $order->endLongitude,
+        //     "distance" =>       $order->distance,
+        //     "paymentId" =>          $order->paymentId,
+        //     "durationDiff" =>       $order->durationDiff,
+        //     "userId"=>              $order->userId,
+        //     "subServiceId"=>       $order->subServiceId,
+        //     "multiDestnationArray"=>       $order->multiDestnationArray,
+        //     "officeCommissionValue"=>       $order->officeCommissionValue,
+        //     "driverCommissionValue"=>       $order->driverCommissionValue,
+        //     "fleetCommissionValue"=>       $order->fleetCommissionValue,
+        //     "driverCommissionPercentage"=>       $order->driverCommissionPercentage,
+        //     "officeCommissionPercentage"=>       $order->officeCommissionPercentage,
+        //     "fleetCommissionPercentage"=>       $order->fleetCommissionPercentage,
+        //     "paymentStatus" =>       $order->paymentStatus,
+        //     "PaymentDatetime"=>       $order->PaymentDatetime,
+        //     "otherPaymentTransactionDetail"=>    $order->otherPaymentTransactionDetail,
+        //     "created_at"=>       $order->created_at,
+        // ];
 
         if ($order->driverId != null) {
-            $order->driver = Driver::select(['firstName', 'lastName', 'photo', 'vehicleId'])
+            $driver = Driver::select(['firstName', 'lastName', 'photo', 'vehicleId','phoneNumber'])
                 ->where(['id' => $order->driverId])
                 ->with('vehicle')  
                 ->first(); 
+            
+                $order->driver = $driver;
+
+            // $value['driver'] = [
+            //     'firstName'=> $driver->firstName,
+            //     'lastName'=>$driver->lastName,
+            //     'photo'=>$driver->photo,
+            //     'phoneNumber'=> $driver->phoneNumber,
+            //     'vehicle' =>[
+            //         'plate'=>$driver->vehicle->plate,
+            //         'vehicleBrand'=>$driver->vehicle->vehicleBrand,
+            //     ],
+            // ]; 
+
         }
         
-        $order->user = User::select(['firstName','lastName','photo',
+        $user = User::select(['firstName','lastName','photo',
         'phoneNumber'])->find($order->userId);
+
+        $order->user = $user;
+        // $value['user'] = [
+        //     'firstName'=> $user->firstName,
+        //     'lastName'=>$user->lastName,
+        //     'photo'=>$user->photo,
+        //     'phoneNumber'=> $user->phoneNumber
+        // ]; 
         
         switch(app()->getLocale())
         {
@@ -45,18 +103,27 @@ abstract class OrderRedisModel  {
                     'name'
               ]);
         }
-        $order->subService = $sub_service->find($order->subServiceId);
+        $subService = $sub_service->find($order->subServiceId);
+
+        $order->subService = $subService;
+        // $value['subService'] = ['name'=> $subService->name];
 
         if($order->multiDestnationArray != null){
-            $order->multiDestnationArray = json_decode($order->multiDestnationArray);
+            $multiDestnationArray = json_decode($order->multiDestnationArray);
+            $order->multiDestnationArray = $multiDestnationArray;
+            // $value['multiDestnationArray'] =  $multiDestnationArray;
         }
 
         if($order->officeId != null){
             $order->withOffice = true;
             $order->officeName = $order->office->officeName;
 
+            // $value['withOffice'] = true;
+            // $value['officeName'] = $order->office->officeName;
+
         }else{
             $order->withOffice = false;
+            // $value['withOffice'] = false;
         }
 
         $order_key = OrderRedisKeies::ORDER->generateKey(['orderId' => $order->id]);
@@ -64,22 +131,47 @@ abstract class OrderRedisModel  {
     
         // $score = $order->created_at ? strtotime($order->created_at) : time();
         $score = $order->id;
-
         Redis::zadd($order_status_key, $score, $order->id);
-    
-        Redis::set($order_key, serialize($order));
-    
+
         if ($order->status === OrderStatus::$Completed) {
             Redis::expire($order_key, 86400);
+            $expiry = 86400;
+            Redis::setex($order_key, $expiry, serialize($order)); //json_encode($value)
         }
+        else{
+            Redis::set($order_key , serialize($order) ); //json_encode($value)
+        }
+        
+        // Redis::set($order_key, serialize($order));
     }
 
 
-    public static function get(int $orderId): ? Booking
+    public static function storeCancelOrderId($orderId): void
+    {
+        $key = 'cancelled-orderIds';
+        $expireAfterSeconds = 90 * 60; 
+        $score = time() + $expireAfterSeconds; 
+        Redis::zadd($key, [$orderId => $score]);
+    }
+    
+    public static function getCancelOrderIds(): array
+    {
+        $key = 'cancelled-orderIds';
+        $now = time();
+        
+        Redis::zremrangebyscore($key, '-inf', $now - 1);
+    
+        return Redis::zrange($key, 0, -1);
+    }
+
+
+
+
+    public static function getOrder(int $orderId)
     {
         $order_key = OrderRedisKeies::ORDER->generateKey(['orderId'=>$orderId]);
         $data = Redis::get($order_key);
-        return $data ? unserialize($data) : null;
+        return $data ? unserialize($data) : null; //json_decode($data)
     }
 
     public static function delete( $orderId , $status ): void
@@ -87,8 +179,12 @@ abstract class OrderRedisModel  {
         $order_key = OrderRedisKeies::ORDER->generateKey(['orderId'=>$orderId]);
         Redis::del($order_key);
         $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status'=>$status]);
-        Redis::srem( $order_status_key , $orderId);
-    }
+        Redis::zrem($order_status_key, $orderId);
+
+        if($status == OrderStatus::$Pending){
+            OrderRedisModel::storeCancelOrderId($orderId);
+         }
+        }
 
     public static function deleteCompletely(int $orderId, string $status): void
     {
@@ -121,9 +217,9 @@ abstract class OrderRedisModel  {
     {
         $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey([ 'status'=> $status ]);
         $ids = Redis::smembers($order_status_key);
-        // return collect($ids)->map(fn($id) => self::get($id))->filter();
+        // return collect($ids)->map(fn($id) => self::getOrder($id))->filter();
         return collect($ids)->map(function ($id) use ($order_status_key) {
-            $order = self::get($id);
+            $order = self::getOrder($id);
             if (!$order) {
                 Redis::srem($order_status_key, $id);
                 return null;
@@ -139,7 +235,7 @@ abstract class OrderRedisModel  {
     $ids = Redis::zrevrangebyscore($order_status_key, '+inf', "($afterId"); 
 
     return collect($ids)->map(function ($id) use ($order_status_key) {
-        $order = self::get($id);
+        $order = self::getOrder($id);
         if (!$order) {
             Redis::zrem($order_status_key, $id);
             return null;
@@ -157,7 +253,7 @@ abstract class OrderRedisModel  {
     //Redis::zrevrange($order_status_key, $offset, $offset + $limit - 1);
 
     return collect($ids)->map(function ($id) use ($order_status_key) {
-        $order = self::get($id);
+        $order = self::getOrder($id);
         if (!$order) {
             Redis::zrem($order_status_key, $id); 
             return null;

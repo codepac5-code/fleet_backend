@@ -12,7 +12,8 @@ Route::get('/',function(){
     $sectionData['title'] = "Welcome! Ready to Take Control of Your Fleet?";
     $sectionData['login_register'] = 1;
   
-  
+    return view('TT.index',compact('sectionData'));
+
 return view('landing-page.login',compact('sectionData'));
 })->name('login');
 

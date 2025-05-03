@@ -25,14 +25,17 @@ class GetOnlyNewOrdersByStatusLogic implements Service {
 
     public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
 
+        $canceled_order_Ids = [] ;
         switch($this->input->getStatus()){
-            case 'pending' : $status = OrderStatus::$Pending;
+            case OrderStatus::$Pending : 
+                $status = OrderStatus::$Pending;
+                $canceled_order_Ids  = OrderRedisModel::getCancelOrderIds();
             break;
 
-            case 'ongoing' :  $status = OrderStatus::$OnGoing;
+            case OrderStatus::$OnGoing :  $status = OrderStatus::$OnGoing;
             break;
 
-            case 'completed' :  $status = OrderStatus::$Completed;
+            case OrderStatus::$Completed :  $status = OrderStatus::$Completed;
             break;
 
             default : $status = ' ';
@@ -46,12 +49,12 @@ class GetOnlyNewOrdersByStatusLogic implements Service {
      
         $count = OrderRedisModel::get_status_count($status);
 
-        
 
         
         return response()->json([
             'orders' => $orders,
             'count'  => $count ?? 0,
+            'canceled_order_Ids'=>$canceled_order_Ids ?? [],
         ]);
    }
 }

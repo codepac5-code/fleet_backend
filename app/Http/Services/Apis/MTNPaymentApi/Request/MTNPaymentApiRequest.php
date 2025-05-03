@@ -26,7 +26,7 @@ class MTNPaymentApiRequest extends BaseRequest
         [
             "amount"        => ['integer'   ,"required"],
             // "orderId"       => ["integer"   ,"required"],
-            "phoneNumber"   => ['string'    ,"required"],
+            "phoneNumber"   => ['string',"required"],
             // "paymentName"   => ['required'  , 'string']
         ];
     }
