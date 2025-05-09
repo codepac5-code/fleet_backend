@@ -138,7 +138,12 @@ abstract class OrderRedisModel  {
             $expiry = 86400;
             Redis::setex($order_key, $expiry, serialize($order)); //json_encode($value)
         }
-        else{
+        elseif($order->status === OrderStatus::$Pending )
+        {
+            $expiry = 60*60;
+            Redis::setex($order_key ,$expiry, serialize($order) );
+        }
+        else {
             Redis::set($order_key , serialize($order) ); //json_encode($value)
         }
         

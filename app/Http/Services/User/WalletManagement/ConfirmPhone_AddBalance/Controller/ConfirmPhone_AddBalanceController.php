@@ -12,12 +12,12 @@ class ConfirmPhone_AddBalanceController extends Controller
     public function __invoke(ConfirmPhone_AddBalanceRequest $request)
     {
 
-        $request->validated();
+        $data = $request->validated();
         // validate input data and pass it to the service..
         $service = new ConfirmPhone_AddBalanceLogic(); // call the service's logic
 
         // execute service and get result..
-        $result = $service->{$request->input('type')}($request->validated());
+        $result = $service->{$request->input('type')}( $data);
 
         return SendResponse::sendSuccessResponse($result); // send response..
     }

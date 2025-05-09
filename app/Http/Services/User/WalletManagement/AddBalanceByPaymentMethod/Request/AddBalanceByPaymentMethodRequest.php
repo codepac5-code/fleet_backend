@@ -24,7 +24,9 @@ class AddBalanceByPaymentMethodRequest extends BaseRequest
     {
         return
         [
-            "type" => ['required'  , 'string'],              
+            "type" => ['required'  , 'string'],   
+            "amount"        => ['integer'   ,"required"],
+            "phoneNumber"        => ['string'   ,"required"],
         ];
     }
 

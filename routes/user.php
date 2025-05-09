@@ -31,6 +31,7 @@ use App\Http\Services\User\UserAddressManagement\DeleteAddress\Controller\Delete
 use App\Http\Services\Apis\ConfirmPaymentPhoneNumber\Controller\ConfirmPaymentPhoneNumberController;
 use App\Http\Services\Apis\MTNConfirmPaymentPhoneNumber\Controller\MTNConfirmPaymentPhoneNumberController;
 use App\Http\Services\Apis\SyriatelConfirmPhoneNumber\Controller\SyriatelConfirmPhoneNumberController;
+use App\Http\Services\Apis\SyriatelPaymentApi\Controller\SyriatelPaymentApiController;
 use App\Http\Services\Dashboard\BannersManagement\CreateOrUpdateBanner\Controller\CreateOrUpdateBannerController;
 use App\Http\Services\User\ProfileManagement\EdateImageProfile\Controller\EdateImageProfileController;
 use App\Http\Services\User\Auth\UserResetPasswordService\Controller\UserResetPasswordServiceController;
@@ -39,6 +40,7 @@ use App\Http\Services\User\Auth\UserSendOtpServiceService\Controller\UserSendOtp
 use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Controller\ShowPoilceAndPrivceServiceController;
 use App\Http\Services\PoilceAndPrivceManagement\ViewPoilceAndPrivceService\Controller\ViewPoilceAndPrivceServiceController;
 use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
+use App\Http\Services\User\InquireUserOrderStatus\Controller\InquireUserOrderStatusController;
 use App\Http\Services\User\SendReport\Controller\SendReportController;
 use App\Http\Services\User\WalletManagement\AddBalanceByPaymentMethod\Controller\AddBalanceByPaymentMethodController;
 use App\Http\Services\User\WalletManagement\ConfirmPhone_AddBalance\Controller\ConfirmPhone_AddBalanceController;
@@ -101,7 +103,8 @@ Route::group(['prefix' => 'get'],function(){
 Route::group(['prefix' => 'wallet'], function () {
     Route::Post('/add-balance/by/paymentMethods' , AddBalanceByPaymentMethodController::class);
     Route::Post('/confirm-phoneNumber/add-balance-to-wallet' , ConfirmPhone_AddBalanceController::class);
-    
+    // Route::Post('/add-balance/by/paymentMethods' , SyriatelPaymentApiController::class);
+
 });
 
 
@@ -112,13 +115,15 @@ Route::group(['prefix' => 'payment'], function () {
     Route::post('/fleet-wallet',FleetWalletPaymentController::class);
     Route::Post('/order' , PaymentServiceController::class);
     Route::Post('/confirm-phoneNumber/completed-order' , MTNConfirmPaymentPhoneNumberController::class);
-
     // Route::Post('/confirm-syriatel-phoneNumber/completed-order' , SyriatelConfirmPhoneNumberController::class);
-
 });
+
+
+
 
 Route::group(['prefix' => 'order'], function () {
     Route::post('/make',MakeOrderController::class);
+    Route::post('/inquire-about-the-status-of-the-order' , InquireUserOrderStatusController::class);
     Route::post('/completed' ,CompletedOrderController::class);
 });
 

@@ -69,7 +69,7 @@ class MTNPaymentApiLogic implements Service {
         ->post( MTN_API::$CashMobileUrl.'/'.MTN_API::$GetInvoice ,  ["Invoice" => $invoice->id]);
 
         if ($mtn_response['Errno'] != 0) {
-                make_exception( $mtn_response["Error"] , $mtn_response["Errno"]  );
+                make_exception( $mtn_response["Error"] , $mtn_response["Errno"]);
         }
         info($mtn_response);
         $payment_response = $this->initPymentPhone($invoice, $this->input->getPhoneNumber());
@@ -77,15 +77,14 @@ class MTNPaymentApiLogic implements Service {
         info($payment_response);
 
         $response  = new MTNPaymentApiOutput( [
-            'operationNumber'=>$payment_response['OperationNumber'],
+            'operationNumber'=> $payment_response['OperationNumber'],
             'invoiceId'=> $invoice->id] ,
+            
             //------ mtn message
             $payment_response['PaySystem'] ?? '');
         return $response->send_as_object();
 
         }
-
-
 
 
     public function initPymentPhone($invoice  , $phoneNumber  ) {
@@ -95,16 +94,6 @@ class MTNPaymentApiLogic implements Service {
         $response = Http::withHeaders($this->request_header( MTN_API::$CreatePymentByPhoneNumber , $body ))
         ->post( MTN_API::$CashMobileUrl.'/'.MTN_API::$CreatePymentByPhoneNumber , $body );
 
-
-
-        // if($response["Errno"] == 0 ){
-        //     $this->repository->MtnInvoiceRepository()->updateRepository()
-        //     ->update(['id' => $invoice->id ] , 
-        //     [                
-        //         'phoneNumber'   =>  $phoneNumber,
-        //     ]);
-
-        // }
 
         if($response["Errno"] != 0 ){
             make_exception( $response["Error"] , $response["Errno"] );

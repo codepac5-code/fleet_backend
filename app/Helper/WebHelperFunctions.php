@@ -6,6 +6,7 @@ use App\Http\Core\Const\Options\Roles;
 use App\Models\Setting;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use \Illuminate\Support\Facades\File;
@@ -87,9 +88,10 @@ function defaultSymbol(){
 
 function switch_language_of_view_and_redirect_back($locale)
 {
-    \App::setLocale($locale);
+    app()->setLocale($locale);
+    // \App::setLocale($locale);
     session()->put('locale', $locale);
-    \Artisan::call('cache:clear');
+    Artisan::call('cache:clear');
     $dir = 'ltr';
     if (in_array($locale, ['ar', 'dv', 'ff', 'ur', 'he', 'ku', 'fa'])) {
         $dir = 'rtl';
@@ -101,8 +103,12 @@ function switch_language_of_view_and_redirect_back($locale)
     //     $user->language_option = $locale;
     //     $user->save();
     // }
+
+    // return app()->getLocale('locale');
     return redirect()->back();
 }
+
+
 
 function comman_message_response( $message, $status_code = 200){
 	return response()->json( [ 'message' => $message ], $status_code );

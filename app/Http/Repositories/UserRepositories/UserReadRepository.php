@@ -58,7 +58,7 @@ class UserReadRepository extends ReadRepository
     }
 
 
-    public function notifyUser( $id , NotificationModel $notificationModel , array $selected = ["*"] ) {
+    public function notifyUser(int $id , NotificationModel $notificationModel , array $selected = ["*"] ) {
         return$this->model->select($selected)->find($id)->notify(new PrivateNotification($notificationModel));
     }
 

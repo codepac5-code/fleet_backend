@@ -10,6 +10,7 @@ use App\Events\MyRedisEvent;
 use App\Events\SearchOnDriver;
 use App\Models\FrontendSetting;
 use App\Events\DriverPositionChanged;
+use App\Events\HoldOrder;
 use App\Events\NewMessage;
 use App\Http\Core\Const\APIs\MTN_API;
 use Illuminate\Support\Facades\Redis;
@@ -128,6 +129,7 @@ use App\Http\Services\Dashboard\UsersManagement\ToView\IndexUserController;
 use App\Http\Services\Dashboard\UsersManagement\ViewUsersList\Controller\ViewUsersListController;
 use App\Http\Services\Driver\Earning\Logic\EarningOutput;
 use App\Http\Services\Driver\GetDriverNotification\Controller\GetDriverNotificationController;
+use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
 use App\Jobs\SearchOnDriverJob;
 use App\Models\Admin;
 use App\Models\Booking;
@@ -144,6 +146,7 @@ use App\Models\Vehicle;
 use App\Notifications\BroadcastSuperAdminNotification;
 use Illuminate\Http\Request;
 use Illuminate\Redis\RedisManager;
+use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\DataTables;
 
 use function PHPUnit\Framework\isEmpty;
@@ -590,16 +593,22 @@ Route::get('live-drivers-locations',function(){
     return $locations;
 })->name('live-drivers-locations');
 
-
-
+// ------------ GET -----------//
 Route::get('home/statistics',GetHomeStatisticController::class)->name('home.statistics');
 Route::get('get/orders-by-status',GetOrdersByStatusController::class)->name('orders-by-status');
 Route::get('get/only-new-orders-by-status',GetOnlyNewOrdersByStatusController::class)->name('new-orders-by-status');
+Route::get('payment/method',GetPaymentMethodController::class);
 
 
 Route::get('/bassam', function(){
+  Http::get('https://services.mtnsyr.com:7443/General/MTNSERVICES/ConcatenatedSender.aspx?User=uom424&Pass=mar141214&From=FleetApp&Gsm=0940606534&Msg=5555IsyourFleetAppverificationcode&Lang=1');
 
 
+  return 'otp sending..';
+  event(new HoldOrder(1));
+
+
+  return 'event fire';
 
   $order = Booking::where('id', 9)->first();
   // for($i = 1 ;$i<=10;$i++){ 
@@ -1093,6 +1102,7 @@ Route::get('push/user/notification', function(){
    'eee',
    'ddd',
  );
+
  $repo = new UserReadRepository();
  $repo->notifyUser( 3,  $notificationModel  );
 

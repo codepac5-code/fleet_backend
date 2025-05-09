@@ -14,6 +14,7 @@ use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Contr
 use App\Http\Services\Driver\GetDriverNotification\Controller\GetDriverNotificationController;
 use App\Http\Services\Driver\GetDriverWalletHistory\Controller\GetDriverWalletHistoryController;
 use App\Http\Services\Driver\GetPublicDriverAppSettings\Controller\GetPublicDriverAppSettingsController;
+use App\Http\Services\Driver\ReceiveCompletedOrderInfo\Controller\ReceiveCompletedOrderInfoController;
 use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
 use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
 use App\Http\Services\User\GetWalletHistory\Controller\GetWalletHistoryController;
@@ -60,6 +61,8 @@ Route::group(['middleware' => ['auth:driver','set-localization']],function () {
         Route::get('/logout',LogoutController::class);
     });
 
+
+    Route::post('send-completed-order-info',ReceiveCompletedOrderInfoController::class);
     
 
 });

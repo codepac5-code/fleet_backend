@@ -1,9 +1,9 @@
 <?php
-namespace App\Http\Services\Apis\SyriatelPaymentApi\Request;
+namespace App\Http\Services\User\InquireUserOrderStatus\Request;
 
 use App\Http\Core\Request\BaseRequest;
 
-class SyriatelPaymentApiRequest extends BaseRequest
+class InquireUserOrderStatusRequest extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +24,7 @@ class SyriatelPaymentApiRequest extends BaseRequest
     {
         return
         [
-            "amount"        => ['integer'   ,"required"],
-            "phoneNumber"        => ['string'   ,"required"],
+            'orderId'=>['required' , 'integer']
         ];
     }
 

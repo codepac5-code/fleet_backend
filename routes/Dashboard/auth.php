@@ -4,18 +4,31 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Services\Dashboard\Front\Controller\FrontController;
 use App\Http\Services\Dashboard\Auth\LoginToDashboard\Controller\LoginToDashboardController;
 use App\Http\Services\Dashboard\Auth\LoginToDashboardAsOffice\Controller\LoginToDashboardAsOfficeController;
+use App\Http\Services\WebSite\ViewFleetLandingPage\Controller\ViewFleetLandingPageController;
+use Illuminate\Support\Facades\Artisan;
 
-Route::get('/',function(){
-    // $footerSection = FrontendSetting::where('key', 'login-register-setting')->first();
-    // $sectionData = $footerSection ? json_decode($footerSection->value, true) : null;
-    $sectionData['description'] = 'Here, you can efficiently monitor and manage your fleet\'s activities, track vehicle status, view ride history, and oversee driver performance.';
-    $sectionData['title'] = "Welcome! Ready to Take Control of Your Fleet?";
-    $sectionData['login_register'] = 1;
-  
-    return view('TT.index',compact('sectionData'));
+Route::group(['middleware' => ['set-localization']],function () {
 
-return view('landing-page.login',compact('sectionData'));
-})->name('login');
+Route::get('/',ViewFleetLandingPageController::class)->name('login');
+
+// Route::get('/lang-switch', function (Request $request) {
+//     $locale = $request->input('lang');
+//      return  switch_language_of_view_and_redirect_back($locale);
+// })->name('lang.switch');
+});
+//    return view('fleet-landing-page.index',compact('sectionData'));
+
+Route::get('/lang-switch', function (Request $request) {
+    $locale = $request->input('lang');
+    // if (!in_array($locale, ['en', 'ar'])) {
+    //     abort(400);
+    // }
+    // session(['locale' => $locale]);
+    // app()->setLocale($locale);
+    // return redirect()->back();
+
+     return  switch_language_of_view_and_redirect_back($locale);
+})->name('lang.switch');
 
 
 Route::post('/login-office', LoginToDashboardAsOfficeController::class )

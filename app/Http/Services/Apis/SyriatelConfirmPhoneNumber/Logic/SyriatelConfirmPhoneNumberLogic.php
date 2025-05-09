@@ -49,7 +49,7 @@ class SyriatelConfirmPhoneNumberLogic implements Service {
         {
             $syraiyelInvoice->code = $this->input->getCode();
             $syraiyelInvoice->save();
-            $response  = new SyriatelConfirmPhoneNumberOutput(["success" => true] , "Payment confirm success");
+            $response  = new SyriatelConfirmPhoneNumberOutput(["invoice" => $syraiyelInvoice] , "Payment confirmed successfully");
             return $response->send_as_object();
             
             // return response()->json(array("status" => 200, "message" => "Payment confirm success", "data" => array("success" => true)));

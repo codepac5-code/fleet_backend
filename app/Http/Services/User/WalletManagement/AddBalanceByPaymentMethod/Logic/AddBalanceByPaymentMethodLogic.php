@@ -33,18 +33,19 @@ class AddBalanceByPaymentMethodLogic {
     
    public function syriatel($request) {
 
-         $syrital_payment = SyriatelPaymentApiController::class ;
+        // validate input data and pass it to the service..
+        $input   = new SyriatelPaymentApiInput($request->all());
+        $service = new SyriatelPaymentApiLogic($input); // call the service's logic
 
-         return $syrital_payment;
-   }
+        return $service->execute();
+    }
 
 
 
    public function mtn($request){
 
             // validate input data and pass it to the service..
-            $input = new MTNPaymentApiInput($request->all());
-
+            $input   = new MTNPaymentApiInput($request->all());
             $service = new MTNPaymentApiLogic($input); // call the service's logic
     
             // execute service and get result..

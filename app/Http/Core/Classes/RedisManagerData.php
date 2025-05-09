@@ -98,7 +98,7 @@ abstract class RedisManagerData
             self::delete('driver_location:'.$driverId);
 
 
-            Log::info("maek driver offline");
+            Log::info("make driver offline");
         }
     }
 
