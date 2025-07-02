@@ -11,8 +11,11 @@ class FollowOrderOnMapToViewController extends Controller
 {
     public function __invoke(FollowOrderOnMapToViewRequest $request)
     {
+        $data = $request->validated();
+        // $data['orderId'] = $id ;
+
         // validate input data and pass it to the service..
-        $input = new FollowOrderOnMapToViewInput($request->validated());
+        $input = new FollowOrderOnMapToViewInput($data);
 
         $service = new FollowOrderOnMapToViewLogic($input); // call the service's logic
 

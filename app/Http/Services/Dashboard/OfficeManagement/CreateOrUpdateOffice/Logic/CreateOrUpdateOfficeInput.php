@@ -18,6 +18,7 @@ class CreateOrUpdateOfficeInput implements InputServiceInterface
     private $logo;
     private $walletBalance;
     private $limitOrders;
+    private $serviceIds;
 
     public function __construct( array $input)
     {
@@ -34,6 +35,9 @@ class CreateOrUpdateOfficeInput implements InputServiceInterface
         $this->city              = isset($input['city'])? $input['city'] : null;
         $this->walletBalance     = isset($input['walletBalance']) ? $input['walletBalance'] : 0.00 ;
         $this->limitOrders       = isset( $input['limitOrders'])? $input['limitOrders'] : 0;
+        $this->serviceIds       = isset( $input['serviceIds'])? $input['serviceIds'] : 0;
+
+
 
     }
 
@@ -138,5 +142,12 @@ class CreateOrUpdateOfficeInput implements InputServiceInterface
      */
     public function getId() {
         return $this->id;
+    }
+
+    /**
+     * Get the value of serviceIds
+     */
+    public function getServiceIds() {
+        return $this->serviceIds;
     }
 }

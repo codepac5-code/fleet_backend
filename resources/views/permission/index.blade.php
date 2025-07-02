@@ -11,11 +11,11 @@
                     </div>
                 </div>
             </div>
-        
             <div class="col-md-12">
-                {{ Form::open(['route' => 'permission.store','method' => 'post']) }}
+                <form action="{{ route('roles-permission.update') }}" method="POST"> 
+                    @csrf
                     <div class="accordion cursor" id="permissionList">
-                        @foreach($permission as  $key => $data)
+                        @foreach($permission as $key => $data )
                             <?php
                                 $a = str_replace("_"," ",$key);
                                 $k = ucwords($a);
@@ -23,7 +23,11 @@
                             <div class="card mb-2">
                                 <div class="card-header d-flex justify-content-between collapsed btn" id="heading_{{$key}}" data-toggle="collapse" data-target="#pr_{{$key}}" aria-expanded="false" aria-controls="pr_{{$key}}">
                                     <div class="header-title">
-                                        <h6 class="mb-0 text-capitalize permission-text"> <i class="fa fa-plus mr-10"></i> {{ $data->name }}<span class="badge badge-secondary"></span></h6>
+                                        <h6 class="mb-0 text-capitalize permission-text">
+                                            <i class="fa fa-plus mr-10"></i>
+                                            {{ $data->name }}
+                                            <span class="badge badge-secondary"></span>
+                                        </h6>
                                     </div>
                                 </div>
                                 <div id="pr_{{$key}}" class="collapse bg_light_gray" aria-labelledby="heading_{{$key}}" data-parent="#permissionList">
@@ -35,12 +39,22 @@
                                                     <th>{{ ucwords(str_replace('_',' ',$role->name)) }}</th>
                                                 @endforeach
                                             </tr>
-                                            @foreach($data->subpermission as $p)
+                                            @foreach( $data->permissions as $p)
                                                 <tr>
-                                                    <td class="text-capitalize">{{ $p->name }}</td>
+                                                    <td class="text-capitalize">
+                                                        {{ ucwords(str_replace('_',' ', strtolower($p->name))) }}
+                                                    </td>
                                                     @foreach($roles as $role)
                                                         <td>
-                                                            <input class="checkbox no-wh permission_check" id="permission-{{$role->id}}-{{$p->id}}" type="checkbox" name="permission[{{$p->name}}][]" value='{{$role->name}}' {{ (checkRolePermission($role,$p->name)) ? 'checked' : '' }} @if($role->is_hidden) disabled @endif >
+                                                            <input
+                                                                class="checkbox no-wh permission_check"
+                                                                id="permission-{{$role->id}}-{{$p->id}}"
+                                                                type="checkbox"
+                                                                name="permissions[{{ $p->name }}][]"
+                                                                value="{{ $role->name }}"
+                                                                {{ checkRolePermission($role, $p->name) ? 'checked' : '' }}
+                                                                @if($role->is_hidden) disabled @endif
+                                                            >
                                                         </td>
                                                     @endforeach
                                                 </tr>
@@ -52,11 +66,12 @@
                             </div>
                         @endforeach
                     </div>
-                {{ Form::close() }}
+                </form>
+                
             </div>
         </div>
     </div>
-</div>
+</div> 
 @section('bottom_script')
     <script>
         (function($) {

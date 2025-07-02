@@ -54,7 +54,9 @@ class CreateOrUpdateBannerLogic implements Service {
             ->create([
               'title' => $this->input->getTitle(),
               'description' => $this->input->getDescription(),
-              'image' => $path
+              'image' => $path,
+              'title_en' => $this->input->getTitleEn(),
+              'description_en' => $this->input->getDescriptionEn(),
             ]);
         }
 

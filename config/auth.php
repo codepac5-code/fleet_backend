@@ -61,6 +61,10 @@ return [
             'driver'   => 'session',
             'provider' => 'offices',
         ],
+        Guard::$Employee => [
+            'driver'   => 'session',
+            'provider' => 'employees',
+        ],
 
     ],
 
@@ -100,6 +104,10 @@ return [
         'offices' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Office::class),
+        ],
+        'employees' => [
+            'employee' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Employee::class),
         ],
 
         // 'drivers' => [

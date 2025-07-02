@@ -48,8 +48,20 @@ use App\Http\Repositories\UserReportRepositories\UserReportRepositoryCaller;
 use App\Http\Repositories\PublicUserAppSettingRepositories\PublicUserAppSettingRepositoryCaller; 
 use App\Http\Repositories\PublicDriverAppSettingRepositories\PublicDriverAppSettingRepositoryCaller; 
 use App\Http\Repositories\SyriatelInvoiceRepositories\SyriatelInvoiceRepositoryCaller; 
+use App\Http\Repositories\SiteSettingsRepositories\SiteSettingsRepositoryCaller; 
+use App\Http\Repositories\SettingRepositories\SettingRepositoryCaller; 
+use App\Http\Repositories\GeneralSettingRepositories\GeneralSettingRepositoryCaller; 
+use App\Http\Repositories\OfficeServiceRepositories\OfficeServiceRepositoryCaller; 
+use App\Http\Repositories\ServiceRoutesRepositories\ServiceRoutesRepositoryCaller; 
+use App\Http\Repositories\EmployeeRepositories\EmployeeRepositoryCaller; 
 class RepositoryCaller {
 
+	static public function EmployeeRepository(){return (new EmployeeRepositoryCaller);}
+	static public function ServiceRoutesRepository(){return (new ServiceRoutesRepositoryCaller);}
+	static public function OfficeServiceRepository(){return (new OfficeServiceRepositoryCaller);}
+	static public function GeneralSettingRepository(){return (new GeneralSettingRepositoryCaller);}
+	static public function SettingRepository(){return (new SettingRepositoryCaller);}
+	static public function SiteSettingsRepository(){return (new SiteSettingsRepositoryCaller);}
 	static public function SyriatelInvoiceRepository(){return (new SyriatelInvoiceRepositoryCaller);}
 	static public function PublicDriverAppSettingRepository(){return (new PublicDriverAppSettingRepositoryCaller);}
 	static public function PublicUserAppSettingRepository(){return (new PublicUserAppSettingRepositoryCaller);}
@@ -69,7 +81,6 @@ class RepositoryCaller {
 	static public function FrontendSettingRepository(){return (new FrontendSettingRepositoryCaller);}
 	static public function VehicleRepository(){return (new VehicleRepositoryCaller);}
 	static public function NotficationRepository(){return (new NotficationRepositoryCaller);}
-	static public function SettingsRepository(){return (new SettingsRepositoryCaller);}
 	static public function RatingUserRepository(){return (new RatingUserRepositoryCaller);}
 	static public function RatingRepository(){return (new RatingRepositoryCaller);}
 	static public function DrieverWalletRepository(){return (new DrieverWalletRepositoryCaller);}

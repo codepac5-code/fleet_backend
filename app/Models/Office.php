@@ -39,7 +39,17 @@ class Office extends Authenticatable implements HasMedia
         'commission_with_driver_car',
         'driver_commission_precentage',
         'driver_car_commission_precentage',
-        'walletBalance'
+        'walletBalance',
+
+
+        //-----------
+        'total_income',
+        'withdrawn_amount',
+        'available_amount',
+        'drivers_debt',
+        'fleet_debt',
+        'drivers_count',
+
     ];
 
     public function getCommissionFormattedAttribute()
@@ -91,9 +101,16 @@ class Office extends Authenticatable implements HasMedia
         return $this->hasMany(Driver::class, 'officeId','id');
     }
 
+    public function vehicles(){
+        return $this->hasMany(Vehicle::class, 'officeId','id');
+    }
     public function ratings(){
         return $this->hasMany(Rating::class, 'officeId','id');
     }
 
+public function services()
+{
+    return $this->belongsToMany(Service::class, 'office_services', 'officeId', 'serviceId');
+}
     
 }

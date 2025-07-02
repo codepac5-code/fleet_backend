@@ -26,19 +26,18 @@ class ChangeConnectedLogic implements Service {
     public function execute (): ResponseModel {
 
         $driverUpdateRepository = $this->repository->DriverRepository()->updateRepository();
-        $driver = $driverUpdateRepository->update(['id'=>$this->input->getDriverId()] , [
+        $driverUpdateRepository->update(['id'=>$this->input->getDriverId()] , [
             'isConected' => $this->input->getIsConnected()
         ]);
         
-        if($driver == null ){ make_exception('driver not found'); }
-
+        $driver = getAuthUser();
         if( !$this->input->getIsConnected()){
             RedisManagerData::makeDriverOffline($this->input->getDriverId());
         }
         else {
             RedisManagerData::makeDriverOffline($this->input->getDriverId());
             RedisManagerData::makeDriverOnline(
-                $this->input->getDriverId(),
+                $driver,
                 $this->input->getLatitude(),
                 $this->input->getLongitude(),
             );

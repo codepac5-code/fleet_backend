@@ -7,10 +7,12 @@ class ViewBookingInput implements InputServiceInterface
 {
     private $filter;
     private $pageType;
+    private $officeId;
     public function __construct( array $input)
     {
         $this->filter = isset($input['filter']) ? $input['filter'] : null;
         $this->pageType = $input['type'] ?? 'none';
+        $this->officeId = $input['officeId'] != 0 ? $input['officeId'] :null ;
     }
 
     // write your input function here..
@@ -46,5 +48,12 @@ class ViewBookingInput implements InputServiceInterface
      */
     public function getPageType() {
         return $this->pageType;
+    }
+
+    /**
+     * Get the value of officeId
+     */
+    public function getOfficeId() {
+        return $this->officeId;
     }
 }

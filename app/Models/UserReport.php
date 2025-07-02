@@ -14,4 +14,15 @@ class UserReport extends Model
         'image',
         'userId',
     ];
+
+
+    /**
+     * Get the user that owns the UserReport
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function users()
+    {
+        return $this->belongsTo(User::class, 'userId', 'id');
+    }
 }

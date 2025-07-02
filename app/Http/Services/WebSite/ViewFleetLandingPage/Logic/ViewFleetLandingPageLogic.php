@@ -1,5 +1,8 @@
 <?php
 namespace App\Http\Services\WebSite\ViewFleetLandingPage\Logic;
+
+use App\Http\Core\Const\Options\Settings\PublicSettingsKies;
+use App\Http\Core\Const\Options\Settings\SettingsTypes;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use Illuminate\Contracts\View\View;
@@ -31,7 +34,8 @@ class ViewFleetLandingPageLogic implements Service {
         
 
         app()->setLocale('ar');
-        //'landing_data',
+
         return view('fleet-landing-page.index',compact('services' ,'payment_methods'));
+
    }
 }

@@ -153,4 +153,17 @@ class Permission extends Model implements PermissionContract
         /** @var PermissionContract|null */
         return static::getPermissions($params, true)->first();
     }
+
+
+    public function subpermission()
+    {
+        return $this->hasMany(Permission::class, 'parent_id');
+    }
+    
+
+
+    public function parent()
+    {
+        return $this->belongsTo(ParentPermission::class, 'parent_id');
+    }
 }

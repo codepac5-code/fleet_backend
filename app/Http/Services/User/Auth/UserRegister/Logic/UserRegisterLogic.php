@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Services\User\Auth\UserRegister\Logic;
 
-use App\Helper\integrations\MTNOtpIntegration;
+use App\Http\Core\Classes\ImageManager;
 use App\Http\Core\Const\Messages\Attributes;
 use App\Http\Core\Const\Messages\ErrorMessages;
 use App\Http\Core\Const\Messages\SuccessMessages;
@@ -34,7 +34,7 @@ class UserRegisterLogic implements Service {
 
         $user = $userRepository->readRepository()->getByValue('phoneNumber'   ,$this->input->getPhoneNumber());
 
-        if ($user) {
+        if($user) {
             if ($user->is_registered) {
                 make_exception(ErrorMessages::getKey(ErrorMessages::$AccountAlreadyExists,Attributes::User));
             }
@@ -47,29 +47,100 @@ class UserRegisterLogic implements Service {
                     'password'      =>$hashedPassword,
                 ]
             );
-            }
+          }
         }
         else{
+
+            $ImageManager = new ImageManager();
+
             $user =  $userRepository->createRepository()->create([
                 'firstName'     =>$this->input->getFirstName(),
                 'lastName'      =>$this->input->getLastName(),
                 'phoneNumber'   =>$this->input->getPhoneNumber(),
+                'dialCode'      =>$this->input->getDialCode(),
                 'password'      =>$hashedPassword,
+                'photo' => $ImageManager->default_profile_photo()
             ]);
+
+            $referralCode = $this->generateReferralCode($user->id);
+            $userRepository->updateRepository()->update([ 'id' => $user->id ],
+            ['referralCode'  =>$referralCode]
+        );
         }
 
+        // $phoneNumber = "963" . substr($this->input->getPhoneNumber(),1);
+        $phoneNumber = $this->input->getPhoneNumber();
 
 
-
-        $phoneNumber = "963" . substr($this->input->getPhoneNumber(),1);
-
-        $otpCode = MTNOtpIntegration::sendOtp($phoneNumber);
+        // $otpCode = MTNOtpIntegration::sendOtp($phoneNumber);
+        $otpCode = $this->send_whatsapp_otp($phoneNumber , $this->input->getFirstName());
 
         setCatch("user_id_".$user->id , $otpCode);
 
+
+
         $response  = new UserRegisterOutput(  data:$user,
-        message: SuccessMessages::getKey(SuccessMessages::$AccountCreated),
+        message: 'الرجاء ادخال كود تأكيد الرقم',
     );
+
         return $response->send_as_object();
    }
+
+
+   function generateReferralCode($userId) {
+    $prefix = strtoupper(substr(md5($userId . microtime()), 0, 6)); 
+    return 'REF-' . $prefix;
+    }
+
+    function generateOtpMessage($userName , $otpCode) {
+    if(app()->getLocale() == 'ar'){
+        return "مرحباً {$userName} 👋\n" .
+           "رمز التحقق الخاص بك هو: {$otpCode}\n" .
+           "⏱️ صالح لمدة 1 دقيقة فقط.\n" .
+           "⚠️ لا تشارك هذا الرمز مع أي شخص لضمان أمان حسابك على Fleet.";
+    }
+
+    return "Hello {$userName} 👋\n" .
+           "Your verification code is: {$otpCode}\n" .
+           "⏱️ This code is valid for 1 minute only.\n" .
+           "⚠️ Do not share this code with anyone to keep your Fleet account secure.";
+}
+
+    public function send_whatsapp_otp($phoneNumber , $userName){
+        $otpCode = random_int( 100000 , 999999);
+
+        $config = [
+            'base_url' => 'https://message.dashboard.technoplus.tech',
+            'api_key' => '51|OE7uqfEx7BJzGpzCtFBHC9McoZxJT25oG9jybb5e72747175',
+            'session_id' => '4a501269-dbdf-456d-b1e9-d61e1b424276',
+            'phone' => $phoneNumber, 
+            'otp' => $otpCode
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $config['api_key'],
+                'Accept' => 'application/json',
+            ])->post($config['base_url'] . '/whatsapp/api/v1/message/text/send', [
+                'session_id' => $config['session_id'],
+                'receiver' => '+963' . substr($config['phone'], 1),
+                'text' => $this->generateOtpMessage($userName, $otpCode)
+            ]);
+
+            if ($response->successful()) {
+              return  $otpCode;
+            }
+
+            make_exception( 'Failed to send the verification code');
+
+        } catch (\Exception $e) {
+           make_exception($e->getMessage());
+        }
+    }
+
+
+    
+
+  
+
 }

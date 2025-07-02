@@ -1,5 +1,8 @@
 <?php
 namespace App\Http\Services\Dashboard\Settings\SaveTermAndCondition\Logic;
+
+use App\Http\Core\Const\Options\Settings\PublicSettingsKies;
+use App\Http\Core\Const\Options\Settings\SettingsTypes;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use Illuminate\Contracts\View\View;
@@ -27,19 +30,37 @@ class SaveTermAndConditionLogic implements Service {
         //     return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
         // }
 
-        $value = $this->input->getValue();
+        $value_ar = $this->input->getArValue();
+        $value_en = $this->input->getEnValue();
+
         $setting_data = [
-            'type'  => 'terms_condition',
-            'key'   =>  'terms_condition',
-            'value' =>  $value
+            'type'  => SettingsTypes::$PublicSettings,
+            'key'   => PublicSettingsKies::$TermsCondition,
         ];
-        $result = Setting::updateOrCreate(['id' => $this->input->getId()], $setting_data);
-        if ($result->wasRecentlyCreated) {
-            $message = __('messages.save_form', ['form' => __('messages.terms_condition')]);
-        } else {
-            $message = __('messages.update_form', ['form' => __('messages.terms_condition')]);
+
+
+        $result = $this->repository->SettingRepository()
+        ->readRepository()->getFirstByConditions($setting_data);
+
+        if($result != null ){
+            
+            $result = $this->repository->SettingRepository()->updateRepository()
+            ->update(['id'=>$result->id], ['value' =>  $value_ar , 'value_en'=>$value_en]);
+        }else{
+            $setting_data['value_en'] = $value_en;
+            $setting_data['value']    = $value_ar;
+
+            $result = $this->repository->SettingRepository()
+            ->createRepository()->create($setting_data);
         }
 
-        return redirect()->route('term-condition')->withsuccess($message);
+        
+        // if ($result->wasRecentlyCreated) {
+        //     $message = __('messages.save_form', ['form' => __('messages.terms_condition')]);
+        // } else {
+            $message = __('messages.update_form', ['form' => __('messages.terms_condition')]);
+        //}
+
+        return redirect()->back()->withsuccess($message);
    }
 }

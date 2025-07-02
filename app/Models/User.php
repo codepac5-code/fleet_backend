@@ -33,7 +33,9 @@ class User extends Authenticatable
         'photo',
         'walletBalance',
         'password',
-        'isActive'
+        'isActive',
+        'referralCode',
+        'dialCode',
     ];
 
     /**
@@ -67,6 +69,8 @@ class User extends Authenticatable
     {
         return 'private-notification-user.'.$this->id;
     }
+
+    
 
     public function ratingsReceived()
     {

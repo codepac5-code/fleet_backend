@@ -22,9 +22,13 @@ abstract class DeleteRepository {
         return $this->model->query()->whereIn($key , $values )->forceDelete();
      }
 
-     public function delete( $conditions){
-        return $this->model->where( $conditions )->delete();
+     public function forceDelete( $conditions){
+        return $this->model->where( $conditions )->forceDelete();
      }
+
+     public function delete( $conditions){
+      return $this->model->where( $conditions )->delete();
+   }
 
 
 }

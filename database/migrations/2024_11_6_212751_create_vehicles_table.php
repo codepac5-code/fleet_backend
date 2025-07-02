@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('vehicleBrand');
             $table->text('plate');
             $table->string('modelYear');
+            $table->string('model');
             $table->string('licenseNumber')->nullable();
             $table->string('photo')->nullable();
             $table->unsignedBigInteger('lastDriver')->nullable();

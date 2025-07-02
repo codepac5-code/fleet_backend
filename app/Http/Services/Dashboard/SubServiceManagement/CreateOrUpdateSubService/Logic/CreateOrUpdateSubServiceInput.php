@@ -21,6 +21,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
     private $serviceId;
     private $hasImage;
     private $current_image;
+    private $routes;
 
     public function __construct( array $input)
     {
@@ -38,6 +39,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
         $this->image = $input['image'] ?? null;
         $this->hasImage = $input['has_image'] ?? false ;  
         $this->current_image = $input['current_image'];    
+        $this->routes = $input['routes'] ?? null;
     }
 
     public function toArray(){

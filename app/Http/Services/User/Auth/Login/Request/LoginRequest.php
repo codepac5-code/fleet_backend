@@ -23,7 +23,7 @@ class LoginRequest extends BaseRequest
     {
         return
         [
-            'phoneNumber'=>['required', 'numeric', 'digits:10'],
+            'phoneNumber'=>['required', 'numeric'],
             'password'=>['required' ,"string","min:8"],
         ];
     }

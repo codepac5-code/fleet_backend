@@ -216,7 +216,7 @@ class ReceiveCashLogic implements Service {
             WalletManagement::transfer($driver, $office, $deductedAmount, $description ,$description_en);
             return $remainingDues;
            }
-       }
+       } 
        elseif($driver->walletBalance >= $office_commission) {
         $description = '# عمولة الطلب رقم';
         $description_en = 'Order Commission No.';

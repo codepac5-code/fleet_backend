@@ -57,6 +57,7 @@ class MakeOrderInput implements InputServiceInterface
             'totalAmount'    => $this->getTotalAmount(),
             'subServiceId'   => $this->getSubServiceId(),
             'durationDiff'   => $this->getTime(),
+            'time'           => $this->getTime(),
             'multiDestnationArray'   => json_encode($this->multiDestnationArray),
         ];
     }

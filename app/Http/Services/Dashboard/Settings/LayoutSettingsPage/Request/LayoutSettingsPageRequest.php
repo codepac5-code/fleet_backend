@@ -24,7 +24,7 @@ class LayoutSettingsPageRequest extends BaseRequest
     {
         return
         [
-            // write your rules here..
+           'page'=>'required'
         ];
     }
 

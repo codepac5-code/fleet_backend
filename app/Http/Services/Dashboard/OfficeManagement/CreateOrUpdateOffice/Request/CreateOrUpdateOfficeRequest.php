@@ -40,6 +40,7 @@ class CreateOrUpdateOfficeRequest extends BaseRequest
             'city' => 'required|string|max:255',
             'region' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
+            'serviceIds' => 'required|array',
             // 'status' => 'required|in:0,1',
             // 'walletBalance' => 'required|numeric|min:0',
             // 'limitOrders' => 'required|numeric|min:0',

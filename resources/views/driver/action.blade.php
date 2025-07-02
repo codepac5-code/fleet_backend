@@ -9,7 +9,7 @@
     <a class="mr-2" href="{{route('driver.create', ['id' => $driver->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.driver') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
     {{-- @endif --}}
      @if($auth_user->can('driver changePassword'))
-      <a class="mr-2" href="{{ route('driver.getchangepassword',['id' => $driver->id]) }}" title="{{ __('messages.change_password',['form' => __('messages.driver') ]) }}"><i class="fa fa-lock text-success "></i></a>
+      <a class="mr-2" href="{{ route('driver.view.change-password',['id' => $driver->id]) }}" title="{{ __('messages.change_password',['form' => __('messages.driver') ]) }}"><i class="fa fa-lock text-success "></i></a>
       @endif
       @if($auth_user->can('delete driver'))
         <a class="mr-3 text-danger" href="{{ route('driver.destroy', $driver->id) }}" data--submit="driver{{$driver->id}}" 

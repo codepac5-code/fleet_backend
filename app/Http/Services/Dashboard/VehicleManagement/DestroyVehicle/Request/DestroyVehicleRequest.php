@@ -24,7 +24,7 @@ class DestroyVehicleRequest extends BaseRequest
     {
         return
         [
-            // write your rules here..
+           'vehicleId'=>'required'
         ];
     }
 

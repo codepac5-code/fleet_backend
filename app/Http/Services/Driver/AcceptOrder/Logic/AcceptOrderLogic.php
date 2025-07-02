@@ -11,6 +11,11 @@ use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\Const\Options\OrderStatus;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\BalanceStatus;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletModel;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletRedisModel;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\OfficeWallet\OfficeWalletModel;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\OfficeWallet\OfficeWalletRedisModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
 
 class AcceptOrderLogic implements Service {
@@ -34,14 +39,20 @@ class AcceptOrderLogic implements Service {
         $order = $this->repository->BookingRepository()->readRepository()
         ->find($orderId);
 
+
         if($order->driverId != null && $order->driverId == $this->input->getDriverId() ){
-             return $response  = (new AcceptOrderOutput(['accept'  => true ]  , 'order accepted'))->send_as_object();
+             return $response  = (new AcceptOrderOutput(['accept'  => true, 'orderModel' =>$this->order_info($order) ]  , 'order accepted'))
+             ->send_as_object();
         }
 
+        $driver = getAuthUser();
+
+        if($driver->walletBalance < 5000){
+            make_exception(__('messages.insufficient_balance_accept_order', ['amount' => 5000]));
+        }
 
         //order_not_accepted($orderId)
         if( RedisManagerData::OrderNotAccepted($orderId) && $order->driverId == null){
-        $driver = getAuthUser();
 
         beginTransaction();
         
@@ -51,7 +62,7 @@ class AcceptOrderLogic implements Service {
             'startAt'   => Carbon::now()->format('Y-m-d H:i:s'),
         ];
 
-        CommissionManagement::OrderCommissionCalculation( $order , $driver);
+        $this->commission_calculation( $order , $driver);
 
         $order_updated = $this->repository->BookingRepository()->updateRepository()->update(
                     ['id'=>$orderId],
@@ -95,7 +106,6 @@ class AcceptOrderLogic implements Service {
         //--------
         if ( RedisManagerData::OrderNotAccepted($orderId)){
                 RedisManagerData::deleteOrderDetails($orderId);
-                commitTransaction();
                 RedisManagerData::AcceptOrder($orderId);
                 $this->redisOrderDatabaseModel($orderId);
                 //delete_order_details_from_redis($orderId);
@@ -149,7 +159,11 @@ class AcceptOrderLogic implements Service {
                   //----------------
 
                 // }
-                return $response  = (new AcceptOrderOutput(['accept'  => true ]  , 'order accepted'))->send_as_object();
+
+   
+                commitTransaction();
+                return $response  = (new AcceptOrderOutput(['accept'  => true ,
+                'orderModel' =>$this->order_info($order) ]  , 'order accepted'))->send_as_object();
 
         } 
             rollbackTransaction();
@@ -164,7 +178,7 @@ class AcceptOrderLogic implements Service {
 
    
 
-     function removeDriverId(array $driverIds, $idToRemove) {
+    function removeDriverId(array $driverIds, $idToRemove) {
                 $driverIds = array_filter($driverIds, function ($driverId) use ($idToRemove) {
                     return $driverId !== $idToRemove;
                 });
@@ -182,6 +196,90 @@ class AcceptOrderLogic implements Service {
             OrderStatus::$Pending,
             OrderStatus::$OnGoing
         );
+    }
+
+
+    public function order_info($order){
+        // return 'dd';
+        $select = select_by_language([
+            'name',
+            'id'
+            
+             ] , [
+                'name_en as name',
+                'id'
+        ]);
+
+        $payment_name = $this->repository->PaymentMethodRepository()
+        ->readRepository()
+        ->getFirstByConditions(['id'=> $order->paymentId] ,$select )->name;
+
+
+        $select = select_by_language([
+            'id',
+            'name',
+            'image',
+            'status',
+            'description',
+            'openPrice',
+            'kmPrice',
+            'minutePrice',
+            'serviceId',
+             ] , [
+                'id',
+                'image',
+                'status',
+                'openPrice',
+                'kmPrice',
+                'minutePrice',
+                'serviceId',
+                'name_en as name',
+                'description_en as description'
+        ]);
+
+        $sub_service = $this->repository
+        ->SubServiceRepository()->readRepository()
+        ->getFirstByConditions(['id' => $order->subServiceId ] ,$select);
+
+
+        $user = $this->repository->UserRepository()
+        ->readRepository()->getByValue('id', $order->userId);
+
+
+    return  [ 
+        "startAddress" => $order->startAddress,
+        "startLatitude" => (double)$order->startLatitude,
+        "startLongitude" => (double)$order->startLongitude,
+        "endAddress" => $order->endAddress,
+        "endLatitude" => (double)$order->endLatitude,
+        "endLongitude" => (double)$order->endLongitude,
+        "distance" => (double)$order->distance,
+        "time"          =>(string) $order->time,
+        "totalAmount" => (int) $order->totalAmount,
+        "amount" => (int) $order->amount,
+        'subService' => $sub_service->name,
+        'paymentMethod' =>(string) $payment_name,
+        'orderId' => $order->id,
+        'firstName' => $user->firstName,
+        'lastName' => $user->lastName,
+        'phoneNumber' => $user->phoneNumber,
+        'officePhone'=>'0935501111',
+        'waypoints' => json_decode($order->multiDestnationArray),
+        'kmPrice' =>(double) $sub_service->kmPrice,
+        'minutePrice' =>(double) $sub_service->minutePrice,
+        'openPrice' => (double)$sub_service->openPrice ,
+        ];
+         
+    }
+
+
+    public function commission_calculation($order , $driver){
+
+        $order_after_commission = CommissionManagement::OrderCommissionCalculation( $order , $driver);
+        FleetWalletRedisModel::addBalanceValueByBalanceStatus( BalanceStatus::$Pending , $order_after_commission->fleetCommissionValue );
+        if($order_after_commission->officeId != null && $order_after_commission->officeCommissionValue > 0  ){
+            OfficeWalletRedisModel::addBalanceValueByBalanceStatus($order_after_commission->officeId, BalanceStatus::$Pending , $order_after_commission->fleetCommissionValue);
+        }
     }
 
 
@@ -206,3 +304,11 @@ class AcceptOrderLogic implements Service {
         // 'firstName':   ,
         // 'lastName':   ,
         // 'phoneNumber': ,
+    
+
+
+
+
+        
+
+    

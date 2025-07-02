@@ -16,13 +16,15 @@ return new class extends Migration
             $table->string('firstName',30);
             $table->string('lastName',30);
             $table->string('gender',10)->nullable()->enum('male','female');
-            $table->string('phoneNumber',10)->unique();
+            $table->string('phoneNumber')->unique();
+            $table->string('dialCode');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('is_registered')->default(false);
             $table->double('walletBalance')->default(0);
             $table->string('photo')->nullable();
             $table->boolean('isActive')->default(1);
+            $table->string('referralCode')->nullable();
             $table->rememberToken();
             $table->softDeletes();
             $table->timestamps();

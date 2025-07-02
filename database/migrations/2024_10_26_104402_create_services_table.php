@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->string('title_en');
             $table->string('description_en')->nullable();
+            $table->boolean('travel_service')->default(0);
             $table->softDeletes();
             $table->timestamps();
         });

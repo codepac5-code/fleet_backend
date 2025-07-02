@@ -10,9 +10,9 @@
                     <div class="card-body p-0">
                         <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                             <h5 class="font-weight-bold">{{  __('messages.Sub_Service_List') }}</h5>
-                            @if($auth_user->can('add sub-service'))
+                            {{-- @if($auth_user->can('add sub-service')) --}}
                             <a href="{{ route('sub-service.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ trans('messages.add_form_title',['form' => trans('messages.Subservice')  ]) }}</a>
-                            @endif
+                            {{-- @endif --}}
                         </div>
                         {{-- {{ $dataTable->table(['class' => 'table  w-100'],false) }} --}}
                     </div>

@@ -35,7 +35,12 @@ class CreateOrUpdateSubServiceRequest extends BaseRequest
             'minutePrice'   => 'required|numeric|min:0',
             'serviceId'     => 'required',
             'id'            => 'nullable|numeric',
-            'current_image' => 'nullable'
+            'current_image' => 'nullable',
+        
+            'routes' => 'sometimes|array|min:1',
+            'routes.*.departureCity' => 'sometimes|string',
+            'routes.*.arrivalCity' => 'sometimes|string',
+            'routes.*.tripPrice' => 'sometimes|numeric|min:0',
         ];
     }
 

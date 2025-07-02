@@ -24,7 +24,7 @@ class AcceptOrderRequest extends BaseRequest
     {
         return
         [
-            // write your rules here..
+           'orderId'=>['required']
         ];
     }
 

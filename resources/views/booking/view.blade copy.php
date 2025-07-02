@@ -169,6 +169,7 @@
     background: #e2f10962;
     border-radius: 10px;
     padding: 10px;
+    font-family: 'Poppins', sans-serif;
     font-size: 0.9rem;
     text-align: center;
 }
@@ -176,11 +177,15 @@
 .finance-box .label {
     font-size: 0.9rem;
     color: #666;
+    font-family: 'Poppins', sans-serif;
+
 }
 
 .finance-box .value {
     font-size: 1.1rem;
     font-weight: bold;
+    font-family: 'Poppins', sans-serif;
+
 }
 
 .dashed-separator {
@@ -242,12 +247,18 @@
 
 .finance-box i {
     font-size: 1.2rem;  
+    font-family: 'Poppins', sans-serif;
+
 }
 
 .action-btn i {
     font-size: 1.2rem;  
 }
 
+
+.poppins-font {
+  font-family: 'Poppins', sans-serif;
+}
 
 
 
@@ -269,6 +280,10 @@ body.dark .trip-column {
 
 body.dark .trip-column {
     background-color: #2d3549; 
+}
+
+body {
+  font-family: 'Poppins', sans-serif !important;
 }
 
 body.dark .modern-trip-card .trip-id,
@@ -327,6 +342,7 @@ body.dark .modern-trip-card .action-btn:hover i {
   }
 }
 
+
 .pulse {
   animation: pulse 0.6s ease-in-out infinite;
 }
@@ -343,7 +359,30 @@ body.dark .modern-trip-card .action-btn:hover i {
 
         </style>
     </head>
+<script>
+    function decreaseCount(elementId) {
+    const element = document.getElementById(elementId);
+    let currentCount = parseInt(element.textContent, 10);
 
+    if (currentCount > 0) {
+        element.textContent = currentCount - 1;
+        return;
+    }
+
+    }
+    
+    function deletePendingOrder(orderId) {
+                        // const elementId = `pending-order-${orderId}`;
+    const element = document.getElementById('pending-order-'+orderId);
+
+    if (element) {
+        element.remove();
+        // decreaseCount('pending_count');
+        } 
+    }
+
+
+</script>
     <div class="container">
         
         <div class="trip-columns">
@@ -387,7 +426,7 @@ body.dark .modern-trip-card .action-btn:hover i {
             loader.id = 'scroll-loader-pending';
             loader.className = 'text-center p-4';
             loader.innerHTML = `<i class="fas fa-spinner fa-spin fa-2x text-warning"></i><p class="mt-2">
-                            <div class="text-center p-4" style="color: #f39c12; font-size: 18px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                            <div class="text-center p-4" style="color: #f39c12; font-size: 18px; font-weight: 600; font-family: 'Poppins', sans-serif;">
                                 {{ __('messages.loading') }}</div>
                             </p>`;
             wrapper.appendChild(loader);
@@ -399,9 +438,8 @@ body.dark .modern-trip-card .action-btn:hover i {
         }
 
 
-
         function createOrderCard(order) {
-            return ` <div class="modern-trip-card toggle-card">
+            return ` <div class="modern-trip-card toggle-card" id="pending-order-${order.id}">
                             <div class="trip-top card-toggle-header">
                                 <div class="trip-id">
                                     <i class="fas fa-hashtag"></i> ${order.id}
@@ -412,7 +450,7 @@ body.dark .modern-trip-card .action-btn:hover i {
                             <div class="trip-route card-toggle-header">
                                 <div>
                                     <i class="fas fa-map-marker-alt text-success"></i>
-                                    <span>${order.startAddress || '—'}</span>
+                                    <span   font-family: 'Poppins', sans-serif;>${order.startAddress || '—'}</span>
                                 </div>
                                 <div>
                                     <i class="fas fa-map-marker-alt text-danger"></i>
@@ -430,9 +468,9 @@ body.dark .modern-trip-card .action-btn:hover i {
 
                                 <hr class="dashed-separator">
 
-                                <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>${order.time || '--'}</strong></div>
+                                <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong >${order.time || '--'}</strong></div>
                                 <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>${order.distance || '--'} كم</strong></div>
-                                <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>${order.subService.name}</strong></div>
+                                <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong class="poppins-font" >${order.subService.name}</strong></div>
                                 <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>${order.paymentStatus || '--'}</strong></div>
 
                                 <div class="finance-box">
@@ -449,7 +487,7 @@ body.dark .modern-trip-card .action-btn:hover i {
                                             <div><i class="fas fa-user"></i> {{ __('messages.user') }}: </div>
                                             <div class="d-flex gap-3 align-items-center">
                                                 <img src="${order.user.photo}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
+                                                <div class="d-flex flex-column text-start" style="font-family: 'Poppins', sans-serif;">
                                                     <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
                                                         ${order.user.firstName +' '+order.user.lastName}
                                                     </h6>
@@ -477,14 +515,17 @@ body.dark .modern-trip-card .action-btn:hover i {
                     </div>
                 `;
         }
+
+
         let lastPendingOrderId = 0;
+
 
     
     function fetchPendingOrders(page) {
             isLoadingPending = true;
             showLoaderPending();
     
-            fetch(`{{ route('orders-by-status') }}?status=pending&page=${page}`)
+            fetch(`{{ route('orders-by-status') }}?status=Pending&page=${page}`)
                 .then(response => response.json())
                 .then(data => {
                     const pendingOrders = data.orders || [];
@@ -528,24 +569,36 @@ body.dark .modern-trip-card .action-btn:hover i {
         }
 
 
-        function fetchNewPendingOrders() {
-  fetch(`/get/only-new-orders-by-status?last_order_id=${lastPendingOrderId}&status=pending`)
+
+function fetchNewPendingOrders() {
+  fetch(`/get/only-new-orders-by-status?last_order_id=${lastPendingOrderId}&status=Pending`)
     .then(response => response.json())
     .then(data => {
       const newOrders = data.orders || [];
+      const canceled_order_Ids = data.canceled_order_Ids || [];
       const wrapper = document.getElementById('pending-orders-wrapper');
       removeLoaderPending();
 
+      if (canceled_order_Ids.length > 0) {
+
+        canceled_order_Ids.forEach(orderId => {
+            deletePendingOrder(orderId);
+        });
+    }
       if (newOrders.length === 0) {
         return;
       }
 
-      const firstOrder =  newOrders.at(0);
-      lastPendingOrderId = firstOrder.id;  
 
+
+      
 
       newOrders.forEach(order => {
         const orderHTML = createOrderCard(order);
+
+        if(order.id > lastPendingOrderId ){
+                        lastPendingOrderId = order.id;
+                    }
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = orderHTML;
         const orderElement = tempDiv.firstElementChild;
@@ -553,8 +606,6 @@ body.dark .modern-trip-card .action-btn:hover i {
         orderElement.classList.add('pulse');
 
         wrapper.prepend(orderElement);
-
-        // wrapper.insertAdjacentElement('afterbegin', orderElement);
 
         setTimeout(() => {
           orderElement.classList.remove('pulse');
@@ -580,110 +631,10 @@ body.dark .modern-trip-card .action-btn:hover i {
             const wrapper = document.getElementById('pending-orders-wrapper');
             lastPagePending = false;
             fetchNewPendingOrders(1);
-    }, 30000);
+    }, 10000);
 
 </script>
-    
-
-    
-
-    {{-- @for ($i = 0; $i < 7; $i++)
-    <div class="modern-trip-card toggle-card">
-
-        <!-- العنوان والحالة -->
-        <div class="trip-top card-toggle-header">
-            <div class="trip-id">
-                <i class="fas fa-hashtag"></i> 457
-            </div>
-            <div class="trip-status waiting">
-                <i class="fas fa-clock fa-spin"></i> {{ __('messages.pending') }}
-            </div>
-        </div>
-
-        <div class="trip-route card-toggle-header">
-            <div>
-                <i class="fas fa-map-marker-alt text-success"></i>
-                <span>{{ __('messages.from_location') }}</span>
-            </div>
-            <div>
-                <i class="fas fa-map-marker-alt text-danger"></i>
-                <span>{{ __('messages.to_location') }}</span>
-            </div>
-
-            @if (null)
-            <!-- وجهات متعددة -->
-            <div class="trip-section">
-                <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
-                <ul class="multi-dests">
-                    <li>شارع التخصصي</li>
-                    <li>دوار سانا عند الكازية بناء مستشفى الملك فيصل</li>
-                </ul>
-            </div>
-
-     @endif
-
-            <hr class="dashed-separator">
-
-            <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>02:15 م</strong></div>
-            <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>12 كم</strong></div>
-            <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>{{ __('messages.luxury_service') }}</strong></div>
-            <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>{{ __('messages.cash') }}</strong></div>
-
-            <div class="finance-box">
-                <i class="fas fa-dollar-sign"></i>
-                <div class="label">{{ __('messages.price') }}</div>
-                <div class="value">85000 ل.س</div>
-            </div>
-        </div>
-
-        <div class="trip-details" style="display: none;">
-            <hr class="dashed-separator">
-
-            <div class="trip-section">
-                <div><i class="fas fa-user"></i> {{ __('messages.user') }}:</div>
-                <div class="d-flex gap-3 align-items-center">
-                    <img src="{{ get_default_image($type = 'user') }}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                    <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                        <h6 class="m-0" style="font-size: 0.9rem;">
-                            محمد محمد
-                        </h6>
-                        <span>0933817393</span>
-                    </div>
-                </div>
-                <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>مكتب المليح</strong></div>
-            </div>
-
-            <div class="trip-finance">
-                <div class="finance-box discount">
-                    <i class="fas fa-percentage"></i>
-                    <div class="label">{{ __('messages.discount') }}</div>
-                    <div class="value">4200 ل.س</div>
-                </div>
-
-                <div class="finance-box total">
-                    <i class="fas fa-wallet"></i>
-                    <div class="label">{{ __('messages.total') }}</div>
-                    <div class="value">70000 ل.س</div>
-                </div>
-            </div>
-
-            <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top">
-                <a href="{{ route('order.follow.map', ['orderId'=>1]) }}" class="action-btn map-btn">
-                    <i class="fas fa-map-marked-alt"></i>
-                   <span>{{ __('messages.follow_on_map') }}</span>
-                </a>
-
-                <button class="action-btn status-btn change-status-btn">
-                    <i class="fas fa-random"></i>
-                    <span>{{ __('messages.change_status') }}</span>
-                </button>
-            </div>
-
-        </div>
-    </div>
-    @endfor --}}
 </div>        
-
           <div class="trip-column">
                 <h3>
                     <i class="fa fa-clock fa-spin"></i>
@@ -693,12 +644,13 @@ body.dark .modern-trip-card .action-btn:hover i {
                 </h3>
 
                 <div id="ongoing-orders-wrapper"></div>
-                
+
                 <script>
                     let ongoingPage = 1;
                     const ongoingLimit = 7;
                     let isOngoingLoading = false;
                     let ongoingLastPage = false;
+                    let lastOngoingOrderId = 0;
                 
                     document.addEventListener('DOMContentLoaded', function () {
                         fetchOngoingOrders(ongoingPage);
@@ -722,11 +674,12 @@ body.dark .modern-trip-card .action-btn:hover i {
                         const loader = document.createElement('div');
                         loader.id = 'scroll-loader-ongoing';
                         loader.className = 'text-center p-4';
-                        loader.innerHTML = `<i class="fas fa-spinner fa-spin fa-2x text-warning"></i><p class="mt-2">
-                            <div class="text-center p-4" style="padding-top:70px; color: #f39c12; font-size: 18px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                {{ __('messages.loading') }}</div>
+                        loader.innerHTML = `
+                            <i class="fas fa-spinner fa-spin fa-2x text-warning"></i>
+                            <p class="mt-2" style="color: #f39c12; font-size: 18px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                {{ __('messages.loading') }}
                             </p>
-                            `;
+                        `;
                         wrapper.appendChild(loader);
                     }
                 
@@ -738,93 +691,92 @@ body.dark .modern-trip-card .action-btn:hover i {
 
 
 
-            function createOngoingOrderCard(order) {
-                return ` <div class="modern-trip-card toggle-card id="p-order-${order.id}">
-                            <div class="trip-top card-toggle-header">
-                                <div class="trip-id">
-                                    <i class="fas fa-hashtag"></i> ${order.id}
-                                </div>
-                                <div class="trip-status waiting">
-                            <i class="fas fa-clock fa-spin"></i> {{ __('messages.ongoing') }}
-                        </div>                          
-                            </div>
+                
+                    function createOngoingOrderCard(order , url) {
+    return `
+    <div class="modern-trip-card toggle-card" id="ongoing-order-${order.id}">
+        <div class="trip-top card-toggle-header">
+            <div class="trip-id">
+                <i class="fas fa-hashtag"></i> ${order.id}
+            </div>
+            <div class="trip-status waiting">
+                <i class="fas fa-clock fa-spin"></i> {{ __('messages.ongoing') }}
+            </div>                          
+        </div>
 
+        <div class="trip-route card-toggle-header">
+            <div>
+                <i class="fas fa-map-marker-alt text-success"></i>
+                <span>${order.startAddress || '—'}</span>
+            </div>
+            <div>
+                <i class="fas fa-map-marker-alt text-danger"></i>
+                <span>${order.endAddress || '—'}</span>
+            </div>
 
-                            <div class="trip-route card-toggle-header">
-                                <div>
-                                    <i class="fas fa-map-marker-alt text-success"></i>
-                                    <span>${order.startAddress || '—'}</span>
-                                </div>
-                                <div>
-                                    <i class="fas fa-map-marker-alt text-danger"></i>
-                                    <span>${order.endAddress || '—'}</span>
-                                </div>
+            ${order.multiDestnationArray && order.multiDestnationArray.length > 0 ? `
+                <div class="trip-section">
+                    <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
+                    <ul class="multi-dests">
+                        ${order.multiDestnationArray.map(dest => `<li>${dest}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
 
-                                ${order.multiDestnationArray && order.multiDestnationArray.length > 0 ? `
-                                    <div class="trip-section">
-                                        <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
-                                        <ul class="multi-dests">
-                                            ${order.multiDestnationArray.map(dest => `<li>${dest}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                ` : ''}
+            <hr class="dashed-separator">
 
-                                <hr class="dashed-separator">
+            <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>${order.time || '--'}</strong></div>
+            <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>${order.distance || '--'}</strong></div>
+            <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>${order.subService.name}</strong></div>
+            <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>${order.paymentStatus || '--'}</strong></div>
 
-                                <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>${order.time || '--'}</strong></div>
-                                <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>${order.distance || '--'} </strong></div>
-                                <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>${order.subService.name}</strong></div>
-                                <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>${order.paymentStatus || '--'}</strong></div>
+            <div class="finance-box">
+                <i class="fas fa-dollar-sign"></i>
+                <div class="label">{{ __('messages.price') }}</div>
+                <div class="value">${order.amount.toLocaleString()}</div>
+            </div>
+        </div>
 
-                                <div class="finance-box">
-                                    <i class="fas fa-dollar-sign"></i>
-                                    <div class="label">{{ __('messages.price') }}</div>
-                                    <div class="value">${order.amount.toLocaleString()}</div>
-                                </div>
-                            </div>
+        <div class="trip-details" style="display: none;">
+            <hr class="dashed-separator">
+            <div class="trip-section">
+                <div><i class="fas fa-user"></i> {{ __('messages.user') }}: </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <img src="${order.user.photo || '/path/to/default-avatar.png'}" alt="avatar" class="avatar avatar-45 rounded-pill">
+                    <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
+                        <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
+                            ${order.user.firstName + ' ' + order.user.lastName}
+                        </h6>
+                        <span>${order.user.phoneNumber}</span>
+                    </div>
+                </div>
 
-                            
-            <div class="trip-details" style="display: none;">
-                <hr class="dashed-separator">
-                        <div class="trip-section">
-                            <div><i class="fas fa-user"></i> {{ __('messages.user') }}: </div>
-                                            <div class="d-flex gap-3 align-items-center">
-                                                <img src="${order.user.photo}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                                        ${order.user.firstName +' '+order.user.lastName}
-                                                    </h6>
-                                                    <span>${order.user.phoneNumber}</span>
-                                                </div>
-                                            </div>
-                                        <div><i class="fas fa-user"></i> {{ __('messages.Driver') }}: </div>
-                                            <div class="d-flex gap-3 align-items-center">
-                                                <img src="${order.driver.photo}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                                        ${order.driver.firstName +' '+order.driver.lastName}
-                                                    </h6>
-                                                    <span>${order.driver.phoneNumber}</span>
-                                                </div>
-                                            </div>
+                ${order.driver ? `
+                    <div><i class="fas fa-user"></i> {{ __('messages.Driver') }}: </div>
+                    <div class="d-flex gap-3 align-items-center">
+                        <img src="${order.driver.photo || '/path/to/default-avatar.png'}" alt="avatar" class="avatar avatar-45 rounded-pill">
+                        <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
+                            <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
+                                ${order.driver.firstName + ' ' + order.driver.lastName}
+                            </h6>
+                            <span>${order.driver.phoneNumber}</span>
+                        </div>
+                    </div>
+                ` : ''}
 
+                <div><i class="fas fa-car"></i> {{ __('messages.car_brand') }}: <strong>${order.driver?.vehicle?.vehicleBrand || '—'}</strong></div>
+                <div><i class="fas fa-tags"></i> {{ __('messages.car_number') }}: <strong>${order.driver?.vehicle?.plate || '—'}</strong></div>
 
-
-                                     <div><i class="fas fa-car"></i> {{ __('messages.car_brand') }}: <strong>كيا</strong></div>
-                                    <div><i class="fas fa-tags"></i> {{ __('messages.car_number') }}: <strong>7822956</strong></div>
-              
-                                    ${order.withOffice ? `
-                                        <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>مكتب المليح</strong></div>
-
-                                ` : '<div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong> {{ __('messages.fleet') }}</strong></div>'}
-
+                ${order.withOffice ? `
+                    <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>مكتب المليح</strong></div>
+                ` : '<div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>{{ __('messages.fleet') }}</strong></div>'}
             </div>
 
             <div class="trip-finance">
                 <div class="finance-box discount">
                     <i class="fas fa-percentage"></i>
                     <div class="label">{{ __('messages.discount') }}</div>
-                    <div class="value">${(order.discount * 100)}%</div>
+                    <div class="value">${(order.discount * 100) || 0}%</div>
                 </div>
 
                 <div class="finance-box total">
@@ -835,71 +787,66 @@ body.dark .modern-trip-card .action-btn:hover i {
             </div>
 
             <div class="trip-section">
-                <div><i class="fas fa-user-tie"></i> {{ __('messages.driver_commission') }}: <strong>${order.driverCommissionValue} </strong></div>
-                <div><i class="fas fa-building"></i> {{ __('messages.office_commission') }}: <strong>${order.officeCommissionValue}</strong></div>
-                <div><i class="fas fa-shield-alt"></i> {{ __('messages.fleet_commission') }}: <strong>${order.fleetCommissionValue}</strong></div>
+                <div><i class="fas fa-user-tie"></i> {{ __('messages.driver_commission') }}: <strong>${order.driverCommissionValue || 0}</strong></div>
+                <div><i class="fas fa-building"></i> {{ __('messages.office_commission') }}: <strong>${order.officeCommissionValue || 0}</strong></div>
+                <div><i class="fas fa-shield-alt"></i> {{ __('messages.fleet_commission') }}: <strong>${order.fleetCommissionValue || 0}</strong></div>
             </div>
-
             <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top" style="background: rgba(255, 255, 255, 0.03); border-style: dashed; border-color: #ccc;">
-                <a href="{{ route('order.follow.map', ['orderId' => '__orderId__']) }}" class="action-btn map-btn" id="follow-map-btn">
+                <a href="${url}" class="action-btn map-btn" id="follow-map-btn">
                     <i class="fas fa-map-marked-alt"></i>
                     <span>{{ __('messages.follow_map') }}</span>
                 </a>
-                
 
-                <button class="action-btn status-btn change-status-btn" id="change-status-btn">
-                    <i class="fas fa-random"></i>
-                    <span>{{ __('messages.change_status') }}</span>
-                </button>
+                <button class="action-btn status-btn change-status-btn"
+            data-order-id="${order.id }"
+            data-bs-toggle="modal"
+            data-bs-target="#statusModal">
+        <i class="fas fa-random"></i>
+        <span>{{ __('messages.change_status') }}</span>
+    </button>
             </div>
         </div>
     </div>
-    `;  
- }
-
-                
-
-
-                let lastOngoingOrderId = 0;
- 
+    `;
+}
 
                     function fetchOngoingOrders(page) {
                         isOngoingLoading = true;
                         showOngoingLoader();
                 
-                        fetch(`{{ route('orders-by-status') }}?page=${page}&status=ongoing`)
+                        fetch(`{{ route('orders-by-status') }}?status=ongoing&page=${page}`)
                             .then(response => response.json())
                             .then(data => {
-                                const orders = data.orders || [];
+                                const ongoingOrders = data.orders || [];
                                 const wrapper = document.getElementById('ongoing-orders-wrapper');
                                 removeOngoingLoader();
-                
-                                if (orders.length === 0 && page === 1) {
-                                    wrapper.innerHTML = `<div class="text-center p-4" style="color: #f39c12; font-size: 22px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                        {{ __('messages.no_ongoing_orders') }}</div>`;
-                                    ongoingLastPage = true;
-                                    return;
-                                }
-                
-                                if (orders.length === 0) {
-                                    ongoingLastPage = true;
-                                    return;
-                                }
-                
-                                orders.forEach(order => {
-                                    const orderHTML = createOngoingOrderCard(order);
-                    if(order.id > lastOngoingOrderId ){
-                        lastOngoingOrderId = order.id;
-                    }
 
-                     const ongoing_count = document.getElementById('ongoing_count');
-                            ongoing_count.textContent = data.count;
-                    // const p_order = document.getElementById('p-order-${order.id}order-'+order.id);
-                    //     if (p_order) p_order.remove();
-                    wrapper.insertAdjacentHTML('beforeend', orderHTML);
+                
+                                if (ongoingOrders.length === 0) {
+                                    if (page === 1) {
+                                        wrapper.innerHTML = `
+                                            <div class="text-center p-4" style="color: #f39c12; font-size: 22px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                                {{ __('messages.no_ongoing_orders') }}
+                                            </div>`;
+                                        ongoingLastPage = true;
+                                    }
+                                    isOngoingLoading = false;
+                                    return;
+                                }
+                
+                                ongoingOrders.forEach(order => {
+                                    const url = '/order-on-map/'+order.id;
+                                    const orderHTML = createOngoingOrderCard(order , url);
+                                    deletePendingOrder(order.id);
+                                    wrapper.insertAdjacentHTML('beforeend', orderHTML);
+                                    if (order.id > lastOngoingOrderId) {
+                                        lastOngoingOrderId = order.id;
+                                    }
                                 });
                 
-                            isOngoingLoading = false;
+                                document.getElementById('ongoing_count').textContent = data.count;
+                
+                                isOngoingLoading = false;
                                 if (data.current_page >= data.total_pages) {
                                     ongoingLastPage = true;
                                 }
@@ -910,590 +857,551 @@ body.dark .modern-trip-card .action-btn:hover i {
                                 isOngoingLoading = false;
                             });
                     }
+                
+                    function fetchNewOngoingOrders() {
+                        fetch(`/get/only-new-orders-by-status?last_order_id=${lastOngoingOrderId}&status=ongoing`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const newOrders = data.orders || [];
+                                const wrapper = document.getElementById('ongoing-orders-wrapper');
 
 
+                                if (newOrders.length === 0) return;
+                
 
+                          
 
-            function fetchNewOngoingOrders() {
-              fetch(`/get/only-new-orders-by-status?last_order_id=${lastOngoingOrderId}&status=ongoing`)
-                .then(response => response.json())
-                .then(data => {
-                  const newOrders = data.orders || [];
-                  const wrapper = document.getElementById('ongoing-orders-wrapper');
-                  removeOngoingLoader();
-
-
-                newOrders.forEach(order => {
-                    const orderHTML = createOngoingOrderCard(order);
-
-                    if(order.id > lastOngoingOrderId ){
-                                lastOngoingOrderId = order.id;
+                                newOrders.forEach(order => {
+                                    
+                                    const orderHTML = createOngoingOrderCard(order);
+                                    deletePendingOrder(order.id);
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = orderHTML;
+                                    const orderElement = tempDiv.firstElementChild;
+                
+                                    orderElement.classList.add('pulse');
+                                    wrapper.prepend(orderElement);
+                
+                                    setTimeout(() => {
+                                        orderElement.classList.remove('pulse');
+                                    }, 7000);
+                
+                                    if (order.id > lastOngoingOrderId) {
+                                        lastOngoingOrderId = order.id;
+                                    }
+                                });
+                
+                                const ongoingCount = document.getElementById('ongoing_count');
+                                ongoingCount.textContent = data.count;
+                                ongoingCount.classList.add('pulse-red');
+                                setTimeout(() => {
+                                    ongoingCount.classList.remove('pulse-red');
+                                }, 7000);
+                            })
+                            .catch(error => {
+                                console.error('Error fetching new orders:', error);
+                            });
                     }
-
-
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = orderHTML;
-                    const orderElement = tempDiv.firstElementChild;
-
-                    orderElement.classList.add('pulse');
-
-                    wrapper.prepend(orderElement);
-
-                    wrapper.insertAdjacentElement('afterbegin', orderElement);
-
-                    setTimeout(() => {
-                      orderElement.classList.remove('pulse');
-                    }, 7000);
-
-                  });
-
-                  const ongoingCount = document.getElementById('ongoing_count');
-                  ongoingCount.textContent = data.count;
-
-                  ongoingCount.classList.add('pulse-red');
-
-                  setTimeout(() => {
-                    ongoingCount.classList.remove('pulse-red');
-                  }, 7000);
-                })
-                .catch(error => {
-                  console.error('Error fetching new orders:', error);
-                  removeOngoingLoader();
-                });
-            }          
-
-
-            setInterval(() => {
-                        const wrapper = document.getElementById('ongoing-orders-wrapper');
+                
+                    setInterval(() => {
                         ongoingLastPage = false;
                         fetchNewOngoingOrders();
-                    }, 30000);
-
+                    }, 10000);
 </script>
                 
-
-
-
-
-
-
-
-
-
-
-{{-- <div class="trip-section">
-    <div><i class="fas fa-user"></i> {{ __('messages.user') }}:</div>
-    <div class="d-flex gap-3 align-items-center">
-        <img src="" alt="avatar" class="avatar avatar-45 rounded-pill">
-        <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-            <h6 class="m-0" style="font-size: 0.9rem;">${order.userName || '—'}</h6>
-            <span>${order.userPhone || '—'}</span>
-        </div>
-    </div>
-
-    <div><i class="fas fa-user"></i> {{ __('messages.Driver') }}:</div>
-    <div class="d-flex gap-3 align-items-center">
-        <img src="" alt="avatar" class="avatar avatar-45 rounded-pill">
-        <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-            <h6 class="m-0" style="font-size: 0.9rem;">${order.driverName || '—'}</h6>
-            <span>${order.driverPhone || '—'}</span>
-        </div>
-    </div> --}}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                {{-- <div class="modern-trip-card toggle-card">
-
-                    <!-- العنوان والحالة (الظاهر دائمًا) -->
-                    <div class="trip-top card-toggle-header">
-                        <div class="trip-id">
-                            <i class="fas fa-hashtag"></i>  457
-                        </div>
-                        <div class="trip-status waiting">
-                            <i class="fas fa-clock fa-spin"></i> {{ __('messages.ongoing') }}
-                        </div>
-                    </div>
-                
-                    <!-- المسار (ظاهر دائمًا) -->
-                    <div class="trip-route card-toggle-header">
-                        <div>
-                            <i class="fas fa-map-marker-alt text-success"></i>
-                            <span>سانا- برامكة</span>
-                        </div>
-                        <div>
-                            <i class="fas fa-map-marker-alt text-danger"></i>
-                            <span> المزة - اتوستراد -برج تالا</span>
-                        </div>
-                @if (null)
-                        <!-- وجهات متعددة -->
-                        <div class="trip-section">
-                            <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
-                            <ul class="multi-dests">
-                                <li>شارع التخصصي</li>
-                                <li>دوار سانا عند الكازية بناء مستشفى الملك فيصل</li>
-                            </ul>
-                        </div>
-
-                 @endif
-
-                
-                        <hr class="dashed-separator">
-                
-                        <!-- بيانات الرحلة -->
-                        <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>02:15 م</strong></div>
-                        <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>12 كم</strong></div>
-                        <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>خدمة فاخرة</strong></div>
-                        <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>سيرياتل كاش</strong></div>
-                
-                        <div class="finance-box">
-                            <i class="fas fa-dollar-sign"></i>
-                            <div class="label">{{ __('messages.price') }}</div>
-                            <div class="value">67000 ل.س</div>
-                        </div>
-                
-                    </div>
-                
-                    <!-- ✅ التفاصيل (مخفية عند البدء) -->
-                    <div class="trip-details" style="display: none;">
-                
-                        <!-- الخط الفاصل بين القسم الظاهر والمخفي -->
-                        <hr class="dashed-separator">
-                
-                        <!-- المستخدم والخدمة والمكتب -->
-                        <div class="trip-section">
-                            <div> <i class="fas fa-user"></i> {{ __('messages.user') }}: </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <img src="{{ get_default_image($type = 'user') }}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                        محمد محمد
-                                    </h6>
-                                    <span>0933817393</span>
-                                </div>
-                            </div>
-                            <div> <i class="fas fa-user"></i> {{ __('messages.Driver') }}: </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <img src="{{ get_default_image($type = 'user') }}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                        أحمد أحمد
-                                    </h6>
-                                    <span>0933817393</span>
-                                </div>
-                            </div>
-                            <div><i class="fas fa-car"></i> {{ __('messages.car_brand') }}: <strong>كيا</strong></div>
-                            <div><i class="fas fa-tags"></i> {{ __('messages.car_number') }}: <strong>7822956</strong></div>
-                            <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>مكتب المليح</strong></div>
-                        </div>
-                
-                        <!-- المبالغ -->
-                        <div class="trip-finance">
-                            <div class="finance-box discount">
-                                <i class="fas fa-percentage"></i>
-                                <div class="label">{{ __('messages.discount') }}</div>
-                                <div class="value">5000 ل.س</div>
-                            </div>
-                
-                            <div class="finance-box total">
-                                <i class="fas fa-wallet"></i>
-                                <div class="label">{{ __('messages.total') }}</div>
-                                <div class="value">70000 ل.س</div>
-                            </div>
-                        </div>
-                
-                        <!-- العمولات -->
-                        <div class="trip-section">
-                            <div><i class="fas fa-user-tie"></i> {{ __('messages.driver_commission') }}: <strong>15000 ل.س</strong></div>
-                            <div><i class="fas fa-building"></i> {{ __('messages.office_commission') }}: <strong>26000 ل.س</strong></div>
-                            <div><i class="fas fa-shield-alt"></i> {{ __('messages.fleet_commission') }}: <strong>7000 ل.س</strong></div>
-                        </div>
-                
-                        <!-- الجزء الخاص بالأزرار داخل الكارد -->
-                        <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top" style="background: rgba(255, 255, 255, 0.03); border-style: dashed; border-color: #ccc;">
-                            <!-- متابعة على الخريطة -->
-                            <a href="{{  route('order.follow.map', ['orderId'=>1]) }}" class="action-btn map-btn" id="follow-map-btn">
-                                <i class="fas fa-map-marked-alt"></i>
-                                <span>{{ __('messages.follow_map') }}</span>
-                            </a>
-                
-                            <!-- تغيير الحالة -->
-                            <button class="action-btn status-btn change-status-btn" id="change-status-btn">
-                                <i class="fas fa-random"></i>
-                                <span>{{ __('messages.change_status') }}</span>
-                            </button>
-                        </div>
-                
-                    </div>
-                </div>
-                 --}}
-
-
             </div>
 
-            <!-- مكتملة -->
             <div class="trip-column">
                 <h3>
                     <i class="fa fa-trophy"></i>
                                         {{ __('messages.completed') }}
                       <span id="completed_count" style="margin-right: 30px; font-size: 25px; font-weight: bold; padding-left: 25px; padding-right: 25px;">0</span>
                  </h3>
-<div id="completed-orders-wrapper"></div>
+                 <div id="completed-orders-wrapper"></div>
 
-<script>
-    let completedPage = 1;
-    const completedLimit = 7;
-    let isCompletedLoading = false;
-    let completedLastPage = false;
+                 <script>
+                     let completedPage = 1;
+                     const completedLimit = 7;
+                     let isCompletedLoading = false;
+                     let completedLastPage = false;
+                     let lastCompletedOrderId = 0;
+                 
+                     document.addEventListener('DOMContentLoaded', function () {
+                         fetchCompletedOrders(completedPage);
+                         window.addEventListener('scroll', handleCompletedScroll);
+                     });
+                 
+                     function handleCompletedScroll() {
+                         if (completedLastPage || isCompletedLoading) return;
+                 
+                         const scrollPosition = window.innerHeight + window.scrollY;
+                         const threshold = document.body.offsetHeight - 100;
+                 
+                         if (scrollPosition >= threshold) {
+                             completedPage++;
+                             fetchCompletedOrders(completedPage);
+                         }
+                     }
+                 
+                     function showCompletedLoader() {
+                         const wrapper = document.getElementById('completed-orders-wrapper');
+                         const loader = document.createElement('div');
+                         loader.id = 'scroll-loader-completed';
+                         loader.className = 'text-center p-4';
+                         loader.innerHTML = `
+                             <i class="fas fa-spinner fa-spin fa-2x text-warning"></i>
+                             <p class="mt-2" style="color: #f39c12; font-size: 18px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                 {{ __('messages.loading') }}
+                             </p>
+                         `;
+                         wrapper.appendChild(loader);
+                     }
+                 
+                     function removeCompletedLoader() {
+                         const loader = document.getElementById('scroll-loader-completed');
+                         if (loader) loader.remove();
+                     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        fetchCompletedOrders(completedPage);
-        window.addEventListener('scroll', handleCompletedScroll);
-    });
-
-    function handleCompletedScroll() {
-        if (completedLastPage || isCompletedLoading) return;
-
-        const scrollPosition = window.innerHeight + window.scrollY;
-        const threshold = document.body.offsetHeight - 100;
-
-        if (scrollPosition >= threshold) {
-            completedPage++;
-            fetchCompletedOrders(completedPage);
-        }
-    }
-
-    function showCompletedLoader() {
-        const wrapper = document.getElementById('completed-orders-wrapper');
-        const loader = document.createElement('div');
-        loader.id = 'scroll-loader-completed';
-        loader.className = 'text-center p-4';
-        loader.innerHTML = `<i class="fas fa-spinner fa-spin fa-2x text-warning"></i><p class="mt-2">
-                            <div class="text-center p-4" style="color: #f39c12; font-size: 18px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                {{ __('messages.loading') }}</div>
-                            </p>`;
-        wrapper.appendChild(loader);
-    }
-
-    function removeCompletedLoader() {
-        const loader = document.getElementById('scroll-loader-completed');
-        if (loader) loader.remove();
-    }
-
-    function fetchCompletedOrders(page) {
-    isCompletedLoading = true;
-    showCompletedLoader();
-
-    fetch(`{{ route('orders-by-status') }}?page=${page}&status=completed`)
-        .then(response => response.json())
-        .then(data => {
-            const orders = data.orders || [];
-            const wrapper = document.getElementById('completed-orders-wrapper');
-            removeCompletedLoader();
-
-            if (orders.length === 0 && page === 1) {
-                wrapper.innerHTML = `
-                <div class="text-center p-4" style="color: #f39c12; font-size: 22px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                {{ __('messages.no_completed_orders') }}</div>`;
-                completedLastPage = true;
-                return;
-            }
-
-            if (orders.length === 0) {
-                completedLastPage = true;
-                return;
-            }
-
-            orders.forEach(order => {
-                const orderHTML = `
-                <div class="modern-trip-card toggle-card">
-                            <!-- العنوان والحالة -->
-                            <div class="trip-top card-toggle-header">
-                                <div class="trip-id">
-                                    <i class="fas fa-hashtag"></i> ${order.id}
-                                </div>
-                                <div class="trip-status completed"><i class="fas fa-check-circle"></i> {{ __('messages.completed') }}</div>
-                            </div>
 
                      
+                    function deleteOngoingOrder(orderId) {
+                        // const elementId = `pending-order-${orderId}`;
+                        const element = document.getElementById('ongoing-order-'+orderId);
+                    
+                        if (element) {
+                            element.remove();
+                            decreaseCount('ongoing_count');
+                         } 
+                     }
+                 
+                     function createCompletedOrderCard(order) {
+                         return ` 
+                         <div class="modern-trip-card toggle-card">
+                             <div class="trip-top card-toggle-header">
+                                 <div class="trip-id">
+                                     <i class="fas fa-hashtag"></i> ${order.id}
+                                 </div>
+                                 <div class="trip-status completed"><i class="fas fa-check-circle"></i> {{ __('messages.completed') }}</div>
+                             </div>
+                 
+                             <div class="trip-route card-toggle-header">
+                                 <div>
+                                     <i class="fas fa-map-marker-alt text-success"></i>
+                                     <span>${order.startAddress || '—'}</span>
+                                 </div>
+                                 <div>
+                                     <i class="fas fa-map-marker-alt text-danger"></i>
+                                     <span>${order.endAddress || '—'}</span>
+                                 </div>
+                 
+                                 ${order.multiDestnationArray && order.multiDestnationArray.length > 0 ? `
+                                     <div class="trip-section">
+                                         <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
+                                         <ul class="multi-dests">
+                                             ${order.multiDestnationArray.map(dest => `<li>${dest}</li>`).join('')}
+                                         </ul>
+                                     </div>
+                                 ` : ''}
+                 
+                                 <hr class="dashed-separator">
+                 
+                                 <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>${order.time || '--'}</strong></div>
+                                 <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>${order.distance || '--'} كم</strong></div>
+                                 <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>${order.subService.name || '--'}</strong></div>
+                                 <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>${order.paymentStatus || '--'}</strong></div>
+                 
+                                 <div class="finance-box">
+                                     <i class="fas fa-dollar-sign"></i>
+                                     <div class="label">{{ __('messages.price') }}</div>
+                                     <div class="value">${order.amount.toLocaleString()} ل.س</div>
+                                 </div>
+                             </div>
+                 
+                             <div class="trip-details" style="display: none;">
+                                 <hr class="dashed-separator">
+                                 <div class="trip-section">
+                                     <div><i class="fas fa-user"></i> {{ __('messages.user') }}: </div>
+                                     <div class="d-flex gap-3 align-items-center">
+                                         <img src="${order.user.photo || ''}" alt="avatar" class="avatar avatar-45 rounded-pill">
+                                         <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
+                                             <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
+                                                 ${order.user.firstName} ${order.user.lastName}
+                                             </h6>
+                                             <span>${order.user.phoneNumber}</span>
+                                         </div>
+                                     </div>
+                 
+                                     <div><i class="fas fa-user"></i> {{ __('messages.Driver') }}: </div>
+                                     <div class="d-flex gap-3 align-items-center">
+                                         <img src="${order.driver.photo || ''}" alt="avatar" class="avatar avatar-45 rounded-pill">
+                                         <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
+                                             <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
+                                                 ${order.driver.firstName} ${order.driver.lastName}
+                                             </h6>
+                                             <span>${order.driver.phoneNumber || '—'}</span>
+                                         </div>
+                                     </div>
+                 
+                                     <div><i class="fas fa-car"></i> {{ __('messages.car_brand') }}: <strong>${order.driver.vehicle.vehicleBrand || '—'}</strong></div>
+                                     <div><i class="fas fa-tags"></i> {{ __('messages.car_number') }}: <strong>${order.driver.vehicle.plate || '—'}</strong></div>
+                                     <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>${order.withOffice ? 'مكتب المليح' : 'لا يوجد مكتب'}</strong></div>
+                                 </div>
+                 
+                                 <div class="trip-finance">
+                                     <div class="finance-box discount">
+                                         <i class="fas fa-percentage"></i>
+                                         <div class="label">{{ __('messages.discount') }}</div>
+                                         <div class="value">${(order.discount ? (order.discount * 100) : 0)}%</div>
+                                     </div>
+                 
+                                     <div class="finance-box total">
+                                         <i class="fas fa-wallet"></i>
+                                         <div class="label">{{ __('messages.total') }}</div>
+                                         <div class="value">${order.totalAmount} ل.س</div>
+                                     </div>
+                                 </div>
+                 
+                                 <div class="trip-section">
+                                     <div><i class="fas fa-receipt"></i> {{ __('messages.payment_status') }}: <strong>${order.paymentStatus || '—'}</strong></div>
+                                     <div><i class="fas fa-calendar-alt"></i> {{ __('messages.payment_date') }}: <strong>${order.PaymentDatetime || '—'}</strong></div>
+                                     <div><i class="fas fa-user-tie"></i> {{ __('messages.driver_commission') }}: <strong>${order.driverCommissionValue || '0'} ل.س</strong></div>
+                                     <div><i class="fas fa-building"></i> {{ __('messages.office_commission') }}: <strong>${order.officeCommissionValue || '0'} ل.س</strong></div>
+                                     <div><i class="fas fa-shield-alt"></i> {{ __('messages.fleet_commission') }}: <strong>${order.fleetCommissionValue || '0'} ل.س</strong></div>
+                                 </div>
+                 
+                                 <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top" style="background: rgba(255, 255, 255, 0.03); border-style: dashed; border-color: #ccc;">
+                                     <a href="{{ route('booking.show', '') }}" class="action-btn map-btn" id="follow-map-btn">
+                                         <i class="fas fa-eye"></i>
+                                         <span>{{ __('messages.details') }}</span>
+                                     </a>
+                 
+                                     <button class="action-btn status-btn change-status-btn" id="change-status-btn">
+                                         <i class="fas fa-random"></i>
+                                         <span>{{ __('messages.change_status') }}</span>
+                                     </button>
+                                 </div>
+                             </div>
+                         </div> `;
+                     }
+                 
+     
+                     function fetchCompletedOrders(page) {
+                         isCompletedLoading = true;
+                         showCompletedLoader();
+                 
+                         fetch(`{{ route('orders-by-status') }}?status=Completed&page=${page}`)
+                             .then(response => response.json())
+                             .then(data => {
+                                 const completedOrders = data.orders || [];
+                                 const wrapper = document.getElementById('completed-orders-wrapper');
+                                 removeCompletedLoader();
+                 
+                                 if (completedOrders.length === 0) {
+                                     if (page === 1) {
+                                         wrapper.innerHTML = `
+                                             <div class="text-center p-4" style="color: #f39c12; font-size: 22px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                                 {{ __('messages.no_completed_orders') }}
+                                             </div>`;
+                                         completedLastPage = true;
+                                     }
+                                     isCompletedLoading = false;
+                                     return;
+                                 }
+                 
+                                 completedOrders.forEach(order => {
+                                     const orderHTML = createCompletedOrderCard(order);
+                                     wrapper.insertAdjacentHTML('beforeend', orderHTML);
+                                     if (order.id > lastCompletedOrderId) {
+                                         lastCompletedOrderId = order.id;
+                                     }
+                                 });
+                 
+                                 document.getElementById('completed_count').textContent = data.count;
+                 
+                                 isCompletedLoading = false;
+                                 if (data.current_page >= data.total_pages) {
+                                     completedLastPage = true;
+                                 }
+                             })
+                             .catch(error => {
+                                 console.error('Error loading completed orders:', error);
+                                 removeCompletedLoader();
+                                 isCompletedLoading = false;
+                             });
+                     }
+                 
+                     function fetchNewCompletedOrders() {
+                         fetch(`/get/only-new-orders-by-status?last_order_id=${lastCompletedOrderId}&status=Completed`)
+                             .then(response => response.json())
+                             .then(data => {
+                                 const newOrders = data.orders || [];
+                                 const wrapper = document.getElementById('completed-orders-wrapper');
+                 
+                                 if (newOrders.length === 0) return;
+                 
+                                 newOrders.forEach(order => {
+                                     const orderHTML = createCompletedOrderCard(order);
+                                     deleteOngoingOrder(order.id);
+                                     deletePendingOrder(order.id);
+
+                                     const tempDiv = document.createElement('div');
+                                     tempDiv.innerHTML = orderHTML;
+                                     const orderElement = tempDiv.firstElementChild;
+                 
+                                     orderElement.classList.add('pulse');
+                                     wrapper.prepend(orderElement);
+                 
+                                     setTimeout(() => {
+                                         orderElement.classList.remove('pulse');
+                                     }, 7000);
+                 
+                                     if (order.id > lastCompletedOrderId) {
+                                         lastCompletedOrderId = order.id;
+                                     }
+                                 });
+                 
+                                 const completedCount = document.getElementById('completed_count');
+                                 completedCount.textContent = data.count;
+                                 completedCount.classList.add('pulse-red');
+                                 setTimeout(() => {
+                                     completedCount.classList.remove('pulse-red');
+                                 }, 7000);
+                             })
+                             .catch(error => {
+                                 console.error('Error fetching new orders:', error);
+                             });
+                     }
+                 
+                     setInterval(() => {
+                         completedLastPage = false;
+                         fetchNewCompletedOrders();
+                     }, 10000);
+                 </script>
 
 
-                            <!-- المسار -->
-                            <div class="trip-route card-toggle-header">
-                                <div>
-                                    <i class="fas fa-map-marker-alt text-success"></i>
-                                    <span>${order.startAddress || '—'}</span>
-                                </div>
-                                <div>
-                                    <i class="fas fa-map-marker-alt text-danger"></i>
-                                    <span>${order.endAddress || '—'}</span>
-                                </div>
 
-                                ${order.multiDestnationArray && order.multiDestnationArray.length > 0 ? `
-                                    <div class="trip-section">
-                                        <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
-                                        <ul class="multi-dests">
-                                            ${order.multiDestnationArray.map(dest => `<li>${dest}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                ` : ''}
 
-                                <hr class="dashed-separator">
-
-                                <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>${order.time || '--'}</strong></div>
-                                <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>${order.distance || '--'} كم</strong></div>
-                                <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>{{ __('messages.luxury_service') }}</strong></div>
-                                <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>${order.paymentStatus || '--'}</strong></div>
-
-                                <div class="finance-box">
-                                    <i class="fas fa-dollar-sign"></i>
-                                    <div class="label">{{ __('messages.price') }}</div>
-                                    <div class="value">${order.amount.toLocaleString()} ل.س</div>
-                                </div>
-                            </div>
-
-                            
-        <!-- ✅ التفاصيل (مخفية عند البدء) -->
-        <div class="trip-details" style="display: none;">
-            <hr class="dashed-separator">
-            <!-- المستخدم والخدمة والمكتب -->
-                        <div class="trip-section">
-                            <div><i class="fas fa-user"></i> {{ __('messages.user') }}: </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <img src="" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                        محمد محمد
-                                    </h6>
-                                    <span>0933817393</span>
-                                </div>
-                            </div>
-                
-                            <div><i class="fas fa-user"></i> {{ __('messages.Driver') }}: </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <img src="" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                        أحمد أحمد
-                                    </h6>
-                                    <span>0933817393</span>
-                                </div>
-                            </div>    
-
-                <div><i class="fas fa-car"></i> {{ __('messages.car_brand') }}: <strong>كيا</strong></div>
-                <div><i class="fas fa-tags"></i> {{ __('messages.car_number') }}: <strong>7822956</strong></div>
-                <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>مكتب المليح</strong></div>
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form id="statusForm">
+        <div class="modal-content custom-modal">
+  
+          <div class="modal-header custom-header">
+            <h5 class="modal-title"> تحديث حالة الطلب</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <input type="hidden" id="orderId" name="order_id">
+  
+            <label for="orderStatus" class="form-label">اختر الحالة الجديدة:</label>
+            <select name="status" id="orderStatus" class="form-select custom-select">
+              <option value="Completed"> مكتمل</option>
+              <option value="Hold"> قيد الانتظار</option>
+              <option value="Cancel"> ملغي</option>
+            </select>
+  
+            <div id="formSuccessMessage" class="success-message d-none">
+              ✅ تم تحديث الحالة بنجاح!
             </div>
-
-            <!-- المبالغ -->
-            <div class="trip-finance">
-                <div class="finance-box discount">
-                    <i class="fas fa-percentage"></i>
-                    <div class="label">{{ __('messages.discount') }}</div>
-                    <div class="value">${(order.discount * 100)}%</div>
-                </div>
-
-                <div class="finance-box total">
-                    <i class="fas fa-wallet"></i>
-                    <div class="label">{{ __('messages.total') }}</div>
-                    <div class="value">${order.totalAmount} ل.س</div>
-                </div>
-            </div>
-
-            <div class="trip-section">
-                <div><i class="fas fa-receipt"></i> {{ __('messages.payment_status') }}: <strong>مدفوع</strong></div>
-                            <div><i class="fas fa-calendar-alt"></i> {{ __('messages.payment_date') }}: <strong>2025-04-11</strong></div>
-                <div><i class="fas fa-user-tie"></i> {{ __('messages.driver_commission') }}: <strong>${order.driverCommissionValue} ل.س</strong></div>
-                <div><i class="fas fa-building"></i> {{ __('messages.office_commission') }}: <strong>${order.officeCommissionValue} ل.س</strong></div>
-                <div><i class="fas fa-shield-alt"></i> {{ __('messages.fleet_commission') }}: <strong>${order.fleetCommissionValue} ل.س</strong></div>
-            </div>
-
-=            <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top" style="background: rgba(255, 255, 255, 0.03); border-style: dashed; border-color: #ccc;">
-                <a href="{{ route('booking.show', 1) }}" class="action-btn map-btn" id="follow-map-btn">
-        <i class="fas fa-eye"></i>
-        <span>{{ __('messages.details') }}</span>
-    </a>
-                
-
-                <button class="action-btn status-btn change-status-btn" id="change-status-btn">
-                    <i class="fas fa-random"></i>
-                    <span>{{ __('messages.change_status') }}</span>
-                </button>
-            </div>
+          </div>
+  
+          <div class="modal-footer border-0">
+            <button type="submit" class="btn custom-btn"> حفظ التغيير</button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">إغلاق</button>
+          </div>
+  
         </div>
+      </form>
     </div>
-    `;
-
-                const completed_count = document.getElementById('completed_count');
-                 completed_count.textContent = data.count;
-                wrapper.insertAdjacentHTML('beforeend', orderHTML);
-            });
-
-            isCompletedLoading = false;
-            if (data.current_page >= data.total_pages) {
-                completedLastPage = true;
-            }
-        })
-        .catch(error => {
-            console.error('Error loading completed orders:', error);
-            removeCompletedLoader();
-            isCompletedLoading = false;
-        });
-    }
-
-    fetchCompletedOrders(1);
-
-setInterval(() => {
-    const wrapper = document.getElementById('completed-orders-wrapper');
-    wrapper.innerHTML = ''; 
-    completedLastPage = false;
-    fetchCompletedOrders(1);
-}, 10000);
-</script>
-
-                {{-- @for ($i = 0; $i < 7; $i++)
+  </div>
+  
 
 
-                
-                <div class="modern-trip-card toggle-card">
-                    <!-- العنوان والحالة (الظاهر دائمًا) -->
-                    <div class="trip-top">
-                        <div class="trip-id"><i class="fas fa-hashtag"></i> 30{{ $i }}</div>
-                        <div class="trip-status completed"><i class="fas fa-check-circle"></i> {{ __('messages.completed') }}</div>
-                    </div>
-                
-                    <!-- المسار (ظاهر دائمًا) -->
-                    <div class="trip-route card-toggle-header">
-                        <div>
-                            <i class="fas fa-map-marker-alt text-success"></i>
-                            <span> جسر الرئيس- سانا- برامكة </span>
-                        </div>
-                        <div>
-                            <i class="fas fa-map-marker-alt text-danger"></i>
-                            <span>المزة - اتوستراد -برج تالا</span>
-                        </div>
-
-                        @if (null)
-                        <!-- وجهات متعددة -->
-                        <div class="trip-section">
-                            <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
-                            <ul class="multi-dests">
-                                <li>شارع التخصصي</li>
-                                <li>دوار سانا عند الكازية بناء مستشفى الملك فيصل</li>
-                            </ul>
-                        </div>
-
-                 @endif
-                        <hr class="dashed-separator">
-                
-                        <!-- بيانات الرحلة -->
-                        <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>02:15 م</strong></div>
-                        <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>12 كم</strong></div>
-                        <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>خدمة فاخرة</strong></div>
-                        <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>سيرياتل كاش</strong></div>
-                
-                        <div class="finance-box">
-                            <i class="fas fa-dollar-sign"></i>
-                            <div class="label">{{ __('messages.price') }}</div>
-                            <div class="value">90000 ل.س</div>
-                        </div>
-                    </div>
-                
-                    <!-- ✅ التفاصيل (مخفية عند البدء) -->
-                    <div class="trip-details" style="display: none;">
-                        <hr class="dashed-separator">
-                
-                        <!-- المستخدم والخدمة والمكتب -->
-                        <div class="trip-section">
-                            <div><i class="fas fa-user"></i> {{ __('messages.user') }}: </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <img src="{{ get_default_image($type = 'user') }}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                        محمد محمد
-                                    </h6>
-                                    <span>0933817393</span>
-                                </div>
-                            </div>
-                
-                            <div><i class="fas fa-user"></i> {{ __('messages.Driver') }}: </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <img src="{{ get_default_image($type = 'user') }}" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                    <h6 class="m-0" style="font-size: 0.9rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);">
-                                        أحمد أحمد
-                                    </h6>
-                                    <span>0933817393</span>
-                                </div>
-                            </div>    
-                            <div><i class="fas fa-car"></i> {{ __('messages.car_brand') }}: <strong>كيا</strong></div>
-                            <div><i class="fas fa-car"></i> {{ __('messages.car_number') }}: <strong>7822956</strong></div>
-                            <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>مكتب المليح</strong></div>
-                        </div>
-                
-                        <div class="trip-finance">
-                            <div class="finance-box discount">
-                                <i class="fas fa-percentage"></i>
-                                <div class="label">{{ __('messages.discount') }}</div>
-                                <div class="value">5000 ل.س</div>
-                            </div>
-                            
-                            <div class="finance-box total">
-                                <i class="fas fa-wallet"></i>
-                                <div class="label">{{ __('messages.total') }}</div>
-                                <div class="value">65000 ل.س</div>
-                            </div>
-                        </div>
-                
-                        <!-- العمولات -->
-                        <div class="trip-section">
-                            <div><i class="fas fa-receipt"></i> {{ __('messages.payment_status') }}: <strong>مدفوع</strong></div>
-                            <div><i class="fas fa-calendar-alt"></i> {{ __('messages.payment_date') }}: <strong>2025-04-11</strong></div>
-                            <div><i class="fas fa-user-tie"></i> {{ __('messages.driver_commission') }}: <strong>15000 ل.س</strong></div>
-                            <div><i class="fas fa-building"></i> {{ __('messages.office_commission') }}: <strong>26000 ل.س</strong></div>
-                            <div><i class="fas fa-shield-alt"></i> {{ __('messages.fleet_commission') }}: <strong>7000 ل.س</strong></div>
-                        </div>
-                
-                        <!-- الجزء الخاص بالأزرار داخل الكارد -->
-                        <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top" style="background: rgba(255, 255, 255, 0.03); border-style: dashed; border-color: #ccc;">
-                            <a href="{{ route('booking.show', 1) }}" class="action-btn map-btn" id="follow-map-btn">
-                                <i class="fas fa-eye"></i>
-                                <span>{{ __('messages.details') }}</span>
-                            </a>
-                
-                            <button class="action-btn status-btn change-status-btn" id="change-status-btn">
-                                <i class="fas fa-random"></i>
-                                <span>{{ __('messages.change_status') }}</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
 
 
-                @endfor --}}
-            </div>
-        </div>
-    </div>
 
+  <style>
+/* الخطوط */
+body {
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f6f9;
+}
 
+/* مودال زجاجي */
+.custom-modal {
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+/* رأس المودال */
+.custom-header {
+  background: linear-gradient(135deg, #0061ff, #60efff);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* زر الإغلاق */
+.btn-close-white {
+  filter: invert(1);
+}
+
+/* القائمة المنسدلة */
+.custom-select {
+  border-radius: 40px;
+  padding: 0.65rem 1.2rem;
+  font-weight: 500;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  transition: all 0.3s;
+}
+.custom-select:focus {
+  border-color: #60efff;
+  box-shadow: 0 0 0 0.2rem rgba(96, 239, 255, 0.4);
+}
+
+/* زر الحفظ */
+.custom-btn {
+  background: linear-gradient(to right, #00c853, #b2f9b8);
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 30px;
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+  transition: 0.3s ease;
+}
+.custom-btn:hover {
+  background: linear-gradient(to right, #00b248, #a1f6ab);
+  transform: scale(1.05);
+}
+
+/* زر الإغلاق */
+.modal-footer .btn-outline-secondary {
+  border-radius: 30px;
+  font-weight: 500;
+  padding: 0.6rem 1.2rem;
+}
+
+/* رسالة النجاح */
+.success-message {
+  background-color: rgba(209, 231, 221, 0.85);
+  color: #0f5132;
+  padding: 0.8rem 1rem;
+  margin-top: 1rem;
+  border-left: 6px solid #28a745;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  animation: fadeIn 0.5s ease;
+}
+
+/* أنيميشن */
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+    </style>
     
+  
+
+
+
+
+
+  
+            </div>
+        </div>
+    </div>
+
+
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('statusModal');
+            const orderIdInput = document.getElementById('orderId');
+            const formSuccessMessage = document.getElementById('formSuccessMessage');
+        
+            // عند فتح المودال، خزّن ID الطلب
+            modal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const orderId = button.getAttribute('data-order-id');
+                orderIdInput.value = orderId;
+        
+                // إخفاء رسالة النجاح السابقة
+                formSuccessMessage.classList.add('d-none');
+            });
+        
+            // إرسال النموذج
+            document.getElementById('statusForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+        
+                const orderId = orderIdInput.value;
+                const status = document.getElementById('orderStatus').value;
+        
+                fetch('/change-order-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: JSON.stringify({ id: orderId, status: status })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // عرض رسالة نجاح أنيقة داخل المودال
+                    formSuccessMessage.classList.remove('d-none');
+        
+                    // يمكنك إغلاق المودال بعد ثوانٍ تلقائيًا:
+                    setTimeout(() => {
+                        const modalInstance = bootstrap.Modal.getInstance(modal);
+                        modalInstance.hide();
+        
+                        // (اختياري) تحديث الواجهة أو الطلبات تلقائيًا
+                        // location.reload();
+                    }, 1500);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء تحديث الحالة.');
+                });
+            });
+        });
+        </script>
+        
+
+<script>
+
+
+
+
+
+
+
+
+
+
+
     $(document).ready(function () {
     $(document).on('click', '.toggle-card', function (e) {
         if ($(e.target).closest('.action-btn').length === 0) {
@@ -1519,138 +1427,10 @@ setInterval(() => {
     });
 });
 
-    </script>
+
+</script>
     
 
-
-
-
-
-    {{-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            fetchCompletedOrders();
-        });
-    
-        function fetchCompletedOrders() {
-            fetch('{{ route('orders-by-status') }}')
-                .then(response => response.json())
-                .then(data => {
-                    const completedOrders = data.completed_orders || [];
-                    const wrapper = document.getElementById('completed-orders-wrapper');
-    
-                    if (completedOrders.length === 0) {
-                        wrapper.innerHTML = `<div class="text-center p-4 text-muted">{{ __('messages.no_completed_orders') }}</div>`;
-                        return;
-                    }
-    
-                    let html = '';
-    
-                    completedOrders.forEach(order => {
-                        html += `
-                        <div class="modern-trip-card toggle-card">
-                            <div class="trip-top card-toggle-header">
-                                <div class="trip-id">
-                                    <i class="fas fa-hashtag"></i> ${order.id}
-                                </div>
-                                <div class="trip-status completed">
-                                    <i class="fas fa-check-circle text-success"></i> ${order.status}
-                                </div>
-                            </div>
-    
-                            <div class="trip-route card-toggle-header">
-                                <div>
-                                    <i class="fas fa-map-marker-alt text-success"></i>
-                                    <span>${order.startAddress || '—'}</span>
-                                </div>
-                                <div>
-                                    <i class="fas fa-map-marker-alt text-danger"></i>
-                                    <span>${order.endAddress || '—'}</span>
-                                </div>
-    
-                                ${order.multiDestnationArray ? `
-                                    <div class="trip-section">
-                                        <div><i class="fas fa-route"></i><h4>{{ __('messages.multiple_destinations') }}</h4></div>
-                                        <ul class="multi-dests">
-                                            ${order.multiDestnationArray.map(dest => `<li>${dest}</li>`).join('')}
-                                        </ul>
-                                    </div>` : ''
-                                }
-    
-                                <hr class="dashed-separator">
-    
-                                <div><i class="fas fa-clock"></i> {{ __('messages.time') }}: <strong>${order.time || '--'}</strong></div>
-                                <div><i class="fas fa-road"></i> {{ __('messages.distance') }}: <strong>${order.distance} كم</strong></div>
-                                <div><i class="fas fa-car"></i> {{ __('messages.service') }}: <strong>{{ __('messages.luxury_service') }}</strong></div>
-                                <div><i class="fas fa-credit-card"></i> {{ __('messages.payment') }}: <strong>${order.paymentStatus}</strong></div>
-    
-                                <div class="finance-box">
-                                    <i class="fas fa-dollar-sign"></i>
-                                    <div class="label">{{ __('messages.price') }}</div>
-                                    <div class="value">${order.amount.toLocaleString()} ل.س</div>
-                                </div>
-                            </div>
-    
-                            <div class="trip-details" style="display: none;">
-                                <hr class="dashed-separator">
-                                <div class="trip-section">
-                                    <div><i class="fas fa-user"></i> {{ __('messages.user') }}:</div>
-                                    <div class="d-flex gap-3 align-items-center">
-                                        <img src="" alt="avatar" class="avatar avatar-45 rounded-pill">
-                                        <div class="d-flex flex-column text-start" style="font-family: 'Tajawal', sans-serif;">
-                                            <h6 class="m-0" style="font-size: 0.9rem;">—</h6>
-                                            <span>—</span>
-                                        </div>
-                                    </div>
-                                    <div><i class="fas fa-building"></i> {{ __('messages.office') }}: <strong>${order.officeId}</strong></div>
-                                </div>
-    
-                                <div class="trip-finance">
-                                    <div class="finance-box discount">
-                                        <i class="fas fa-percentage"></i>
-                                        <div class="label">{{ __('messages.discount') }}</div>
-                                        <div class="value">${(order.amount * order.discount).toLocaleString()} ل.س</div>
-                                    </div>
-                                    <div class="finance-box total">
-                                        <i class="fas fa-wallet"></i>
-                                        <div class="label">{{ __('messages.total') }}</div>
-                                        <div class="value">${order.totalAmount.toLocaleString()} ل.س</div>
-                                    </div>
-                                </div>
-    
-                                <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top">
-                                    <a href="/order/follow-map/${order.id}" class="action-btn map-btn">
-                                        <i class="fas fa-map-marked-alt"></i>
-                                        <span>{{ __('messages.follow_on_map') }}</span>
-                                    </a>
-    
-                                    <button class="action-btn status-btn change-status-btn">
-                                        <i class="fas fa-random"></i>
-                                        <span>{{ __('messages.change_status') }}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                    });
-    
-                    wrapper.innerHTML = html;
-                })
-                .catch(error => {
-                    console.error('Error loading orders:', error);
-                    document.getElementById('completed-orders-wrapper').innerHTML = `<div class="text-danger p-4">{{ __('messages.error_loading_orders') }}</div>`;
-                });
-        }
-    </script>
-    
-     --}}
-    
-    
-
-
-
-
-
-    
 </x-master-layout>
 
 

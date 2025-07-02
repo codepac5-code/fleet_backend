@@ -166,8 +166,8 @@ class ViewVehicleListLogic implements Service {
             // })
 
 
-            ->addColumn('action', function($data){
-                return view('vehicle.action',compact('data'))->render();
+            ->addColumn('action', function($vehicle){
+                return view('vehicle.action',compact('vehicle'))->render();
             })
 
             ->editColumn('updated_at', function ($query) {

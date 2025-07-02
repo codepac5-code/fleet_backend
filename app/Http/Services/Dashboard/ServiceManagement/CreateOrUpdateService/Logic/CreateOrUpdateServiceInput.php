@@ -15,7 +15,7 @@ class CreateOrUpdateServiceInput implements InputServiceInterface
     private  $status;
     private $hasImage;
     private $current_image;
-    
+    private $travelService;
     public function __construct( array $input)
     {
       $this->userId = isset($input['userId'] )  ? $input['userId']   : null;
@@ -28,6 +28,7 @@ class CreateOrUpdateServiceInput implements InputServiceInterface
       $this->id        =    isset($input['id'] ) ? $input['id']    : null;
       $this->hasImage = $input['has_image'] ?? false ;  
       $this->current_image = $input['current_image'];    
+      $this->travelService = $input['travel_service'] ?? false;
     }
 
 
@@ -181,5 +182,13 @@ class CreateOrUpdateServiceInput implements InputServiceInterface
      */
     public function getDescriptionEn() {
         return $this->description_en;
+    }
+
+    /**
+     * Get the value of travelService
+     */ 
+    public function getTravelService()
+    {
+        return $this->travelService;
     }
 }

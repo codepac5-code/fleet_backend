@@ -14,7 +14,7 @@ class ReceiveCompletedOrderInfoInput implements InputServiceInterface
         $this->orderId = $input['orderId'];
         $this->time = $input['time'];
         $this->price =$input['price'];
-        $this->distance = $input['distance'];
+        $this->distance = $input['distances'];
     }
 
     // write your input function here..

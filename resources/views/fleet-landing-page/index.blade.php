@@ -317,7 +317,7 @@
               <p class="text">
                 اختر رحلتك بسهولة، سواء كانت قصيرة داخل المدينة أو طويلة بين المحافظات، مع إمكانية تحديد وجهات متعددة (Multi-Destination). 
                 يمكنك تخصيص تجربتك، حفظ العناوين المعتادة، وتتبع حالة الرحلة بشكل لحظي. 
-                الدفع سهل وآمن عبر محفظة فليت أو من خلال شركتي الاتصالات الرائدتين في سوريا.
+                {{-- الدفع سهل وآمن عبر محفظة فليت أو من خلال شركتي الاتصالات الرائدتين في سوريا. --}}
                 استمتع بكوبونات وحسومات دورية، ودعم مباشر على مدار الساعة لأي استفسار أو مشكلة.
               </p>
               <a href="javascript:void(0)" class="main-btn">ابدأ رحلتك الآن</a>
@@ -403,7 +403,7 @@
                 يمكنك إدارة أرباحك بسهولة من خلال محفظتك الرقمية، وتتبع الطلبات بواجهة استخدام بسيطة وآمنة.
                 فليت تساعدك على بناء قاعدة زبائن وتوسيع دخلك بثقة.
               </p>
-              <a href="javascript:void(0)" class="main-btn">انضم كـ سائق</a>
+              <a href="{{route('driver-join')}}" class="main-btn">انضم كـ سائق</a>
             </div>
             <!-- about content -->
           </div>
@@ -971,6 +971,15 @@
     <!--====== FOOTER PART START ======-->
     <footer id="footer" class="footer-area pt-300">
       <div class="container">
+
+        <div class="col-sm-4 col-md-4">
+          <div class="footer-content">
+            <h4>SUPPORT</h4>
+            <p>You need support? Visit our support forum and open tickets for you questions.</p>
+            <p><button type="button" class="btn btn-custom-sm">forum</button></p>
+          </div>  <!-- end footer-content -->   
+        </div> <!-- end col-sm-4 -->
+
         <!-- subscribe area -->
         <div class="footer-widget pb-100">
           <div class="row">
@@ -987,11 +996,15 @@
               font-family: 'Segoe UI', sans-serif; 
               text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
               ">
-                .fleet
+              الدعم
+                {{-- .fleet --}}
               </h1>
                 <p class="text">
-                  استكشف مجموعة واسعة من المركبات المصانة بعناية، المصممة لتوفير الراحة والأمان والكفاءة في كل رحلة. سواء كنت تسافر للعمل أو للترفيه، لدينا السيارة المثالية لك
+                  هل تحتاج إلى دعم؟ استخدم نموذج الدعم الخاص بنا لطرح أسئلتك.
+                  {{-- استكشف مجموعة واسعة من المركبات المصانة بعناية، المصممة لتوفير الراحة والأمان والكفاءة في كل رحلة. سواء كنت تسافر للعمل أو للترفيه، لدينا السيارة المثالية لك --}}
                 </p>
+                <a href="{{route('support-form')}}" class="main-btn">الفورم</a>
+
                 <ul class="social">
                   <li>
                     <a href="javascript:voi)">
@@ -1030,11 +1043,12 @@
 
                   </div>
                   <ul class="link">
-                    <li><a href="javascript:void(0)">خريطة الطريق</a></li>
-                    <li><a href="javascript:void(0)">سياسة الخصوصية</a></li>
-                    <li><a href="javascript:void(0)">سياسة الاسترجاع</a></li>
+                    {{-- <li><a href="javascript:void(0)">خريطة الطريق</a></li> --}}
+                    <li><a href="{{route('privacy-policy')}}">سياسة الخصوصية</a></li>
+                    <li><a href="{{route('delete-account')}}">حذف الحساب </a></li>
+                    {{-- <li><a href="javascript:void(0)">سياسة الاسترجاع</a></li>
                     <li><a href="javascript:void(0)">شروط الخدمة</a></li>
-                    <li><a href="javascript:void(0)">التسعير</a></li>                    
+                    <li><a href="javascript:void(0)">التسعير</a></li>                     --}}
                   </ul>
                 </div>
                 <!-- footer wrapper -->
@@ -1047,11 +1061,11 @@
                     <h4 class="title">موارد</h4>
                   </div>
                   <ul class="link">
-                    <li><a href="home">الرئيسية</a></li>
-                    <li><a href="services">خدماتنا</a></li>
-                    <li><a href="about1">حول التطبيق</a></li>
-                    <li><a href="payment">وسائل الدفع</a></li>
-                    <li><a href="video">كيف ؟</a></li>
+                    <li><a href="#home">الرئيسية</a></li>
+                    <li><a href="#services">خدماتنا</a></li>
+                    <li><a href="#about"> حول التطبيق</a></li>
+                    <li><a href="#payment">وسائل الدفع</a></li>
+                    <li><a href="#video">كيف ؟</a></li>
                   </ul>
                 </div>
                 <!-- footer wrapper -->
@@ -1070,12 +1084,12 @@
 
                 </div>
                 <ul class="contact">
-                  <li>+963900000000</li>
-                  <li>info@gmail.com</li>
-                  <li>www.CodePac.com</li>
+                  <li>0586000926</li>
+                  <li>CodePac@gmail.com</li>
+                  <!--<li>www.CodePac.com</li>-->
                   <li>
-                   اتوستراد المزة - برج تالا<br/>
-                   دمشق ، المزة 
+                   دبي  - برج العرب<br/>
+                   <!--دبي -->
 
                   </li>
                 </ul>
@@ -1168,7 +1182,7 @@
    
            //========= glightbox
            GLightbox({
-               'href': 'https://www.youtube.com/watch?v=r44RKWyfcFw&fbclid=IwAR21beSJORalzmzokxDRcGfkZA1AtRTE__l5N4r09HcGS5Y6vOluyouM9EM',
+               'href': 'https://www.youtube.com/watch?v=yvefze898Jw',
                'type': 'video',
                'source': 'youtube', //vimeo, youtube or local
                'width': 900,

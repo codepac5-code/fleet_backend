@@ -1,4 +1,6 @@
 <?php
+
+use App\Http\Services\Api\Send_SMS_Message_Api\Controller\Send_SMS_Message_ApiController;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
@@ -16,7 +18,6 @@ use App\Http\Services\User\RattingDriver\Controller\RattingDriverController;
 use App\Http\Services\User\CompletedOrder\Controller\CompletedOrderController;
 use App\Http\Services\User\PaymentService\Controller\PaymentServiceController;
 use App\Http\Services\User\Auth\UserRegister\Controller\UserRegisterController;
-use App\Http\Services\FleetWalletPayment\Controller\FleetWalletPaymentController;
 use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
 use App\Http\Services\User\GetWalletHistory\Controller\GetWalletHistoryController;
 use App\Http\Services\User\ResearchOnDriver\Controller\ResearchOnDriverController;
@@ -33,50 +34,58 @@ use App\Http\Services\Apis\MTNConfirmPaymentPhoneNumber\Controller\MTNConfirmPay
 use App\Http\Services\Apis\SyriatelConfirmPhoneNumber\Controller\SyriatelConfirmPhoneNumberController;
 use App\Http\Services\Apis\SyriatelPaymentApi\Controller\SyriatelPaymentApiController;
 use App\Http\Services\Dashboard\BannersManagement\CreateOrUpdateBanner\Controller\CreateOrUpdateBannerController;
+use App\Http\Services\Driver\SendJobApplication\Controller\SendJobApplicationController;
 use App\Http\Services\User\ProfileManagement\EdateImageProfile\Controller\EdateImageProfileController;
 use App\Http\Services\User\Auth\UserResetPasswordService\Controller\UserResetPasswordServiceController;
 use App\Http\Services\User\Auth\UserForgetPasswordService\Controller\UserForgetPasswordServiceController;
 use App\Http\Services\User\Auth\UserSendOtpServiceService\Controller\UserSendOtpServiceServiceController;
 use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Controller\ShowPoilceAndPrivceServiceController;
 use App\Http\Services\PoilceAndPrivceManagement\ViewPoilceAndPrivceService\Controller\ViewPoilceAndPrivceServiceController;
+use App\Http\Services\User\DeleteUserAccount\Controller\DeleteUserAccountController;
+use App\Http\Services\User\FleetWalletPayment\Controller\FleetWalletPaymentController;
 use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
+use App\Http\Services\User\GetReferralMessage\Controller\GetReferralMessageController;
+use App\Http\Services\User\GetUserTermAndCondition\Controller\GetUserTermAndConditionController;
 use App\Http\Services\User\InquireUserOrderStatus\Controller\InquireUserOrderStatusController;
 use App\Http\Services\User\SendReport\Controller\SendReportController;
 use App\Http\Services\User\WalletManagement\AddBalanceByPaymentMethod\Controller\AddBalanceByPaymentMethodController;
 use App\Http\Services\User\WalletManagement\ConfirmPhone_AddBalance\Controller\ConfirmPhone_AddBalanceController;
 
 Route::post('/send/otp',UserSendOtpServiceServiceController::class);
+
 Route::post('/check/otp',UserCheckOtpServiceController::class);
 Route::post('/change/password',UserForgetPasswordServiceController::class);
 Route::post('/register',UserRegisterController::class);
 Route::post('/login',LoginController::class);
-Route::get('/policy',ShowPoilceAndPrivceServiceController::class);
+// Route::get('/policy',ShowPoilceAndPrivceServiceController::class);
 
 
 Route::group(['middleware' => ['set-localization']], function () {
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/app-public-settings', GetPublicUserAppSettingsController::class);
     });
-    
+    Route::get('/policy',GetUserTermAndConditionController::class);
 });
 
 Route::group(['middleware' => ['auth:user','set-localization']], function () {
+    Route::post('send-driver-job-application', SendJobApplicationController::class);
 
-    Route::post('rating',RattingDriverController::class);
-    Route::post('make-order',MakeOrderController::class);
+    Route::get('referral-details', GetReferralMessageController::class);
+
+    Route::post('delete-account',DeleteUserAccountController::class);
+
+    Route::post('rating', RattingDriverController::class);
+    Route::post('make-order', MakeOrderController::class);
     Route::post('order/cancel',CancelOrderController::class);
     Route::post('research-on-driver',ResearchOnDriverController::class);
     Route::get('order/history',OrderHistoryController::class);
     Route::get('get/notifications', GetUserNotificationsController::class);
     Route::get('wallet/history',GetWalletHistoryController::class);
 
-    
+    Route::get('coupon/calculation', GetCoponController::class);
 
 
-Route::get('coupon/calculation',GetCoponController::class);
-
-
-Route::group(['prefix' => 'address'], function () {
+    Route::group(['prefix' => 'address'], function () {
 
         Route::post('/add', AddAddressController::class);
         Route::get('/index', ShowAddressController::class);
@@ -104,7 +113,6 @@ Route::group(['prefix' => 'wallet'], function () {
     Route::Post('/add-balance/by/paymentMethods' , AddBalanceByPaymentMethodController::class);
     Route::Post('/confirm-phoneNumber/add-balance-to-wallet' , ConfirmPhone_AddBalanceController::class);
     // Route::Post('/add-balance/by/paymentMethods' , SyriatelPaymentApiController::class);
-
 });
 
 
@@ -120,7 +128,6 @@ Route::group(['prefix' => 'payment'], function () {
 
 
 
-
 Route::group(['prefix' => 'order'], function () {
     Route::post('/make',MakeOrderController::class);
     Route::post('/inquire-about-the-status-of-the-order' , InquireUserOrderStatusController::class);
@@ -128,7 +135,7 @@ Route::group(['prefix' => 'order'], function () {
 });
 
 
-// Broadcast::routes(['middleware' => ['auth:user']]);
+//Broadcast::routes(['middleware' => ['auth:user']]);
 Route::post('banner/add', CreateOrUpdateBannerController::class)->name('banner.store');
 });
 

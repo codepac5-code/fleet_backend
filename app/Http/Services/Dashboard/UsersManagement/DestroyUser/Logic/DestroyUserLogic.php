@@ -20,12 +20,12 @@ class DestroyUserLogic implements Service {
 
     public function execute (): ResponseModel | JsonResponse {
 
-   if(demoUserPermission()){
-            // if(request()->is('api/*')){
-            //     return comman_message_response( __('messages.demo_permission_denied') );
-            // }
-            return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
-        }
+//    if(demoUserPermission()){
+//             // if(request()->is('api/*')){
+//             //     return comman_message_response( __('messages.demo_permission_denied') );
+//             // }
+//             return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
+//         }
         $user = $this->repository->UserRepository()->deleteRepository()->delete(['id' =>$this->input->getId()]);
         $msg = __('messages.msg_deleted',['name' => __('messages.user')] );
 

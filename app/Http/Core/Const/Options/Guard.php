@@ -7,5 +7,7 @@ class  Guard {
     static public $Office   = 'office';
     static public $User     = 'user';
     static public $Driver   = 'driver';
+    static public $Employee   = 'employee';
+
 
 }

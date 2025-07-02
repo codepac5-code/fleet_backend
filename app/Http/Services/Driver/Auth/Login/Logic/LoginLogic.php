@@ -36,11 +36,23 @@ class LoginLogic implements Service {
         if (!checkPassword($this->input->getPassword() , $driver->password ))
         make_exception(__('messages.incorect_password'));//ErrorMessages::getKey('')
 
-        $driver['token']= getToken($driver);
 
         $car = $driver->vehicle;
+        if($driver->officeId != null){
+            $driver['officePhone']= $this->repository->OfficeRepository()
+            ->readRepository()->getByValue('id',$driver['officeId'])->contactNumber;
+        }
+        else{
+            $driver['officePhone'] = '0937766225' ;
+        }
+        if($car == null){
+            make_exception(__('messages.driver_has_no_car'));
+        }
         $driver['car_number']= $car->plate ?? 'xxxxxxx';
-        $driver['car_image']= 'https://media.istockphoto.com/id/492362277/photo/3d-yellow-taxi.jpg?s=612x612&w=0&k=20&c=RXoWaS8t0UrqGN0cFxrbLDROw_bThdCrh-lSYjWU5L0=';
+        $driver['car_image']= $car->photo ??'';
+        $driver['token']= getToken($driver);
+        $driver ['rating'] = round($driver->rating, 1);
+
 
         $response  = new LoginOutput(
         data:$driver,

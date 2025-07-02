@@ -22,6 +22,7 @@ class Service extends  Model implements HasMedia
         'title',
         'title_en',
         'description_en',
+        'travel_service',
     ];
 
 

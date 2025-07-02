@@ -28,8 +28,10 @@ class CU_OfficePageController extends Controller
             $officedata = new Office;
         }
 
+        $services = Service::query()->where(['status'=>true])->get();
         $countries = Country::all();
         $cities = City::all();
-        return view('office.create', compact('pageTitle' ,'officedata' ,'auth_user' ,'cities' , 'countries'));
+        return view('office.create', compact('pageTitle' ,'officedata' ,'auth_user' 
+        ,'cities' , 'countries' ,'services'));
     }
 }

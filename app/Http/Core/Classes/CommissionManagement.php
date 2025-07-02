@@ -14,7 +14,7 @@ abstract class CommissionManagement {
         }
   
         
-         $fleet = FleetOffice::first();
+        $fleet = FleetOffice::first();
 
 //------- fleet commissions 
 
@@ -34,18 +34,15 @@ abstract class CommissionManagement {
 
         if($driver->free_driver){
             info('calculat free driver commission:');
-            $order->fleetCommissionValue  = ($fleet->fleet_commission_value_with_driver / 100) * $order->totalAmount;
+            $order->fleetCommissionValue  = ($fleet->fleet_commission_value_with_driver / 100) * $order->amount;
             info('fleet commission:'. $order->fleetCommissionValue);
             $order->officeCommissionValue = 0;
-            $order->driverCommissionValue = ($fleet->driver_commission_value / 100) * $order->totalAmount;
+            $order->driverCommissionValue = ($fleet->driver_commission_value / 100) * $order->amount;
             info('driver commission:'. $order->driverCommissionValue);
 
             $order->fleetCommissionPercentage  = $fleet->fleet_commission_value_with_driver;
             $order->officeCommissionPercentage = 0;
             $order->driverCommissionPercentage = $fleet->driver_commission_value;
-            $order->save();
-            info('save in database:'. $order->driverCommissionValue);
-
         } 
         
         elseif($driver->car_owner && $driver->officeId != null){
@@ -55,9 +52,9 @@ abstract class CommissionManagement {
                 make_exception("order commission Calculation : office not fuond !");
             }
             // calculate fleet commission 
-            $order->fleetCommission  = ($fleet->fleet_commission_value_with_office / 100) * $order->totalAmount;
+            $order->fleetCommission  = ($fleet->fleet_commission_value_with_office / 100) * $order->amount;
             // calculate office commission  
-            $office_totalAmount      = ($fleet->office_commission_value / 100)  * $order->totalAmount;
+            $office_totalAmount      = ($fleet->office_commission_value / 100)  * $order->amount;
             $order->officeCommissionValue = ($office->commission_with_driver_car / 100) * $office_totalAmount;
             // calculate driver car commission from office commission 
             $order->driverCommission = ($office->driver_car_commission_precentage / 100) * $office_totalAmount;
@@ -65,18 +62,18 @@ abstract class CommissionManagement {
             $order->fleetCommissionPercentage  = $fleet->fleet_commission_value_with_office;
             $order->officeCommissionPercentage = $office->commission_with_driver_car;
             $order->driverCommissionPercentage = $office->driver_car_commission_precentage;
-            $order->save();
             } 
-        elseif(!($driver->car_owner) && $driver->officeId != null){
+
+        elseif(!($driver->car_owner) && $driver->officeId != null ){
             $office = Office::find($driver->officeId);
             if($office == null){
                 Log::error("order commission Calculation : office not fuond !");
                 make_exception("order commission Calculation : office not fuond !");
             }
             // calculate fleet commission 
-            $order->fleetCommissionValue  = ($fleet->fleet_commission_value_with_office / 100) * $order->totalAmount;
+            $order->fleetCommissionValue  = ($fleet->fleet_commission_value_with_office / 100) * $order->amount;
             // calculate office commission  
-            $office_totalAmount      = ($fleet->office_commission_value / 100)  * $order->totalAmount;
+            $office_totalAmount      = ($fleet->office_commission_value / 100)  * $order->amount;
             $order->officeCommissionValue = ($office->commission_with_office_car / 100) * $office_totalAmount;
             // calculate driver car commission from office commission 
             $order->driverCommissionValue = ($office->driver_commission_precentage / 100) * $office_totalAmount;
@@ -86,8 +83,24 @@ abstract class CommissionManagement {
             $order->fleetCommissionPercentage  = $fleet->fleet_commission_value_with_office;
             $order->officeCommissionPercentage = $office->commission_with_office_car;
             $order->driverCommissionPercentage = $office->driver_commission_precentage;
-            $order->save();
         }
+
+
+        if($order->couponId != null){
+            $coupon = $order->coupon;
+            if($coupon->isPercentage){
+                $discountAmount = $coupon->discount * $order->amount;
+            }
+            else {
+                $discountAmount = max( $order->amount - $coupon->discount, 0);
+            }
+            $order->fleetCommissionValue = max($order->fleetCommissionValue - $discountAmount , 0); 
+            $order->totalAmount = $order->amount - $discountAmount;
+            
+        }
+
+        $order->save();
+        info('save commissions of order #'.$order->id.'in database');
         return $order;
 
     }

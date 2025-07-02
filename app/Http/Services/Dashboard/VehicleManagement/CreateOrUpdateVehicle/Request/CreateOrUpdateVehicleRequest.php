@@ -33,6 +33,7 @@ class CreateOrUpdateVehicleRequest extends BaseRequest {
             'description'       => 'nullable|string|max:500',
             'seats_count'       => 'nullable|numeric|min:1',
             'serviceIds'      => 'required',
+            'model'             =>'required',
             'city'              => 'nullable',   
             'image'             => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'id'            =>'sometimes|numeric',

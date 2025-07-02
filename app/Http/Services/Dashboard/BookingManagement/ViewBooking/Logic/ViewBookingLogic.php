@@ -29,17 +29,18 @@ class ViewBookingLogic implements Service {
 
             case'completed':
                 $query = $this->repository->BookingRepository()
-                ->readRepository()->getCompletedOrders();
+                ->readRepository()->getCompletedOrders($this->input->getOfficeId());
                 return $this->completed_dataTable($query);
                 break;
 
             case'ongoing':
                 $query = $this->repository->BookingRepository()
-                ->readRepository()->getOngoingOrders();
+                ->readRepository()->getOngoingOrders($this->input->getOfficeId());
                 return $this->ongoing_dataTable($query);
                 break;
 
-            case'pending':
+                // case'pending':
+             default:
                 $query = $this->repository->BookingRepository()
                 ->readRepository()->getPendingOrders();
                 return $this->pending_dataTable($query);
@@ -111,7 +112,7 @@ class ViewBookingLogic implements Service {
     // })
     ->editColumn('details' , function ($query){
         
-        return "<a class='btn-link btn-link-hover' href=" .route('booking.show', $query->id).">".__('messages.details') ."</a>";
+        return "<a class='btn-link btn-link-hover' href=" .route('booking.show', ['id'=>$query->id]).">".__('messages.details') ."</a>";
     })
     ->editColumn('status' , function ($query){
         return bookingstatus($query->status);

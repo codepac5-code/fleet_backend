@@ -12,7 +12,7 @@ class CreateOrUpdateBannerController extends Controller
     public function __invoke(CreateOrUpdateBannerRequest $request)
     {
         // validate input data and pass it to the service..
-        $input = new CreateOrUpdateBannerInput($request->all());
+        $input = new CreateOrUpdateBannerInput($request->validated());
 
         $service = new CreateOrUpdateBannerLogic($input); // call the service's logic
 

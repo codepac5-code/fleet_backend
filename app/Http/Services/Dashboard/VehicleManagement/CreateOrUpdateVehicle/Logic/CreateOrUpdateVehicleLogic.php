@@ -41,6 +41,7 @@ class CreateOrUpdateVehicleLogic implements Service {
             'plate'             =>$this->input->getPlate(), 
             'modelYear'         =>$this->input->getModel_year(), 
             'licenseNumber'     =>$this->input->getLicenseNumber(), 
+            'model'             =>$this->input->getModel(),
         //  'lastDriver'        =>$this->input->getLast(), 
             'color'             =>$this->input->getColor(), 
         //  'driverId'          =>$this->input->getDriverId(), 
@@ -71,8 +72,8 @@ class CreateOrUpdateVehicleLogic implements Service {
                 $message = __('messages.update_form',[ 'form' => __('messages.vehicle') ] );
             }
         }
-        else{
-
+    else
+        {
             $vehicle = $vehicle_repo->createRepository()
             ->create( $data);
             $vehicleId = $vehicle->id;

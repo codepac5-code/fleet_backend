@@ -96,7 +96,10 @@
                                     </div>
 
 
-                                    <div class="form-group col-md-4">
+
+
+                                        
+                                    <div class="form-group col-md-2">
                                         <label for="status" class="form-control-label">
                                             {{ trans('messages.status') }} <span class="text-danger">*</span>
                                         </label>
@@ -111,7 +114,33 @@
                                         @error('status')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror
+                                    </div>
+                                    
+
+                                    <div class="form-group col-md-2">
+                                        <label for="travel_service" class="form-control-label">
+                                            {{ trans('messages.travel_service') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="travel_service" id="travel_service" class="form-control select2js" required>
+                                            <option value="0" {{ old('travel_service', $service->travel_service ?? '') == '0' ? 'selected' : '' }}>
+                                                {{ __('messages.no') }}
+                                            </option>
+                                            <option value="1" {{ old('travel_service', $service->travel_service ?? '') == '1' ? 'selected' : '' }}>
+                                                {{ __('messages.yes') }}
+                                            </option>
+                                   
+                                        </select>
+                                        @error('travel_service')
+                                            <small class="text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
+
+
+                                <div class="row">
+
+
                                 <div class="form-group col-md-6">
                                         <label for="description" class="form-control-label">
                                             {{ trans('messages.description') }}
@@ -132,13 +161,22 @@
                                         @enderror
                                     </div>
                                 </div>
-                                    <button type="submit" class="btn btn-md btn-primary float-right">
-                                        {{ trans('messages.save') }}
+
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                        <i class="fas fa-save mr-2"></i> {{ trans('messages.save') }}
                                     </button>
+                                    <div id="responseMessage" class="mt-3"></div>
+                                </div>
                                 </div>
                             </div>
                         </div>
-                     </form>
+
+                      
+                    
+                    </form>
+
                 </div>
             </div>
         </div>

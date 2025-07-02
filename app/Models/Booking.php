@@ -42,6 +42,7 @@ class Booking extends Model
         'paymentStatus', 
         'PaymentDatetime',
         'isPercentage',
+        'reason',
         'driverCommissionPercentage',
         'officeCommissionPercentage',
         'fleetCommissionPercentage',

@@ -34,6 +34,7 @@ class CU_SubServicePageController extends Controller
     
          $services = Service::where(['status'=> true])->get();
         
-        return view('sub-service.create', compact('services','pageTitle' ,'subservice' ,'auth_user' ));
+         $cities = City::all();
+        return view('sub-service.create', compact('services','pageTitle' ,'subservice' ,'auth_user','cities' ));
     }
 }

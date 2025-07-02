@@ -1,9 +1,11 @@
 <x-master-layout>
+
+
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-12">
                 <ul class="nav nav-tabs nav-fill custom-tabs-nav" id="customTabs">
-                    <li class="nav-item">
+                    {{-- <li class="nav-item">
                         <a class="nav-link active custom-tabs-link custom-tabs-hover" data-tab="pending">
                             <i class="fa fa-hourglass-half custom-tabs-icon"></i> 
                             <span class="custom-tabs-text">{{ __('messages.pending') }}</span>
@@ -14,18 +16,18 @@
                             <i class="fa fa-clock custom-tabs-icon"></i>
                             <span class="custom-tabs-text">{{ __('messages.ongoing') }}</span>
                         </a>
-                    </li>
+                    </li> --}}
                     <li class="nav-item">
                         <a class="nav-link custom-tabs-link custom-tabs-hover" data-tab="completed">
-                            <i class="fa fa-check-circle custom-tabs-icon"></i>
-                            <span class="custom-tabs-text">{{ __('messages.completed') }}</span>
+                            <i class="fas fa-history"></i>
+                            <span class="custom-tabs-text">{{ __('messages.order_history') }}</span>
                         </a>
                     </li>
                 </ul>
             </div>
             <div class="card mt-3">
                 <div class="card-body">
-                    <div class="tab-content">
+                    {{-- <div class="tab-content">
                         <div class="tab-pane show active" id="pending">
 
                             <h4 class="custom-tabs-title">
@@ -48,17 +50,17 @@
                             <p class="completed-orders-text">{{ __('messages.ongoing_orders_desc')  }}</p>
                             @include('booking.follow.ongoing-index')
                         </div>
-            
+             --}}
                         <div class="tab-pane" id="completed">
                             <h4 class="custom-tabs-title">
                                 <i class="fa-solid fa-circle-check animated-icon blink-animation completed-icon"></i> 
                                 
-                                ✅ {{ __('messages.completed_orders') }}
-                                <span id="counterElement3" style="float: right; margin-right: 60px; font-size: 70px; font-weight: bold;">0</span>
+                               <i class="fas fa-list-alt"></i> {{ __('messages.order_history') }}
+                                <span id="counterElement3" style="float: right; margin-right: 60px; font-size: 70px; font-weight: bold;">{{$completedCount}}</span>
 
                             </h4>
-                            <p class="completed-orders-text">{{ __('messages.completed_orders_desc') }}</p>
-                            @include('booking.follow.completed-index')
+                            <p class="completed-orders-text">{{ __('messages.order_history_description') }}</p>
+                            @include('booking.follow.completed-index' )
                         </div>
                     </div>
                 </div>
@@ -67,7 +69,7 @@
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
+{{-- <script>
     $(document).ready(function () {
         $(".nav-link").on("click", function () {
             let targetTab = $(this).data("tab");
@@ -84,11 +86,11 @@
 
         $(".nav-link.active").click();
     });
-</script>
+</script> --}}
 
 
 {{-- @if(auth()->user()->hasAnyRole(['office']))  --}}
-<script> 
+{{-- <script> 
 
   socket.on('offices:follow-order', (data) => {
     console.log('follow_order event...');
@@ -112,11 +114,11 @@
     }
 
     });
-</script>
+</script> --}}
 {{-- @endif --}}
 
 
-@if(auth()->user()->hasAnyRole(['super-admin'])) 
+{{-- @if(auth()->user()->hasAnyRole(['super-admin'])) 
 <script> 
 
   socket.on('admins:follow_order', (data) => {
@@ -141,9 +143,9 @@
     }
     });
 </script>
-@endif
+@endif --}}
 
-
+{{-- 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const counterElement = document.getElementById("counterElement");
@@ -205,7 +207,7 @@
     });
 
 
-</script>
+</script> --}}
 
 
 </x-master-layout>

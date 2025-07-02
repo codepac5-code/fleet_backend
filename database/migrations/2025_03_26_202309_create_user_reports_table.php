@@ -15,9 +15,19 @@ return new class extends Migration
             $table->id();
             $table->foreignId('userId')->references('id')->on('users')->onDelete('cascade');
             $table->string('subject');
-            $table->string('description');
+            $table->longText('description');
+            $table->string('mode')->nullable();
             $table->string('photo')->nullable();
             $table->boolean('isOpen')->default(true);
+            $table->string('status')->nullable()->default('0');
+            $table->softDeletes();
+
+
+            // $table->unsignedBigInteger('employee_id');
+            // $table->string('email')->unique()->nullable();
+            // $table->string('contact_number', 255)->nullable();
+            // $table->string('status')->nullable()->default('0');
+
             $table->timestamps();
 
         });

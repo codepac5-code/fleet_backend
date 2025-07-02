@@ -51,19 +51,25 @@ class BookingReadRepository extends ReadRepository
         return $model = $this->model->query()->select($selected)->with($with)->where($conditions)->orderBy('created_at','desc')->paginate(10);
     }
 
-    public function getCompletedOrders(){
+    public function getCompletedOrders($officeId){
          $model = $this->model->query()->select(['*'])->where(['status'=>OrderStatus::$Completed],['status'=>OrderStatus::$Cancelled],['status'=>OrderStatus::$Hold]);
         if(auth()->user()->hasRole(['office'])){
             $model->where(['officeId'=>auth()->user()->id]);
         }
+        elseif( $officeId != null){
+            $model->where(['officeId'=>$officeId]);
+        }
        return $model->orderBy('created_at','desc')->get();
     }
 
-    public function getOngoingOrders(){
+    public function getOngoingOrders($officeId){
          $model = $this->model->query()->select(['*'])->where(['status'=>OrderStatus::$InProgress]);
 
         if(auth()->user()->hasRole(['office'])){
             $model->where(['officeId'=>auth()->user()->id]);
+        }
+        elseif( $officeId != null){
+            $model->where(['officeId'=>$officeId]);
         }
 
         return $model->orderBy('created_at','desc')->get();

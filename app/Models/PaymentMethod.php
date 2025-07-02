@@ -12,6 +12,8 @@ class PaymentMethod extends Model
         'name_en',
         'image',
         'status',
+        'payment_wallet',
+        'payment_trip',
         'type',
     ];
 

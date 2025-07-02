@@ -10,4 +10,10 @@ class OfficeCreateRepository extends CreateRepository
     {
         $this->model = new Office();
     }
+
+    public function addOfficeServices( $officeId , $SubServiceIds){
+        $office = $this->model::findOrFail($officeId);
+
+        $office->services()->sync($SubServiceIds);
+    }
 }

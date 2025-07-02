@@ -12,7 +12,7 @@ const ioRealTime = require('socket.io')(serverRealTime, {
 const appNotifications = express();
 const serverNotifications = http.createServer(appNotifications);
 
-const PORT_REAL_TIME = 3000;
+const PORT_REAL_TIME = 6001;
 
 require('dotenv').config();
 
@@ -77,13 +77,14 @@ redis.on('pmessage', ( pattern , channel , message ) => {
     message = JSON.parse(message);
 
     if(message.socket !== true ){
-      if (channel.startsWith('public-notification') || channel.startsWith('private-notification')) {
-        console.log('to notification channel');
+      if (channel.startsWith('public-notification') || channel.startsWith('private-')) {
+        console.log('to notification channel:');
         console.log(`Channel: ${channel}, Event: ${message.event} ,  data: ${message.data}`);
         ioNotification.to(channel).emit(channel + ':' + message.event , message.data);
     }
     else{
       // data = JSON.parse(message.data);
+      console.log('to real-time channel:');
       console.log(`Channel: ${channel}, Event: ${message.event} ,  data: ${message.data}`);
       ioRealTime.to(channel).emit(channel + ':' + message.event , message.data );
     }
@@ -246,7 +247,7 @@ ioNotification.on('connection', (client) => {
      // -------------- send event to channel
 
     client.on('unsubscribe', function(room) {
-      console.log('leaving room', room);
+      console.log('leaving notification room ', room);
       client.leave(room);
   });
 

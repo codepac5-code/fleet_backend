@@ -22,7 +22,7 @@ class SubService extends Model implements HasMedia
         'openPrice',
         'kmPrice',
         'minutePrice',
-        'serviceId',
+        'subServiceId',
         'name_en',
         'description_en'
     ];

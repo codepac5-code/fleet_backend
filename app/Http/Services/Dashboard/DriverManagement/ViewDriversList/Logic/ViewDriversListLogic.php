@@ -84,11 +84,11 @@ class ViewDriversListLogic implements Service {
 
             ->editColumn('isConected', function($query) {
                 if($query->isConected){
-                    $status = '<span class="badge badge-active">'.__('messages.Conected').'</span>';
+                    $status = '<span class="badge badge-active">'.__('messages.connected').'</span>';
                     // $status = '<a class="btn-sm text-white btn-success"  href='.route('handyman.approve',$query->id).'>Accept</a>';
 }
             else{
-                    $status = '<span class="badge badge-inactive">'.__('messages.disConected').'</span>';
+                    $status = '<span class="badge badge-inactive">'.__('messages.disconnected').'</span>';
                 }
                 return $status;
             })
@@ -109,12 +109,22 @@ class ViewDriversListLogic implements Service {
             ->addColumn('phoneNumber',function($qry){
                    return  $qry->phoneNumber;
             })
+            
+            ->editColumn('walletBalance', function ($qry){
+                $walletBalance = $qry->walletBalance;
+                return view('customer.walletBalance', compact('walletBalance'));
+            })
+            ->editColumn('dues', function ($qry){
+                $dues = $qry->fleetDues + $qry->officeDues;
+                return view('driver.dues', compact('dues'));
+            })
+           
             ->addColumn('action', function($driver){
                 $auth_user= authSession();
                 return view('driver.action',compact('driver','auth_user'))->render();
             })
             ->addIndexColumn()
-            ->rawColumns(['check','display_name','action','isConected','created_at','contact_number','office' ])
+            ->rawColumns(['check','display_name','action','isConected','created_at','contact_number','office','walletBalance' ])
             ->make(true); 
         }
 }

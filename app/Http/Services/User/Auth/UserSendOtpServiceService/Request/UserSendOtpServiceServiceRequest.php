@@ -23,7 +23,8 @@ class UserSendOtpServiceServiceRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'phoneNumber'=>['required',  'numeric', 'digits:10'],
+            'phoneNumber'=>['required',  'numeric'],
+            'dialCode'=>'required'
         ];
     }
 

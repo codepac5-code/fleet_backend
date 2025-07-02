@@ -91,6 +91,11 @@ class CreateOrUpdateOfficeLogic implements Service {
         //     }
         // }
         $office->assignRole('office');
+
+        $this->repository->OfficeRepository()
+        ->createRepository()->addOfficeServices(  $office->id , $this->input->getServiceIds());
+        
+
      
         commitTransaction();
 

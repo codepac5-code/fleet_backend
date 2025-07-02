@@ -14,9 +14,6 @@
                 <div class="tab-content" id="pills-tabContent-1">
                     <div class="tab-pane active p-1" >
                         <div class="role_permission_tab"></div>
-
-
-                    
                     </div>
                 </div>
             </div>

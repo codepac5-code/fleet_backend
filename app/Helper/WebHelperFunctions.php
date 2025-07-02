@@ -77,6 +77,25 @@ function logoutAuthUser(){
     // ]);
 }
 
+
+
+function textByLanguage($ar_text , $en_text){
+    if(app()->getLocale() == 'ar'){return $ar_text; }
+    return $en_text;
+}
+function getGenderByLanguage($gender){
+    switch($gender){
+        case 'male':  return (app()->getLocale() == 'ar') ? 'ذكر' : 'male';
+                break;
+
+        case 'male':  return (app()->getLocale() == 'ar') ? 'انثى' : 'female';
+        break;
+
+        default: return '--';
+        break;
+    }
+
+}
 function getDefaultCurrency($value){
    return (new CurrencyChange())->getDefaultCurrency($value);
 }
@@ -156,15 +175,13 @@ function checkMenuRoleAndPermission($menu){
     return false;
 }
 
-function checkRolePermission($role,$permission){
-    try{
-        if($role->hasPermissionTo($permission)){
-            return true;
-        }
-        return false;
-    }catch (Exception $e){
-        return false;
-    }
+function checkRolePermission($role,$permission , $guardName = 'web'){
+    
+        return $role->permissions()
+                    ->where('name', $permission)
+                    ->where('guard_name', $guardName)
+                    ->exists();
+    
 }
 
 function demoUserPermission(){
@@ -598,10 +615,21 @@ function envChanges($type,$value){
     }
 }
 
-function getPriceFormat($price){
+function getPriceFormat($price , $lang = null){
+
+
+    if($lang !=null){
+        if($lang == 'ar'){
+            return "د.إ " .$price;
+        }
+        return $price." AED";
+    }
     $price = (double)$price;
 
 
+
+
+    
     $symbol= 'SYP';
     if (app()->getLocale() == 'ar') {
         $symbol= 'ل.س';

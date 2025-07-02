@@ -127,6 +127,22 @@
                           name: 'contact_number',
                           title: "{{__('messages.contact_number')}}"
                       },
+
+                      {
+                          data: 'walletBalance',
+                          name: 'walletBalance',
+                          title: "{{__('messages.walletBalance')}}",
+                          searchable: false,
+
+                      },
+
+                      {
+                          data: 'created_at',
+                          name: 'created_at',
+                          title: "{{ __('messages.joining_date') }}",
+                          searchable: false,
+
+                      },
                       // // {
                       // //     data: 'address',
                       // //     name: 'address',

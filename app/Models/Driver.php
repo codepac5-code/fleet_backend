@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class Driver extends Authenticatable
@@ -88,7 +89,14 @@ class Driver extends Authenticatable
       ->toArray();
 
       Log::info('driver has this sub services: ',$subServiceIds);
-      return !empty($subServiceIds);
+      return empty($subServiceIds) ? false : true;
+    }
+
+    public function getSubServicesAsArray() : array
+    {  
+      return $this->hasMany(Vehicle_SubService::class, 'vehicleId', 'vehicleId')
+      ->pluck('subServiceId')
+      ->toArray();
     }
 
 

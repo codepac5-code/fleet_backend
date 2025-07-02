@@ -36,7 +36,7 @@ class Vehicle extends Model
     }
 
     public function subServices(){       
-    return $this->belongsToMany(SubService::class, 'vehicle_sub_services', 'vehicleId', 'subServiceId');
+        return $this->belongsToMany(SubService::class, 'vehicle_sub_services', 'vehicleId', 'subServiceId');
     }
 
 

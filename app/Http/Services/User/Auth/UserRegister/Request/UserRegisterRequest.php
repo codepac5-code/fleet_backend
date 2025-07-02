@@ -26,8 +26,10 @@ class UserRegisterRequest extends BaseRequest
         [
             'password'=>['required' ,"string","min:8"],
             'firstName'=>['required', 'string' , 'max:25', 'min:3'],
-            'lastName'=> ['required',  'string', 'max:25', 'min:3'],
-            'phoneNumber'=>['required', 'numeric', 'digits:10'],
+            'lastName'=> ['required',  'string', 'max:25', 'min:2'],
+            'phoneNumber'=>['required', 'numeric'],
+            'referralCode'=>['sometimes','nullable'],
+            'dialCode'=>'required'
         ];
     }
 

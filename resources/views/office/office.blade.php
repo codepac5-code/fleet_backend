@@ -1,5 +1,5 @@
 @if(isset($query->id))
-<a href="{{ route('office.show', ['office' => $query->id]) }}">
+<a href="{{ route('office.show', ['officeId' => $query->id]) }}">
   <div class="d-flex gap-3 align-items-center">
     <img src="{{ $query->logo }}" alt="avatar" class="avatar avatar-40 rounded-pill">
     <div class="text-start">

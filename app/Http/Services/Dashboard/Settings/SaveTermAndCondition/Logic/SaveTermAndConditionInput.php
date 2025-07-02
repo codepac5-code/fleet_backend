@@ -6,12 +6,13 @@ use App\Http\Core\InternalInterface\InputServiceInterface;
 class SaveTermAndConditionInput implements InputServiceInterface
 {
 
-    private $value;
-    private $id;
+    private $value_ar;
+    private $value_en;
+
     public function __construct( array $input)
     {
-        $this->value = $input['value'];
-        $this->id    = $input['id'];
+        $this->value_ar = $input['value'];
+        $this->value_en = $input['value_en'];
 
     }
 
@@ -23,17 +24,13 @@ class SaveTermAndConditionInput implements InputServiceInterface
         ];
     }
 
-    /**
-     * Get the value of value
-     */
-    public function getValue() {
-        return $this->value;
+    public function getArValue(){
+        return $this->value_ar;
     }
 
-    /**
-     * Get the value of id
-     */
-    public function getId() {
-        return $this->id;
+    public function getEnValue(){
+       return $this->value_en;
     }
+
+
 }

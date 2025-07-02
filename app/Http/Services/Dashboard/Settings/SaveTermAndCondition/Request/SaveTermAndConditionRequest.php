@@ -24,8 +24,9 @@ class SaveTermAndConditionRequest extends BaseRequest
     {
         return
         [
-            'id'=>'required',
-            'value'=>'required'
+            'value'=>'required',
+            'value_en'=>'required'
+
         ];
     }
 

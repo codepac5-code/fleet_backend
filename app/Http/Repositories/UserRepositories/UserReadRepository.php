@@ -8,6 +8,8 @@ use App\Http\Core\Models\NotificationModel;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\BroadcastUserNotification;
 use App\Http\Core\Repositories\Abstract_CRUD_Repositoris\ReadRepository;
+use App\Models\Coupon;
+use App\Models\CouponUser;
 use App\Models\UserNotification_model;
 
 class UserReadRepository extends ReadRepository
@@ -17,6 +19,44 @@ class UserReadRepository extends ReadRepository
         $this->model = new User();
     }
 
+  
+    
+    public function addCouponToUser( 
+        $userId,
+        $percentage_discount,
+        $expireDate,
+        $prefix = 'FLEET-',
+        $limit = 1 ,
+        $length = 10 ):string {
+
+
+        $bytes = random_bytes(ceil($length / 2)); 
+        $random = strtoupper(bin2hex($bytes)); 
+        $coupon_code = $prefix . '-' . substr($random, 0, $length);
+         
+        $coupon = Coupon::create([
+            'code' =>  $coupon_code,
+            'discounType' => 'percentage',
+            'discount' => $percentage_discount / 100,
+            'expireDate' => $expireDate,
+            'isActive' => true,
+            'limit'=> $limit,
+        ]);
+
+        $user = $this->model->find($userId);
+
+        if($user == null){
+            make_exception('user not exists , please check user id!');
+        }
+
+        if($coupon == null){
+            make_exception(__('messages.something_wrong'));
+        }
+
+        CouponUser::create(['couponId'=>$coupon->id, 'userId'=>$user->id, 'count'=>0]);
+
+        return $coupon_code;
+    }
 
     public function getByConditions( $conditions=[] , array $selected = ["*"] ):array {
         $user = $this->model->select($selected)

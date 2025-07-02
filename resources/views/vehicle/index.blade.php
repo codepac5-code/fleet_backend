@@ -113,6 +113,19 @@
                         searchable: false,
 
                       },
+                      {
+                        data: 'brand',
+                        name: 'brand',
+                        title: "{{__('messages.Brand')}}",
+                        searchable: false,
+
+                      },
+                      {
+                        data: 'model',
+                        name: 'model',
+                        title: "{{ __('messages.model') }}",
+                        searchable: false,
+                      },
                     // {
                     //    name: 'id',
                     //     data: 'id',
@@ -145,13 +158,7 @@
                         searchable: false,
 
                       },
-                      {
-                        data: 'brand',
-                        name: 'brand',
-                        title: "{{__('messages.Brand')}}",
-                        searchable: false,
-
-                      },
+                     
                       // {
                       //   data: 'model',
                       //   name: 'model',

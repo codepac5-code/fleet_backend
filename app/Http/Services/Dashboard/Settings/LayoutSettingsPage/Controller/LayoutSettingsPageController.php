@@ -17,8 +17,8 @@ class LayoutSettingsPageController extends Controller
         $service = new LayoutSettingsPageLogic($input); // call the service's logic
 
         // execute service and get result..
-        $result = $service->{$request->page}();
+        return $service->{$request->page}(); // send response..
 
-        return SendResponse::sendSuccessResponse($result); // send response..
+       // return SendResponse::sendSuccessResponse($result); 
     }
 }

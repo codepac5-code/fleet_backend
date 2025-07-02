@@ -23,13 +23,14 @@
 
                             <div class="statistics-card statistics-card__style2 statistics-card__already-withdraw">
                                 <h2>{{getPriceFormat($officeData['officeTotWithdrableAmt']) ?? 0}}</h2>
-                                <h3>{{__('messages.already_withdraw')}}</h3>
+                                <h3>{{__('messages.withdrawble_amount')}}</h3>
                             </div>
 
                             <div
                                 class="statistics-card statistics-card__style2 statistics-card__withdrawable-amount">
                                 <h2>{{getPriceFormat($officeData['officeAlreadyWithdrawAmt']) ?? 0}}</h2>
-                                <h3>{{__('messages.withdrawble_amount')}}</h3>
+                                <h3>{{__('messages.already_withdraw')}}</h3>
+
                             </div>
 
                             <div class="statistics-card statistics-card__style2 statistics-card__total-earning">
@@ -45,7 +46,7 @@
 
                                 </div>
                                 @else
-                                <p style = "color:#009900; font-size:20px;
+                                <p style = "color:#366d36ea; font-size:20px;
                                      font-style:italic; text-align:center; margin-top: 20%;">
                                       {{__('messages.nodata')}}
                                     
@@ -61,6 +62,9 @@
                         </div>
                     </div>
 
+                    <div class="col-12">
+                        <div class="horizontal-separator"></div>
+                    </div>
                     
                     <div class="row g-4">
                         <div class="col-lg-6">
@@ -88,6 +92,23 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div
+                        class="statistics-card statistics-card__style2 statistics-card__withdrawable-amount" style="margin-left: 70px; background:rgb(209, 74, 74); border-radius: 15px;">
+                        <h2 style="color: white;">{{__('messages.fleet_dues')}}</h2>
+                        <h2 style="color: white;">{{getPriceFormat($officeData['officeAlreadyWithdrawAmt']) ?? 0}}</h2>
+
+                    </div>
+
+
+                    <div
+                    class="statistics-card statistics-card__style2 statistics-card__withdrawable-amount" style="margin-left: 40px; background:rgba(65, 126, 25, 0.863); border-radius: 15px;">
+                    <h2 style="color: white;">{{__('messages.wallet_balance')}}</h2>
+                    <h2 style="color: white;">{{getPriceFormat($officeData['officeAlreadyWithdrawAmt']) ?? 0}}</h2>
+
+                </div>
+
+                
                     </div>
                 </div>
             </div>

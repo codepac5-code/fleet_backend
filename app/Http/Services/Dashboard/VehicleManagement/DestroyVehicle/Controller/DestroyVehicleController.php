@@ -17,8 +17,8 @@ class DestroyVehicleController extends Controller
         $service = new DestroyVehicleLogic($input); // call the service's logic
 
         // execute service and get result..
-        $result = $service->execute();
+        return $service->execute();
 
-        return SendResponse::sendSuccessResponse($result); // send response..
+        // return SendResponse::sendSuccessResponse($result); // send response..
     }
 }

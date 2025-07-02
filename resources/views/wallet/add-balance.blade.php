@@ -2,15 +2,13 @@
     <div class="container-fluid py-1">
         <div class="row justify-content-center">
 
-            <!-- اختيار نوع المستخدم -->
             <div class="col-lg-6">
                 <div class="card shadow-lg border-0">
                     <div class="card-body">
                         <h4 class="mb-4 text-center text-primary">{{ __('messages.add_balance') }}</h4>
-                        <form method="GET" action="{{ route('uuu') }}" enctype="multipart/form-data" id="userForm">
+                        <form method="GET" action="{{ route('wallet.history') }}" enctype="multipart/form-data" id="userForm">
                             @csrf
 
-                            <!-- اختيار نوع المستخدم -->
                             <div class="form-group text-center">
                                 <label class="font-weight-bold mb-3">{{ __('messages.select_type') }}</label>
                                 <div class="user-type-icons d-flex justify-content-center gap-4">
@@ -27,14 +25,23 @@
                                         <p class="mt-2">{{ __('messages.office') }}</p>
                                     </div>
                                 </div>
+                                <p id="searchingText" style="text-align:center; font-size:18px; margin-top:10px;">
+                        {{ __('messages.select_user_type_to_search') }}
+                        </p>
+
                             </div>
 
-                            <!-- حقل الإدخال -->
                             <div class="form-group position-relative mt-4">
-                                <label id="inputLabel" class="font-weight-bold">{{ __('messages.phone_number') }}</label>
+                                <label id="inputLabel" class="font-weight-bold">{{ __('messages.phoneNumber') }}</label>
                                 <i class="fas fa-phone dynamic-icon" id="dynamicIcon"></i>
-                                <input type="text" id="inputField" name="identifier" class="form-control pl-5 large-input" placeholder="{{ __('messages.enter_phone') }}" required>
-                            </div>
+                                <input type="text" id="inputField" name="identifier" class="form-control pl-5 large-input @error('identifier') is-invalid @enderror" placeholder="{{ __('messages.enter_phone') }}" required>
+                            
+                                @error('identifier')
+                                    <span class="invalid-feedback d-block" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>                            
 
                             <input type="hidden" name="userType" id="userType" value="">
 
@@ -66,7 +73,6 @@
     <div class="col-12">
         <div class="horizontal-separator"></div>
     </div>
-                <!-- أيقونة المحفظة -->
                 <div class="col-12 text-center mb-4">
                     <div class="wallet-icon-container">
                         <i class="fas fa-wallet wallet-icon"></i>
@@ -74,7 +80,6 @@
                 </div>
     
 
-    <!-- الخطوط والأيقونات -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
@@ -82,10 +87,7 @@
         body {
             font-family: 'Cairo', sans-serif;
             background-color: #f9f9f9;
-        }
-
-        
-        /* أيقونة المحفظة */
+        }    
         .wallet-icon-container {
             background: radial-gradient(circle at 30% 30%, #ffcc00, #ffc107, #fff3cd);
             border-radius: 20px;
@@ -108,17 +110,16 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-12px); }
         }
-/* اختيار نوع المستخدم */
-.user-type-icons {
+
+    .user-type-icons {
     display: flex;
     justify-content: center;
     gap: 25px;
     flex-wrap: wrap;
 }
 
-/* الأيقونة العادية */
 .icon {
-    background-color: #f8c7055b; /* اللون في الوضع الفاتح */
+    background-color: #f8c7055b; 
     width: 120px;
     height: 130px;
     border-radius: 35px;
@@ -131,17 +132,16 @@
 }
 
 
-/* تأثير عند المرور فوق الأيقونة */
 .icon:hover {
     transform: translateY(-5px);
 }
-
-/* التحديد عند اختيار الأيقونة */
 .icon.selected {
     border-color: #ffcc00;
     background: #fff3cd;
     box-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
 }
+
+
 
 
 /* تحديد حجم النص لحقل الإدخال */
@@ -241,28 +241,44 @@ body.dark .icon.selected {
     </style>
 
     <script>
-        function selectUserType(type) {
-            document.getElementById("userType").value = type;
+function selectUserType(type) {
+    document.getElementById("userType").value = type;
 
-            const icons = document.querySelectorAll(".icon");
-            icons.forEach(icon => icon.classList.remove("selected"));
-            document.getElementById(type).classList.add("selected");
+    const icons = document.querySelectorAll(".icon");
+    icons.forEach(icon => {
+        icon.classList.remove("selected");
+    });
 
-            const label = document.getElementById("inputLabel");
-            const input = document.getElementById("inputField");
-            const icon = document.getElementById("dynamicIcon");
+    const selectedIcon = document.getElementById(type);
+    selectedIcon.classList.add("selected");
 
-            if (type === 'office') {
-                label.textContent = "{{ __('messages.email') }}";
-                input.placeholder = "{{ __('messages.enter_email') }}";
-                input.type = "email";
-                icon.className = "fas fa-envelope dynamic-icon";
-            } else {
-                label.textContent = "{{ __('messages.phone_number') }}";
-                input.placeholder = "{{ __('messages.enter_phone') }}";
-                input.type = "tel";
-                icon.className = "fas fa-phone dynamic-icon";
-            }
-        }
+    const label = document.getElementById("inputLabel");
+    const input = document.getElementById("inputField");
+    const icon = document.getElementById("dynamicIcon");
+    const searchingText = document.getElementById("searchingText");
+
+    if (type === 'office') {
+        label.textContent = "{{ __('messages.email') }}";
+        input.placeholder = "{{ __('messages.enter_email') }}";
+        input.type = "email";
+        icon.className = "fas fa-envelope dynamic-icon";
+        searchingText.textContent = "{{ __('messages.searching_office') }}";
+    } else if (type === 'driver') {
+        label.textContent = "{{ __('messages.phone_number') }}";
+        input.placeholder = "{{ __('messages.enter_phone') }}";
+        input.type = "tel";
+        icon.className = "fas fa-phone dynamic-icon";
+        searchingText.textContent = "{{ __('messages.searching_driver') }}";
+    } else if (type === 'user') {
+        label.textContent = "{{ __('messages.phone_number') }}";
+        input.placeholder = "{{ __('messages.enter_phone') }}";
+        input.type = "tel";
+        icon.className = "fas fa-phone dynamic-icon";
+        searchingText.textContent = "{{ __('messages.searching_user') }}";
+    } else {
+        searchingText.textContent = "{{ __('messages.select_user_type') }}";
+    }
+}
+
     </script>
 </x-master-layout>

@@ -33,6 +33,7 @@ class CreateOrUpdateServiceLogic implements Service {
             'status' =>$this->input->getStatus(),
             'description'=>$this->input->getDescription(),
             'description_en'=>$this->input->getDescriptionEn(),
+            'travel_service'=>$this->input->getTravelService(),
         ];
 
         if($this->input->hasImage()){
@@ -56,11 +57,13 @@ class CreateOrUpdateServiceLogic implements Service {
             }
         }
         else{
+            
             $service = $this->repository->ServiceRepository()->createRepository()->create(
                 $data
             );
 
-            if( $service->wasRecentlyCreated ){
+
+            if( $service->wasRecentlyCreated ){    
                 $message = __( 'messages.save_form',[ 'form' => __('messages.service') ] );
             }
             else{

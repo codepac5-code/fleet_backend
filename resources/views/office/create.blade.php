@@ -76,6 +76,26 @@
                                     <input type="text" name="contact_number" id="contact_number" class="form-control" placeholder="{{ __('messages.contact_number') }}" value="{{ old('contact_number', $officedata->contact_number ?? '') }}">
                                     @error('contact_number') <small class="text-danger">{{ $message }}</small> @enderror
                                 </div>
+                            
+                            @php
+                                $selected_services = isset($officedata) ? $officedata->services->pluck('serviceId')->toArray() : [];
+                            @endphp
+                                <div class="form-group col-md-8">
+                                    <label for="services" class="form-control-label">
+                                        {{ __('messages.services') }} <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="serviceIds[]" class="select2js form-control" multiple="multiple" required
+                                            data-placeholder="{{ __('messages.select_name', ['select' => __('messages.service')]) }}">
+                                        @foreach($services as $service)
+                                            <option value="{{ $service->id }}" 
+                                                {{ in_array($service->id, $selected_services) ? 'selected' : '' }}>
+                                                {{ $service->title }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                
+
                                 <div class="form-group col-md-6">
                                     <label for="country" class="form-control-label">
                                         {{ __('messages.country') }} <span class="text-danger">*</span>

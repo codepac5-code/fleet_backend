@@ -9,14 +9,17 @@ class UserRegisterInput implements InputServiceInterface
     private string $lastName;
     private string $phoneNumber;
     private string $password;
+    private string $referralCode;
+    private string $dialCode;
 
     public function __construct( Array $input ,
     ){
 
-        $this->firstName    = $input['firstName'];
-        $this->lastName     = $input['lastName'];
-        $this->password     = $input['password'];
-        $this->phoneNumber  = $input['phoneNumber'];
+        $this->firstName        = $input['firstName'];
+        $this->lastName         = $input['lastName'];
+        $this->password         = $input['password'];
+        $this->phoneNumber      = $input['phoneNumber'];
+        $this->dialCode = $input['dialCode'];
         }
 
     // write your input function here..
@@ -105,5 +108,24 @@ class UserRegisterInput implements InputServiceInterface
         $this->phoneNumber = $phoneNumber;
 
         return $this;
+    }
+
+    /**
+     * Get the value of referralCode
+     */ 
+    public function getReferralCode()
+    {
+        return $this->referralCode;
+    }
+
+    
+
+    /**
+     * Get the value of dialCode
+     *
+     * @return string
+     */
+    public function getDialCode(): string {
+        return $this->dialCode;
     }
 }

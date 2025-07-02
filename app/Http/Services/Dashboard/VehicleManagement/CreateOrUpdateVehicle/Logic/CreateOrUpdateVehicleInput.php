@@ -20,6 +20,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
     private $licenseNumber;
     private $image;
     private $hasImage;
+    private $model;
     public function __construct( array $input)
     {
         $this->id = $input['id'] ??  null;
@@ -35,6 +36,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
         $this->image = $input['image']?? null;
         $this->hasImage = $input['has_image'] ?? false ; 
         $this->licenseNumber = $input['license_number'] ?? null; 
+        $this->model =$input['model'] ;
         // $this->driverId = $input['driverId'];
     }
 
@@ -204,5 +206,12 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
      */
     public function getSubServiceIds() {
         return $this->sub_service_ids;
+    }
+
+    /**
+     * Get the value of model
+     */
+    public function getModel() {
+        return $this->model;
     }
 }

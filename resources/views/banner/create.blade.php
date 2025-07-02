@@ -74,8 +74,6 @@
                                     <small class="text-danger" style="font-size: 15px;">{{ $message }}</small>
                                 @enderror
                                 </div>
-
-                                
                             </div>
 
                           

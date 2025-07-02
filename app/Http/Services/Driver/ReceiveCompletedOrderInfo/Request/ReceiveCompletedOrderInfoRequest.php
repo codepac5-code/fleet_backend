@@ -25,7 +25,7 @@ class ReceiveCompletedOrderInfoRequest extends BaseRequest
         return
         [
             'orderId'   =>['required','integer'],
-            'distance'  =>['required'],
+            'distances'  =>['required'],
             'time'      =>['required','integer'],
             'price'     =>['required','integer'],
         ];

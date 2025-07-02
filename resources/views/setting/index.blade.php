@@ -36,11 +36,24 @@
                                     @else
                                         {{-- @hasanyrole('admin|demo_admin') --}}
                                             <li class="nav-item">
-                                                <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=general-setting" data-target=".paste_here" class="nav-link {{$page=='general-setting'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.general_settings') }}</a>
+                                                <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=general_setting" data-target=".paste_here" class="nav-link {{$page=='general-setting'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.general_settings') }}</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=theme-setup" data-target=".paste_here" class="nav-link {{$page=='theme-setup'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.theme_setup') }}</a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=social" data-target=".paste_here" class="nav-link {{$page=='social'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.social') }}</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=web_site_settings" data-target=".paste_here" class="nav-link {{$page=='social'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.web_site_settings') }}</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=payment_methods_settings" data-target=".paste_here" class="nav-link {{$page=='social'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.payment_methods_settings') }}</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=role_permission_setup" data-target=".paste_here" class="nav-link {{$page=='role-permission-setup'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.role_permission_setup') }}</a>
+                                            </li>
+
                                             {{-- <li class="nav-item">
                                                 <a href="javascript:void(0)" data-href="{{ route('layout_page') }}?page=site-setup" data-target=".paste_here" class="nav-link {{$page=='site-setup'?'active':''}}"  data-toggle="tabajax" rel="tooltip"> {{ __('messages.site_setup') }}</a>
                                             </li>

@@ -87,22 +87,24 @@ class HomeLogic implements Service {
     public function getMonthlyRevenue()
     {
         $user = auth()->user();
-        $query = $monthlyRevenue = Booking::selectRaw('MONTH(created_at) as month, SUM(totalAmount) as total');
-        if($user->hasAnyRole(['office'])){
-            $query->where(['officeId'=>$user->id]);
+        $query = Booking::selectRaw('MONTH(created_at) as month, SUM(totalAmount) as total');
+    
+        if ($user->hasAnyRole(['office'])) {
+            $query->where(['officeId' => $user->id]);
         }
-   
-    $query->groupBy('month')
-            ->orderBy('month')
-            ->pluck('total', 'month')
-            ->toArray();
-        
-
-
-       $formattedData = array_fill(1, 12, 0);
-       foreach ($monthlyRevenue as $month => $revenue) {
-           $formattedData[$month] = $revenue;
-       }
-       return  array_values($formattedData);     
+    
+        $monthlyRevenue = $query->groupBy('month')
+                                ->orderBy('month')
+                                ->pluck('total', 'month')
+                                ->toArray();
+    
+        $formattedData = array_fill(1, 12, 0);
+    
+        foreach ($monthlyRevenue as $month => $revenue) {
+            $formattedData[$month] = $revenue;
+        }
+    
+        return array_values($formattedData);
     }
+    
 }

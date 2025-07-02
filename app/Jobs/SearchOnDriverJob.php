@@ -7,6 +7,9 @@ use Sk\Geohash\Geohash;
 use App\Events\NewOrder;
 use App\Events\SearchOnDriver;
 use App\Http\Core\Classes\RedisManagerData;
+use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Driver\DriverRedisModel;
+use App\Models\Booking;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
@@ -47,10 +50,11 @@ class SearchOnDriverJob implements ShouldQueue
         }
 
 
-        if ($this->attempt < 5 && RedisManagerData::OrderNotAccepted($search->getOrderId()) ) {
+        if ($this->attempt < 3 && RedisManagerData::OrderNotAccepted($search->getOrderId()) ) {
             SearchOnDriverJob::dispatch($this->data, $this->attempt + 1)
-                ->delay(now()->addSeconds(6))
+                ->delay(now()->addSeconds(9))
                 ->onQueue('jobs');
+            
         }
 
     }
@@ -61,28 +65,12 @@ class SearchOnDriverJob implements ShouldQueue
         print('notifyNearbyDrivers');
 
         try {
-            //order.1:notAcceptedByDriver    
+            
             RedisManagerData::setOrderNotAccepted($orderId);
-
-            $key = 'order.'.$orderId.':notAcceptedByDriver';      
-            // if(Redis::exists($key)){
-            //     $order_info = readArrayFromRedis($key);
-            //     $radius = ($order_info['radius'] + 0.2 < 2) ? $order_info['radius'] + 0.2 : $order_info['radius'];
-            // }
-            // print('rrrrrrrrrrrrrrrrrrrrrrrrrr');
-            // order.93:notAcceptedByDriver
             
             $driverIds = $this->findDriversInNearbyAreas($latitude, $longitude,  $orderId , $radius);
             
-            
-            $order_info = [
-                'driverIds'=> $driverIds,
-                'radius'   => $radius
-            ];
-            RedisManagerData::storeOrderDetails($orderId , $order_info);
-
-            // storeArrayToRedis( $key , $order_info , 1800 );
-
+        
 
             if ( !empty($driverIds) ) {
 
@@ -92,44 +80,39 @@ class SearchOnDriverJob implements ShouldQueue
                  ->where('isConected', true)
                  ->get();
                 
+                $notified_drivers =[];
+
+                foreach ($drivers as $driver) {
+                    $driverId = $driver->getAttribute('id'); 
+                    $subServices = DriverRedisModel::getDriverServices($driverId);
                 
-                foreach($drivers as $driver){
-                //  broadcast(new NewOrder($data, $driver->id));
-                    // $sub_service_Id = $data['subServiceId'];
-                    // info('sub service:'.$sub_service_Id);
-                    
-                    // if($driver->has_sub_service($sub_service_Id)){
-                        broadcast((new NewOrder($data, $driver->id)));
-                    // }
-                        // dispatch(new HandelRedisEvents('new_order', [
-                        //     'data' => $data,
-                        //     'driverId' => $driverId,
-                        // ]));
+                    $sub_service_Id = $data['subServiceId'];
+                    if (is_array($subServices) && in_array($sub_service_Id, $subServices)) {
+                        info('driver has sub service: ' . $sub_service_Id);
+                        broadcast(new NewOrder($data, $driverId));
+                        $notified_drivers[] = $driverId;
+
+
+                    }else{
+
+                        info('driver >> driverId ='.$driverId.' >> has no service: ' . $sub_service_Id);
+
                     }
-
-                // foreach($driverIds as $driverId){
-                //         dispatch(new HandelRedisEvents('new_order', [
-                //             'data' => $data,
-                //             'driverId' => $driverId,
-                //         ]));
-                //     }
-
-
-                // $drivers = Driver::whereIn('id', $driverIds)->where('isConected',true);
+                }
                 // foreach($drivers as $driver){
-                //     info('ddddddddddddd');
+                //     $subServices = DriverRedisModel::getDriverServices($driver->id );
 
-                //     info('notify driver :'.$driver->id);
-                //     info('dispatch driver :'.$driver->id);
-                //     print('dispatch driver :'.$driver->id);
-
-                //     dispatch(new HandelRedisEvents('new_order', [
-                //         'data' => $data,
-                //         'driverId' => $driver->id,
-                //     ]));
-                 //   broadcast(new NewOrder($data, $driver->id));
-              //  }
-             // $driverIds = array_values($driverIds);
+                //     $sub_service_Id = $data['subServiceId'];
+                //     // info('sub service:'.$sub_service_Id);
+                //     if(in_array($sub_service_Id , $subServices)){
+                //         array_push($notified_drivers , $driver->id);
+                //         info('driver has sub service: '.$sub_service_Id);
+                //         broadcast((new NewOrder($data, $driver->id)));
+                //     }
+            
+                // }
+  
+                // $driverIds = array_values($driverIds);
 
                 // array_map(function ($driverId , $data) {
                 //  dispatch(new HandelRedisEvents('new_order', [
@@ -139,7 +122,17 @@ class SearchOnDriverJob implements ShouldQueue
                 //     // broadcast(new NewOrder($data, $driverId));
                 // }, $driverIds , $data);
 
-                Log::info("Notified drivers: " . implode(',', $driverIds));
+                $order_info = [
+                    'driverIds'=> $notified_drivers,
+                    'radius'   => $radius
+                ];
+                RedisManagerData::storeOrderDetails($orderId , $order_info);
+                if(empty($notified_drivers)){
+                    Log::info("No drivers found in the specified radius.");
+                }
+                else{
+                    Log::info("Notified drivers: " . implode(',', $notified_drivers));
+                }
 
             } else {
                 Log::info("No drivers found in the specified radius.");
@@ -186,7 +179,6 @@ class SearchOnDriverJob implements ShouldQueue
      //   print('7877788888');
         // info('driverssss :');
       info('driverssss :',array_unique($drivers));
-       // info('driverss :'.array_unique($drivers));
     //   $drivers_int = array_map('intval', $drivers);
 
     $drivers_unique = array_unique($drivers);
@@ -206,9 +198,3 @@ class SearchOnDriverJob implements ShouldQueue
 
 }
 
-
-
-// NewOrder::dispatch([
-//     'data' => $data,
-//     'driverId' => $driver->id,
-//  ])->onQueue('events');

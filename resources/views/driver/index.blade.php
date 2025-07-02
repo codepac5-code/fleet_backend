@@ -42,6 +42,7 @@
                         <option value="0">{{__('messages.inactive')}}</option>
                       </select>
                   </div>
+
                   <button id="quick-action-apply" class="btn btn-primary" data-ajax="true"
                   data--submit="{{ route('driver.bulk-action') }}"
                   data-datatable="reload" data-confirmation='true'
@@ -51,7 +52,7 @@
               </div>
             
               </form>
-            </div>
+          </div>
                 <div class="d-flex justify-content-end">
                   <div class="datatable-filter ml-auto">
                     <select name="column_status" id="column_status" class="select2 form-control" data-filter="select" style="width: 100%">
@@ -61,7 +62,7 @@
                     </select>
                   </div> 
 
-                  <div class="input-group ml-2">
+                <div class="input-group ml-2">
                       <span class="input-group-text" id="addon-wrapping"><i class="fas fa-search"></i></span>
                       <input type="text" class="form-control dt-search" placeholder="Search by name..." aria-label="Search" aria-describedby="addon-wrapping" aria-controls="dataTableBuilder">
                     </div>
@@ -108,7 +109,7 @@
                           name: 'firstName',
                           title: "{{__('messages.name')}}",
                           orderable: true,
-                          searchable: true,
+                          searchable: false,
 
                       },
                       {
@@ -131,8 +132,23 @@
                           name: 'phoneNumber',
                           title: "{{__('messages.contact_number')}}",
                           searchable: true,
+                      },
+
+                      {
+                          data: 'dues',
+                          name: 'dues',
+                          title: "{{__('messages.dues')}}",
+                          searchable: false,
 
                       },
+
+                      // {
+                      //     data: 'walletBalance',
+                      //     name: 'walletBalance',
+                      //     title: "{{__('messages.walletBalance')}}"
+                      // },
+
+                      
                       // {
                       //     data: 'address',
                       //     name: 'address',
@@ -145,6 +161,8 @@
                           searchable: false,
 
                       },
+
+
                       {
                           data: 'action',
                           name: 'action',

@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Core\Classes;
 
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Driver\DriverRedisModel;
+use App\Models\Driver;
 use Dotenv\Parser\Value;
 use Illuminate\Support\Facades\Log;
 use Sk\Geohash\Geohash;
@@ -95,31 +97,35 @@ abstract class RedisManagerData
             self::delete($keyDriverArea);
 
             // for driver location map in home page
-            self::delete('driver_location:'.$driverId);
+            self::delete('driver_location_for_map:'.$driverId);
+
+            // delete driver's sub services
+            DriverRedisModel::deleteDriverServices($driverId );
 
 
             Log::info("make driver offline");
         }
     }
 
-    public static function makeDriverOnline($driverId , $latitude, $longitude, $precision = 6)  {
-        RedisManagerData::makeDriverOffline($driverId);
-        RedisManagerData::store_driver_area( $driverId , $latitude, $longitude, $precision);
-        $area = RedisManagerData::get_driver_area( $driverId );
+    public static function makeDriverOnline(Driver $driver , $latitude, $longitude, $precision = 6)  {
+        RedisManagerData::makeDriverOffline($driver->id);
+        RedisManagerData::store_driver_area( $driver->id , $latitude, $longitude, $precision);
+        $area = RedisManagerData::get_driver_area( $driver->id );
 
-        Redis::geoadd( $area , $longitude , $latitude , $driverId );
 
-        // Redis::geoadd("all_drivers_locations", $longitude, $latitude, $driverId);
+        
+        DriverRedisModel::storeDriverServices( $driver->id  , $driver->getSubServicesAsArray());
+
+        Redis::geoadd( $area , $longitude , $latitude , $driver->id );
+
+        // Redis::geoadd("all_drivers_locations", $longitude, $latitude, $driver->id);
         // Redis::expire("all_drivers_locations", 3600 * 12);
         Redis::expire( $area , 3600 * 12 );
-        Log::info("Driver $driverId added to area $area");
+        Log::info("Driver $driver->id added to area $area");
 
         // driver loacation on map
-        Redis::hmset("driver_location:".$driverId, [
-            'longitude' => $longitude,
-            'latitude' =>  $latitude,
-          ]);
-     // RedisManagerData::makeDriverOffline($driverId);
+        RedisManagerData::set_map_driver_location($driver,$latitude,$longitude);
+ 
     }
 
     public static function store_driver_area( $driverId , $latitude, $longitude, $precision = 6) {
@@ -128,9 +134,8 @@ abstract class RedisManagerData
         self::set($key , $geoHash ,43200 );
 
         $key     = RedisKeyTemplate::DRIVER_LONGITUDE_LATITUDE->generateKey(['driverId' => $driverId]);
-        $data = ['long'=> $longitude, 'lat'=> $latitude];
-        self::set($key ,  $data ,43200 );
-
+        $data = [ 'long'=> $longitude , 'lat'=> $latitude ];
+        self::set( $key ,  $data , 43200 );
         return $geoHash;
     }
 
@@ -143,6 +148,43 @@ abstract class RedisManagerData
     public static function isDriverOnline( $driverId ) {
         $key     = RedisKeyTemplate::DRIVER_LOCATION->generateKey(['driverId' => $driverId]);
         return self::exists($key);
+    }
+
+
+    public static function set_map_driver_location(Driver $driver,$latitude,$longitude){
+             // driver loacation on map
+             $car = $driver->vehicle;
+             
+             Redis::hmset("driver_location_for_map:".$driver->id , [
+                'firstName'     =>  $driver->firstName,
+                'lastName'      =>  $driver->lastName,
+                'phoneNumber'   =>  $driver->phoneNumber,
+                'longitude'     =>  $longitude,
+                'latitude'      =>  $latitude,
+                'carNumber'     =>  $car->plate ??'-------',
+                'vehicleBrand'  =>  $car->vehicleBrand ?? 'unknow car!',
+              ]);
+    }
+
+    public static function getOnlineDriversMapLocations(){
+        $keys = Redis::keys('driver_location_for_map:*'); 
+        $locations = [];
+    
+        foreach ($keys as $key) {
+            $driverId = str_replace('driver_location_for_map:', '', $key);
+            $data = Redis::hgetall($key);        
+            $locations[] = [
+                'driver_id' => $driverId,
+                'longitude' => $data['longitude'],
+                'latitude' => $data['latitude'],
+                'name' => $data['firstName'].' '.$data['lastName'],
+                'phoneNumber'=>$data['phoneNumber'],
+                'carNumber'=>$data['carNumber'],
+                'carBrand'=>$data['vehicleBrand'],
+            ];
+        }
+
+        return $locations;
     }
     
 

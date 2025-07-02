@@ -9,6 +9,8 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\BalanceStatus;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletRedisModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
 
 class GetHomeStatisticLogic implements Service {
@@ -43,16 +45,16 @@ class GetHomeStatisticLogic implements Service {
         $system_statistic = $this->repository->FleetStatisticRepository()->readRepository()->getFirstByConditions([]);
  
  
-        $data['withdrawn-amount']  =  $system_statistic->withdrawn_amount;
-        $data['available-amount']  =  $system_statistic->available_amount;
+        $data['withdrawn-amount']  = FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Withdrawn); // $system_statistic->withdrawn_amount;
+        $data['available-amount']  = FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Available);// $system_statistic->available_amount;
         //---------------------------------<<    >>-------------------------------||
-        $data['pending-amount']    =  RedisManagerData::get_system_pending_amount();
-        $data['total-amount']      =  $system_statistic->total_income;
+        $data['pending-amount']    =  FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Pending);//RedisManagerData::get_system_pending_amount();
+        $data['total-amount']      =  FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Total);//$system_statistic->total_income;
         //-----
  
  
-        $data['offices-due-amount']=  $system_statistic->offices_debt;
-        $data['drivers-due-amount']=  $system_statistic->drivers_debt;
+        $data['offices-due-amount']=  FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$OfficesDue);//$system_statistic->offices_debt;
+        $data['drivers-due-amount']=  FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$DriversDue);//$system_statistic->drivers_debt;
  
         return response()->json($data);
    }

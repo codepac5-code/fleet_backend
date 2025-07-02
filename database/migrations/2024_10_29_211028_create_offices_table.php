@@ -42,6 +42,17 @@ return new class extends Migration
             //$table->integer('limitMoney');
             $table->rememberToken();
             $table->softDeletes();
+
+
+            //-----------------
+            $table->decimal('withdrawn_amount', 15, 2)->default(0);
+            $table->decimal('available_amount', 15, 2)->default(0);
+            $table->decimal('total_income', 15, 2)->default(0);
+            $table->decimal('drivers_debt', 15, 2)->default(0); 
+            $table->decimal('fleet_debt', 15, 2)->default(0);
+            $table->bigInteger('drivers_count')->default(0);
+
+            //-----------------
             $table->timestamps();
             // $table->foreignId("user_id")->references("id")->on("users")->onDelete("cascade")->onUpdate("cascade");
             // $table->string('name');

@@ -13,7 +13,7 @@ class Setting extends Model
     use HasFactory;
     protected $table = "settings";
     protected $primaryKey = "id";
-    protected $fillable = ['type' ,'name','key','value' , 'officeId'];
+    protected $fillable = ['type' ,'name','key','value_ar','value_en' ,'value', 'officeId'];
     public $timestamps = false;
 
 

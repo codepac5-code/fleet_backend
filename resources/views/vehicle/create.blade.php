@@ -1,4 +1,6 @@
 <x-master-layout>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-12">
@@ -53,31 +55,147 @@
                             @endforeach
                         </select>
                     </div>
+
+
             
-                    <!-- Vehicle Brand & Model Year -->
-                    <div class="form-group col-md-6">
-                        <label for="vehicle_brand" class="form-control-label">
-                            {{ __('messages.vehicle_brand') }} <span class="text-danger">*</span>
-                        </label>
-                        <select name="vehicle_brand" id="vehicle_brand" class="select2js form-control" required>
-                            <option value="">{{ __('messages.select_name', ['select' => __('messages.vehicle_brand')]) }}</option>
-                            @foreach($vehicleBrands as $brand)
-                                <option value="{{ $brand->name }}" 
-                                    {{ old('vehicle_brand', $vehicledata->vehicleBrand ?? '') == $brand->name ? 'selected' : '' }}>
-                                    {{ $brand->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label for="model_year" class="form-control-label">
-                            {{ __('messages.model_year') }} <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" name="model_year" id="model_year" class="form-control" required
-                               min="2000" max="{{ date('Y') }}" step="1"
-                               value="{{ old('model_year', $vehicledata->modelYear ?? '') }}">
-                    </div>
-            
+                    <style>
+                        .loader {
+                          display: inline-block;
+                          width: 25px;
+                          height: 25px;
+                          border: 4px solid #ccc;
+                          border-top-color: #1d72b8;
+                          border-radius: 50%;
+                          animation: spin 1s linear infinite;
+                          vertical-align: middle;
+                          margin-left: 50px;
+                        }
+                        @keyframes spin {
+                          to { transform: rotate(360deg); }
+                        }
+                        </style>
+
+
+         
+@php
+$startYear = 2000;
+$endYear = date('Y');
+$oldMake = old('vehicle_brand', $vehicledata->vehicle_brand ?? '');
+$oldModelYear = old('model_year', $vehicledata->modelYear ?? '');
+$oldModel = old('model', $vehicledata->model ?? '');
+@endphp
+
+<div class="form-group col-md-4" style="position: relative;">
+<label for="make" class="form-control-label">
+    {{ __('messages.select_make') }} <span class="text-danger">*</span>
+</label>
+<select name="vehicle_brand" id="make" class="select2js form-control" required disabled>
+    <option disabled selected>{{ __('messages.loading_makes') }}</option>
+</select>
+<div id="loader-make" class="loader" style="display:none; position: absolute; top: 38px; right: 10px;"></div>
+</div>
+
+<div class="form-group col-md-4">
+<label for="model_year" class="form-control-label">
+    {{ __('messages.select_year') }} <span class="text-danger">*</span>
+</label>
+<select name="model_year" id="model_year" class="select2js form-control" required>
+    <option value="">{{ __('messages.select_year') }}</option>
+    @for ($year = $endYear; $year >= $startYear; $year--)
+        <option value="{{ $year }}" {{ $oldModelYear == $year ? 'selected' : '' }}>
+            {{ $year }}
+        </option>
+    @endfor
+</select>
+</div>
+
+<div class="form-group col-md-4" style="position: relative;">
+<label for="model" class="form-control-label">
+    {{ __('messages.select_model') }} <span class="text-danger">*</span>
+</label>
+<select name="model" id="model" class="select2js form-control" required disabled>
+    <option value="">{{ __('messages.select_model') }}</option>
+</select>
+<div id="loader-model" class="loader" style="display:none; position: absolute; top: 38px; right: 10px;"></div>
+</div>
+
+<script>
+$(document).ready(function () {
+$('.select2js').select2();
+
+const $make = $('#make');
+const $model = $('#model');
+const $modelYear = $('#model_year');
+const $loaderMake = $('#loader-make');
+const $loaderModel = $('#loader-model');
+
+const oldMake = @json($oldMake);
+const oldModel = @json($oldModel);
+const oldYear = @json($oldModelYear);
+
+$loaderMake.show();
+$make.prop('disabled', true);
+
+$.get('https://vpic.nhtsa.dot.gov/api/vehicles/GetAllMakes?format=json', function (data) {
+    let makes = data.Results;
+    $make.empty().append(`<option value="">{{ __('messages.select_make') }}</option>`);
+    $.each(makes, function (i, make) {
+        let selected = (make.Make_Name === oldMake) ? 'selected' : '';
+        $make.append(`<option value="${make.Make_Name}" ${selected}>${make.Make_Name}</option>`);
+    });
+    $make.prop('disabled', false);
+
+    if (oldMake && oldYear) {
+        loadModels(oldMake, oldYear);
+    }
+}).fail(function () {
+    $make.html(`<option disabled selected>{{ __('messages.failed_loading_makes') }}</option>`).prop('disabled', true);
+}).always(function () {
+    $loaderMake.hide();
+});
+
+function loadModels(make, year) {
+    $loaderModel.show();
+    $model.prop('disabled', true).html(`<option disabled selected>{{ __('messages.loading_models') }}</option>`);
+
+    let apiUrl = `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${make}/modelyear/${year}?format=json`;
+
+    $.get(apiUrl, function (data) {
+        let models = data.Results;
+        $model.empty().prop('disabled', false);
+
+        if (models.length) {
+            $model.append(`<option value="">{{ __('messages.select_model') }}</option>`);
+            $.each(models, function (i, model) {
+                let selected = (model.Model_Name === oldModel) ? 'selected' : '';
+                $model.append(`<option value="${model.Model_Name}" ${selected}>${model.Model_Name}</option>`);
+            });
+        } else {
+            $model.append(`<option disabled selected>{{ __('messages.no_models_found') }}</option>`);
+        }
+    }).fail(function () {
+        $model.html(`<option disabled selected>{{ __('messages.failed_loading_models') }}</option>`).prop('disabled', true);
+    }).always(function () {
+        $loaderModel.hide();
+    });
+}
+
+$make.add($modelYear).on('change', function () {
+    let make = $make.val();
+    let year = $modelYear.val();
+
+    if (make && year) {
+        loadModels(make, year);
+    } else {
+        $model.prop('disabled', true).html(`<option value="">{{ __('messages.select_model') }}</option>`);
+    }
+});
+});
+</script>
+
+
+                
+
 
                 <!-- License Number -->
                 <div class="form-group col-md-6">

@@ -5,14 +5,21 @@ use App\Http\Core\InternalInterface\InputServiceInterface;
 
 class LayoutSettingsPageInput implements InputServiceInterface
 {
-    public function __construct( array $input)
-    {}
 
-    // write your input function here..
+    private $page;
+    public function __construct( array $input)
+    {
+        $this->page = $input['page'];
+    }
+
 
     public function toArray(){
         return [
             ''=>''
         ];
+    }
+
+    public function getPage(){
+        return $this->page;
     }
 }

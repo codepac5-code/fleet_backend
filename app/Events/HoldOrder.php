@@ -39,6 +39,6 @@ class HoldOrder implements ShouldBroadcast ,ShouldQueue
 
 
     public function broadcastAs(){
-        return 'hold';
+        return 'hold-order';
     }
 }

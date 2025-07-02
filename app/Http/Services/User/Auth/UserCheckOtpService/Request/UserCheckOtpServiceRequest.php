@@ -27,6 +27,8 @@ class UserCheckOtpServiceRequest extends BaseRequest
             'code'          =>  ['required' ,"string","min:6","max:6"],
             'phoneNumber'   =>  ['required' , 'numeric', 'digits:10'],
             'userId'        =>  ['required' ,"integer"],
+            'referralCode'  =>['sometimes','nullable']
+
         ];
     }
 

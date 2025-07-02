@@ -66,6 +66,17 @@ class CreateOrUpdateSubServiceLogic implements Service {
             );
 
             if( $service->wasRecentlyCreated ){
+                // if ($service->travel_service) {
+                //     foreach ($request->routes as $route) {
+                //         TravelRoute::create([
+                //             'departureCity' => $subservice->id,
+                //             'arrivalCity' => $route['departureCity'],
+                //             'arrivalCity' => $route['arrivalCity'],
+                //             'price' => $route['tripPrice'],
+                //         ]);
+                //     }
+                // }
+
                 $message = __( 'messages.save_form',[ 'form' => __('messages.subservice') ] );
             }
         }

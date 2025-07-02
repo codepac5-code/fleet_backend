@@ -9,7 +9,7 @@
     <a class="mr-2" href="{{route('user.create', ['id' => $user->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.office') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
     {{-- @endif --}}
      {{-- @if($auth_user->can('handyman changePassword')) --}}
-      <a class="mr-2" href="{{ route('user.getchangepassword',['id' => $user->id]) }}" title="{{ __('messages.change_password',['form' => __('messages.user') ]) }}"><i class="fa fa-lock text-success "></i></a>
+      <a class="mr-2" href="{{ route('user.view.change-password',['id' => $user->id]) }}" title="{{ __('messages.change_password',['form' => __('messages.user') ]) }}"><i class="fa fa-lock text-success "></i></a>
       {{-- @endif --}}
       {{-- @if($auth_user->can('handyman delete')) --}}
         <a class="mr-3 text-danger" href="{{ route('user.destroy', ['id' => $user->id] ) }}" data--submit="user{{$user->id}}" 

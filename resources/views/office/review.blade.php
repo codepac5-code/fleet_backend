@@ -85,7 +85,7 @@
                             </div>
                         </div>
                         
-                        <div class="card">
+                        {{-- <div class="card">
                             <div class="card-body">
                                 <div class="row justify-content-between">
                                     <div>
@@ -110,7 +110,7 @@
                                         </table>
                                 </div>
                             </div>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
             </div>

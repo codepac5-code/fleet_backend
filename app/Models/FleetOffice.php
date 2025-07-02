@@ -15,5 +15,18 @@ class FleetOffice extends Model
         'driver_commission_value',
         // 'driver_commission_type',
         'walletBalance',
+
+        //--------------------
+
+        'total_income',
+        'withdrawn_amount',
+        'available_amount',
+        'drivers_debt',
+        'offices_debt',
+        'users_count',
+        'drivers_count',
+        'offices_count',
+        'services_count',
+        'subServices_count',
     ];
 }

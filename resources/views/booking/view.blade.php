@@ -1,6 +1,16 @@
 <x-master-layout>
     <head>
 
+   <!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+
+
+<!-- CSRF Token -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+
+
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
         <style>
@@ -357,6 +367,44 @@ body.dark .modern-trip-card .action-btn:hover i {
 
 
 
+
+
+
+
+
+
+
+
+
+.swal2-popup {
+    font-family: 'Tajawal', sans-serif;
+    border-radius: 1rem;
+}
+.status-btn-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: 0.2s ease;
+}
+.status-btn-option:hover {
+    background-color: #ffcc00;
+    color: black;
+    font-weight: bold;
+}
+.status-btn-option i {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+
+
+
         </style>
     </head>
 <script>
@@ -366,8 +414,10 @@ body.dark .modern-trip-card .action-btn:hover i {
 
     if (currentCount > 0) {
         element.textContent = currentCount - 1;
-        return;
+        return currentCount;
     }
+
+    return currentCount;
 
     }
     
@@ -377,7 +427,12 @@ body.dark .modern-trip-card .action-btn:hover i {
 
     if (element) {
         element.remove();
-        // decreaseCount('pending_count');
+        let count =  decreaseCount('pending_count');
+        if(count == 0 ){
+            const wrapper = document.getElementById('pending-orders-wrapper');
+            wrapper.innerHTML = `<div class="text-center p-4" style="color: #f39c12; font-size: 22px; font-weight: 600; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                {{ __('messages.no_pending_orders') }}</div>`;
+         }
         } 
     }
 
@@ -692,7 +747,7 @@ function fetchNewPendingOrders() {
 
 
                 
-                    function createOngoingOrderCard(order) {
+                    function createOngoingOrderCard(order , url) {
     return `
     <div class="modern-trip-card toggle-card" id="ongoing-order-${order.id}">
         <div class="trip-top card-toggle-header">
@@ -791,22 +846,35 @@ function fetchNewPendingOrders() {
                 <div><i class="fas fa-building"></i> {{ __('messages.office_commission') }}: <strong>${order.officeCommissionValue || 0}</strong></div>
                 <div><i class="fas fa-shield-alt"></i> {{ __('messages.fleet_commission') }}: <strong>${order.fleetCommissionValue || 0}</strong></div>
             </div>
-
             <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top" style="background: rgba(255, 255, 255, 0.03); border-style: dashed; border-color: #ccc;">
-                <a href="{{ route('order.follow.map', ['orderId' =>1]) }}" class="action-btn map-btn" id="follow-map-btn">
-                    <i class="fas fa-map-marked-alt"></i>
-                    <span>{{ __('messages.follow_map') }}</span>
-                </a>
+               <button type="button"
+        class="action-btn map-btn"
+        id="follow-map-btn-${order.id }"
+        onclick="followOrderOnMap(${order.id })">
+    <i class="fas fa-map-marked-alt"></i>
+    <span>{{ __('messages.follow_map') }}</span>
+</button>
 
-                <button class="action-btn status-btn change-status-btn" id="change-status-btn">
+
+                <button id="change-status-btn-${order.id}"
+                    class="action-btn status-btn"
+                    data-order-id="${order.id }">
                     <i class="fas fa-random"></i>
                     <span>{{ __('messages.change_status') }}</span>
                 </button>
+  
+
             </div>
         </div>
     </div>
     `;
 }
+
+    function followOrderOnMap(orderId) {
+        const url = `{{ route('order.follow.map', ['orderId' => '__ORDER_ID__']) }}`.replace('__ORDER_ID__', orderId);
+        window.location.href = url;
+    }
+
 
                     function fetchOngoingOrders(page) {
                         isOngoingLoading = true;
@@ -833,7 +901,8 @@ function fetchNewPendingOrders() {
                                 }
                 
                                 ongoingOrders.forEach(order => {
-                                    const orderHTML = createOngoingOrderCard(order);
+                                    const url = '/order-on-map/'+order.id;
+                                    const orderHTML = createOngoingOrderCard(order , url);
                                     deletePendingOrder(order.id);
                                     wrapper.insertAdjacentHTML('beforeend', orderHTML);
                                     if (order.id > lastOngoingOrderId) {
@@ -869,6 +938,7 @@ function fetchNewPendingOrders() {
                           
 
                                 newOrders.forEach(order => {
+                                    
                                     const orderHTML = createOngoingOrderCard(order);
                                     deletePendingOrder(order.id);
                                     const tempDiv = document.createElement('div');
@@ -1066,20 +1136,24 @@ function fetchNewPendingOrders() {
                                  </div>
                  
                                  <div class="trip-card-footer d-flex justify-content-between align-items-center px-3 py-2 mt-3 border-top" style="background: rgba(255, 255, 255, 0.03); border-style: dashed; border-color: #ccc;">
-                                     <a href="{{ route('booking.show', '') }}" class="action-btn map-btn" id="follow-map-btn">
-                                         <i class="fas fa-eye"></i>
-                                         <span>{{ __('messages.details') }}</span>
-                                     </a>
-                 
-                                     <button class="action-btn status-btn change-status-btn" id="change-status-btn">
-                                         <i class="fas fa-random"></i>
-                                         <span>{{ __('messages.change_status') }}</span>
-                                     </button>
+                                    <button type="button"
+                                        class="action-btn map-btn"
+                                        style="width: 100%;"
+                                        onclick="goToBookingDetails(${order.id })">
+                                        <i class="fas fa-eye"></i>
+                                        <span>{{ __('messages.details') }}</span>
+                                    </button>
                                  </div>
                              </div>
                          </div> `;
                      }
                  
+             function goToBookingDetails(orderId) {
+                    const routeTemplate = "{{ route('booking.show', ['id' => '__ORDER_ID__']) }}";
+                    const finalUrl = routeTemplate.replace('__ORDER_ID__', orderId);
+                    window.location.href = finalUrl;
+            }
+
      
                      function fetchCompletedOrders(page) {
                          isCompletedLoading = true;
@@ -1173,12 +1247,202 @@ function fetchNewPendingOrders() {
                          fetchNewCompletedOrders();
                      }, 10000);
                  </script>
+
+
+
+
+
+  
+
+
+
+  
             </div>
         </div>
     </div>
 
 
+
+
+    
+
+
+
+
+<!-- Font: Tajawal -->
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+
+
+<style>
+    /* SweetAlert2 custom theme */
+    .swal2-popup {
+        font-family: 'Tajawal', sans-serif;
+        border-radius: 1rem !important;
+    }
+    .swal2-confirm.btn {
+        background-color: #ffcc00 !important;
+        color: #000 !important;
+        font-weight: bold;
+        border: none;
+        font-family: 'Tajawal', sans-serif;
+    }
+    .swal2-cancel.btn {
+        font-family: 'Tajawal', sans-serif;
+    }
+</style>
+
+    
+
+
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const wrapper = document.getElementById('ongoing-orders-wrapper');
+
+    wrapper.addEventListener('click', function (e) {
+        const btn = e.target.closest("[id^='change-status-btn-']");
+        if (!btn) return;
+
+        const orderId = btn.getAttribute("data-order-id");
+        let selectedStatus = null;
+
+        Swal.fire({
+            title: 'اختر الحالة الجديدة',
+            html: `
+                <div id="custom-status-options" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
+                    <div class="status-btn-option" data-status="completed_payment"><i class="fas fa-check-circle text-success"></i> مكتمل مع دفع</div>
+                    <div class="status-btn-option" data-status="completed"><i class="fas fa-check-double text-info"></i> مكتمل بدون دفع</div>
+                    <div class="status-btn-option" data-status="hold"><i class="fas fa-pause-circle text-warning"></i> معلق</div>
+                    <div class="status-btn-option" data-status="cancel"><i class="fas fa-times-circle text-danger"></i> ملغى</div>
+                </div>
+                <button id="confirm-status-btn" class="swal2-confirm swal2-styled" style="background-color: #ffcc00; display: none;">تأكيد الحالة</button>
+            `,
+            showCancelButton: true,
+            cancelButtonText: 'إلغاء',
+            showConfirmButton: false,
+            didOpen: () => {
+                const options = document.querySelectorAll('.status-btn-option');
+                const confirmBtn = document.getElementById('confirm-status-btn');
+
+                options.forEach(option => {
+                    option.style.cursor = 'pointer';
+                    option.style.padding = '8px 12px';
+                    option.style.border = '1px solid #eee';
+                    option.style.borderRadius = '8px';
+                    option.style.background = '#fff';
+                    option.style.fontFamily = 'Tajawal, sans-serif';
+                    option.style.transition = 'background 0.3s';
+
+                    option.addEventListener('mouseenter', () => option.style.background = '#fff8cc');
+                    option.addEventListener('mouseleave', () => {
+                        if (option.getAttribute('data-status') !== selectedStatus)
+                            option.style.background = '#fff';
+                    });
+
+                    option.addEventListener('click', () => {
+                        selectedStatus = option.getAttribute('data-status');
+
+                        options.forEach(opt => opt.style.background = '#fff');
+                        option.style.background = '#ffec99';
+
+                        confirmBtn.style.display = 'inline-block';
+                    });
+                });
+
+                confirmBtn.addEventListener('click', () => {
+                    if (!selectedStatus) return;
+
+                    Swal.close();
+                    handleStatusSelection(orderId, selectedStatus);
+                });
+            }
+        });
+    });
+
+    function handleStatusSelection(orderId, status) {
+        if (status === 'hold' || status === 'cancel') {
+            Swal.fire({
+                title: `سبب ${status === 'hold' ? 'التعليق' : 'الإلغاء'}`,
+                input: 'textarea',
+                inputPlaceholder: 'يرجى إدخال السبب...',
+                inputAttributes: { dir: 'rtl' },
+                inputValidator: value => !value && 'السبب مطلوب',
+                showCancelButton: true,
+                confirmButtonText: 'تأكيد',
+                cancelButtonText: 'إلغاء'
+            }).then(reasonResult => {
+                if (reasonResult.isConfirmed) {
+                    sendStatusChange(orderId, status, reasonResult.value);
+                }
+            });
+        } else {
+            sendStatusChange(orderId, status);
+        }
+    }
+
+    function sendStatusChange(orderId, status, reason = null) {
+        Swal.fire({
+            title: 'جاري تحديث الحالة...',
+            html: '<div style="font-size:16px; margin-top:10px;">يرجى الانتظار</div>',
+            didOpen: () => Swal.showLoading(),
+            allowOutsideClick: false,
+            showConfirmButton: false
+        });
+
+        fetch('/change-order-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ orderId: orderId, status: status, reason: reason })
+        })
+        .then(res => res.json())
+        .then(data => {
+            Swal.fire({
+                icon: data.success ? 'success' : 'error',
+                title: data.success ? 'تم التحديث' : 'فشل التحديث',
+                text: data.message || (data.success ? 'تم تغيير الحالة بنجاح.' : 'حدث خطأ أثناء التحديث.')
+            });
+
+            deleteOngoingOrder(orderId);
+        })
+        .catch(() => {
+            Swal.fire({
+                icon: 'error',
+                title: 'فشل الاتصال',
+                text: 'حدث خطأ في الاتصال بالخادم. حاول لاحقًا.'
+            });
+        });
+    }
+});
+
+        </script>
+
+
+
+
+
+
+
+
+  
+        
+
 <script>
+
+
     $(document).ready(function () {
     $(document).on('click', '.toggle-card', function (e) {
         if ($(e.target).closest('.action-btn').length === 0) {
@@ -1203,6 +1467,7 @@ function fetchNewPendingOrders() {
         e.stopPropagation();
     });
 });
+
 
 </script>
     

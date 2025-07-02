@@ -381,7 +381,7 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
 
     function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: 33.5522, lng: 37.15522 },
+            center: { lat: 33.51389 , lng: 36.27639 },
             zoom: 10
         });
 
@@ -401,10 +401,8 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                 updatedDriverIds.add(driverId);
 
                 if (markers[driverId]) {
-                    // السائق موجود مسبقًا ➔ نحدث موقعه فقط
                     markers[driverId].setPosition(position);
                 } else {
-                    // سائق جديد ➔ نضيف علامة جديدة
                     let infoWindow = new google.maps.InfoWindow({
                         content: `<div class="driver-info">
                             <strong>👤 ${driver.name}</strong><br>
@@ -417,8 +415,8 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                         position: position,
                         map: map,
                         icon: {
-                            url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkQoszVAKLbrUCvTZCrXBW6T_4QlpU2QiFK9yAC58jngsr8Ys-nBsqxrgbV_fphuH4QuM&usqp=CAU",
-                            scaledSize: new google.maps.Size(45, 45),
+                            url: "storage/system/images/map/driver_map_marker.png",
+                            scaledSize: new google.maps.Size(85, 120),
                         },
                         title: `🚖{{ __('messages.driver_number')}}: ${driverId}`,
                     });
@@ -430,11 +428,10 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                 }
             });
 
-            // حذف السائقين الذين لم يعودوا موجودين
             for (let id in markers) {
                 if (!updatedDriverIds.has(id)) {
-                    markers[id].setMap(null); // إزالة العلامة من الخريطة
-                    delete markers[id];       // إزالة من الكائن markers
+                    markers[id].setMap(null); 
+                    delete markers[id];       
                 }
             }
 
@@ -929,8 +926,69 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
 
 
 
-</x-master-layout>
+<div id="data-container" data-revenue='<?php echo json_encode($data['revenueData']); ?>'></div>
 
+<div id="monthly-revenue"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var container = document.getElementById('data-container');
+        var revenueData = JSON.parse(container.getAttribute('data-revenue'));
+        
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        if (document.querySelector('#monthly-revenue')) {
+            var options = {
+                series: [{
+                    name: 'الإيرادات',
+                    data: revenueData
+                }],
+                chart: {
+                    height: 300,
+                    type: 'line',
+                    toolbar: { show: true },
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800,
+                        animateGradually: { enabled: true, delay: 150 },
+                        dynamicAnimation: { enabled: true, speed: 350 }
+                    }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    colors: ['#f5b041'] 
+                },
+                markers: {
+                    size: 5,
+                    colors: ['#f39c12'],
+                    strokeWidth: 2,
+                    hover: { size: 7 }
+                },
+                xaxis: {
+                    categories: months,
+                    labels: { style: { fontSize: '13px', fontWeight: 'bold', colors: '#aaa' } }
+                },
+                yaxis: {
+                    labels: { style: { fontSize: '12px', fontWeight: 'bold', colors: '#aaa' } },
+                    title: { text: '', style: { fontSize: '14px', fontWeight: 'bold', color: '#666' } }
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: function(val) { return 'ل.س' + val.toLocaleString(); } }
+                },
+                grid: { borderColor: '#ddd', strokeDashArray: 5 }
+            };
+
+            var chart = new ApexCharts(document.querySelector("#monthly-revenue"), options);
+            chart.render();
+        }
+    });
+</script>
+
+
+    
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         function fetchStatistics() {
@@ -1012,57 +1070,5 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
 
 
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var revenueData = <?php echo json_encode($data['revenueData']); ?>;
-        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        if (document.querySelector('#monthly-revenue')) {
-            var options = {
-                series: [{
-                    name: 'الإيرادات',
-                    data: revenueData
-                }],
-                chart: {
-                    height: 300,
-                    type: 'line',
-                    toolbar: { show: true },
-                    animations: {
-                        enabled: true,
-                        easing: 'easeinout',
-                        speed: 800,
-                        animateGradually: { enabled: true, delay: 150 },
-                        dynamicAnimation: { enabled: true, speed: 350 }
-                    }
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3,
-                    colors: ['#f5b041'] 
-                },
-                markers: {
-                    size: 5,
-                    colors: ['#f39c12'],
-                    strokeWidth: 2,
-                    hover: { size: 7 }
-                },
-                xaxis: {
-                    categories: months,
-                    labels: { style: { fontSize: '13px', fontWeight: 'bold', colors: '#aaa' } }
-                },
-                yaxis: {
-                    labels: { style: { fontSize: '12px', fontWeight: 'bold', colors: '#aaa' } },
-                    title: { text: '', style: { fontSize: '14px', fontWeight: 'bold', color: '#666' } }
-                },
-                tooltip: {
-                    theme: 'dark',
-                    y: { formatter: function(val) { return 'ل.س' + val.toLocaleString(); } }
-                },
-                grid: { borderColor: '#ddd', strokeDashArray: 5 }
-            };
-
-            var chart = new ApexCharts(document.querySelector("#monthly-revenue"), options);
-            chart.render();
-        }
-    });
-</script>
+</x-master-layout>

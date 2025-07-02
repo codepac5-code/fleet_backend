@@ -230,6 +230,7 @@
 
 
         @if (auth()->user()->hasAnyRole(['super-admin']))
+        @if ($withOffice)
         <div class="c1-light-bg radius-10 py-3 px-4 flex-grow-1">
             <h4 class="mb-2">{{__('messages.Office_information')}}</h4>
             <h5 class="c1 mb-3">{{optional($office)->officeName ?? '-'}}</h5>
@@ -248,10 +249,11 @@
                 </li>
                 <li>
                     <span class="material-icons customer-info-text">{{__('messages.joining_date')}}</span>
-                    <p class="customer-info-text">{{ date("$datetime->date_format / $datetime->time_format", strtotime($office->created_at)) ?? '-'}}</p>
+                    {{-- <p class="customer-info-text">{{ date("$datetime->date_format / $datetime->time_format", strtotime($office->created_at)) ?? '-'}}</p> --}}
                 </li>
             </ul>
         </div>
+        @endif
         @endif
 
 
@@ -268,12 +270,12 @@
                 <li>
                     <span class="material-icons customer-info-text">{{__('messages.rating')}}</span>
                     {{-- <a href="tel:{{optional($user)->rating}}" class="customer-info-value"> --}}
-                        <p class="mb-0">{{ optional($office)->rating ?? '-' }}</p>
+                        <p class="mb-0">{{ optional($user)->rating ?? '-' }}</p>
                     {{-- </a> --}}
                 </li>
                 <li>
                     <span class="material-icons customer-info-text">{{__('messages.joining_date')}}</span>
-                    <p class="customer-info-text">{{ date("$datetime->date_format / $datetime->time_format", strtotime($office->created_at)) ?? '-'}}</p>
+                    <p class="customer-info-text">{{ date("$datetime->date_format / $datetime->time_format", strtotime($user->created_at)) ?? '-'}}</p>
                 </li>
             </ul>
         </div>

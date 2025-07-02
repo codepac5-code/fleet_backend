@@ -1,10 +1,9 @@
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
             <form method="POST" action="{{ route('reorderSave') }}">
                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                <section class="">
+                 <section class="">
                     <ul class="list-unstyled m-1" id="drag-list">
                         @if( count($settings) > 0 )
                             @foreach($settings as $data)

@@ -3,6 +3,7 @@ namespace App\Http\Services\Dashboard\UsersManagement\ViewUsersList\Logic;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Models\Setting;
 use App\Models\User;
 use Yajra\DataTables\DataTables;
 use Illuminate\Http\JsonResponse;
@@ -123,8 +124,22 @@ class ViewUsersListLogic implements Service {
             $auth_user= authSession();
             return view('customer.action',compact('user','auth_user'))->render();
         })
+
+        ->editColumn('walletBalance', function ($qry){
+            $walletBalance = $qry->walletBalance;
+            return view('customer.walletBalance', compact('walletBalance'));
+        })
+        ->editColumn('created_at', function($query) {
+            $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
+            $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
+           
+            $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
+            ? date(optional($datetime)->date_format, strtotime($query->created_at)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->created_at))
+            : $query->created_at;
+            return $formattedDate;
+        })
         ->addIndexColumn()
-        ->rawColumns(['check','action','status','block' ,'display_name'])
+        ->rawColumns(['check','action','status','block' ,'display_name','created_at','walletBalance'])
         // ->rawColumns(['check','action','status','created_at','contact_number'])
         ->make(true);
    }

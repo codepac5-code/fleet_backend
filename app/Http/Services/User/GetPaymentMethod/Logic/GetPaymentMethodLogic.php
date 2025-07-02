@@ -36,12 +36,14 @@ class GetPaymentMethodLogic implements Service {
 
         if($this->input->isWalletCharge()){
             $paymentMethod = $paymentMethodRepository->getWhereIn( 
-                'type', [ 'mtn','syriatel'],
+                'type', [ ],//'type', [ 'mtn','syriatel'],
             $select);
 
         }else{
-            $paymentMethod = $paymentMethodRepository->getAllRecords( $select);
-
+            // $paymentMethod = $paymentMethodRepository->getAllRecords( $select);
+            $paymentMethod = $paymentMethodRepository->getByConditions( 
+                ['type'=>'fleetWallet','type'=>'cash'],//'type', [ 'mtn','syriatel'],
+            $select);
         }
 
 

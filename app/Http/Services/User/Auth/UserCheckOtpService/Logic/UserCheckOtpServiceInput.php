@@ -8,6 +8,7 @@ class UserCheckOtpServiceInput implements InputServiceInterface
     private string $userId;
     private string $code;
     private string $phoneNumber;
+    private string $referralCode;
 
 
     public function __construct( Array $input ,
@@ -15,6 +16,7 @@ class UserCheckOtpServiceInput implements InputServiceInterface
         $this->userId    = $input['userId'];
         $this->code      = $input['code'];
         $this->phoneNumber      = $input['phoneNumber'];
+        $this->referralCode     = $input['referralCode'] ?? null;
     }
 
     // write your input function here..
@@ -83,5 +85,14 @@ class UserCheckOtpServiceInput implements InputServiceInterface
         $this->phoneNumber = $phoneNumber;
 
         return $this;
+    }
+
+    /**
+     * Get the value of referralCode
+     *
+     * @return string
+     */
+    public function getReferralCode(): string {
+        return $this->referralCode;
     }
 }

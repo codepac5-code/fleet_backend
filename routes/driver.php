@@ -9,33 +9,43 @@ use App\Http\Services\Driver\ReceiveCash\Controller\ReceiveCashController;
 use App\Http\Services\Driver\OrderHistory\Controller\OrderHistoryController;
 use App\Http\Services\Driver\Profile\GetProfile\Controller\GetProfileController;
 use App\Http\Services\Driver\ChangeConnected\Controller\ChangeConnectedController;
+use App\Http\Services\Driver\DeleteDriverAccount\Controller\DeleteDriverAccountController;
+use App\Http\Services\Driver\DeleteUserAccount\Controller\DeleteUserAccountController;
 use App\Http\Services\Driver\Profile\EditImageProfile\Controller\EditImageProfileController;
 use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Controller\ShowPoilceAndPrivceServiceController;
 use App\Http\Services\Driver\GetDriverNotification\Controller\GetDriverNotificationController;
+use App\Http\Services\Driver\GetDriverTermAndCondition\Controller\GetDriverTermAndConditionController;
 use App\Http\Services\Driver\GetDriverWalletHistory\Controller\GetDriverWalletHistoryController;
 use App\Http\Services\Driver\GetPublicDriverAppSettings\Controller\GetPublicDriverAppSettingsController;
 use App\Http\Services\Driver\ReceiveCompletedOrderInfo\Controller\ReceiveCompletedOrderInfoController;
+use App\Http\Services\Driver\SendJobApplication\Controller\SendJobApplicationController;
 use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
 use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
 use App\Http\Services\User\GetWalletHistory\Controller\GetWalletHistoryController;
+use App\Http\Services\User\InquireUserOrderStatus\Controller\InquireUserOrderStatusController;
 use App\Http\Services\User\SendReport\Controller\SendReportController;
 use App\Http\Services\User\WalletManagement\AddBalanceByPaymentMethod\Controller\AddBalanceByPaymentMethodController;
 use App\Http\Services\User\WalletManagement\ConfirmPhone_AddBalance\Controller\ConfirmPhone_AddBalanceController;
 
 Route::post('login', LoginController::class);
 
-Route::get('/policy',ShowPoilceAndPrivceServiceController::class);
+// Route::get('/policy',ShowPoilceAndPrivceServiceController::class);
 
 
 Route::group(['middleware' => ['set-localization']], function () {
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/app-public-settings', GetPublicDriverAppSettingsController::class);
     });
-    
+    Route::get('/policy',GetDriverTermAndConditionController::class);
+
 });
+
+Route::post('send-driver-job-application', SendJobApplicationController::class);
+
 
 Route::group(['middleware' => ['auth:driver','set-localization']],function () {
 
+    Route::post( 'delete-account', DeleteDriverAccountController::class);
     Route::post('rating',RattingUserController::class);
     Route::post('changeConnected',ChangeConnectedController::class);
     Route::post('accept-order',AcceptOrderController::class);
@@ -61,6 +71,8 @@ Route::group(['middleware' => ['auth:driver','set-localization']],function () {
         Route::get('/logout',LogoutController::class);
     });
 
+
+    Route::post('order/inquire-about-the-status-of-the-order' , InquireUserOrderStatusController::class);
 
     Route::post('send-completed-order-info',ReceiveCompletedOrderInfoController::class);
     

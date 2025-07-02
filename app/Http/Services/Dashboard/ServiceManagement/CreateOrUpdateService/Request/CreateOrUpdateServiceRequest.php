@@ -34,6 +34,7 @@ class CreateOrUpdateServiceRequest extends BaseRequest
             'description_en' => 'nullable|string|max:500|regex:/^[A-Za-z0-9\s]*$/',
             'id'          => 'nullable|numeric',
             'current_image' => 'nullable',
+            'travel_service'=>'required',
         ];
     }
 

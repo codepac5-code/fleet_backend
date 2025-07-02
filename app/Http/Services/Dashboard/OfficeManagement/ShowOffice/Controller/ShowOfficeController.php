@@ -15,7 +15,7 @@ class ShowOfficeController extends Controller
 {
     public function __invoke(ShowOfficeRequest $request)
     {
-        $id =  $request->office;
+        $id =  $request->officeId;
         $auth_user = authSession();
         $office = Office::with('officeDocument', 'booking')->where('id', $id)->first();
 
@@ -46,10 +46,12 @@ class ShowOfficeController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('amount');
 
+
+       
         $officeData = [
-            'officeTotEarning'          =>  $totalAmount,
-            'officeTotWithdrableAmt'    =>  $totalAmount,
-            'officeAlreadyWithdrawAmt'  =>  $officePayout,
+            'officeTotEarning'          =>  $office->total_income,
+            'officeTotWithdrableAmt'    =>  $office->walletBalance,
+            'officeAlreadyWithdrawAmt'  =>  $office->withdrawn_amount,
             'pendWithdrwan' =>  $totalAmount - $officePayout,
         ];
 

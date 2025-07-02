@@ -53,9 +53,15 @@
         </div>
 
     </div>
+
+    @php
+    $officeId = $officeId ?? 0;
+
+@endphp
  
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
+            const officeId = @json($officeId);
 
         window.renderedDataTable2 = $('#ongoing_datatable').DataTable({
                 processing: true,
@@ -65,7 +71,7 @@
                 dom: '<"row align-items-center"><"table-responsive my-3" rt><"row align-items-center" <"col-md-6" l><"col-md-6" p>><"clear">',
                 ajax: {
                   "type"   : "GET",
-                  "url"    : '{{ route("booking.index_data",["type"=>"ongoing"]) }}',
+                  url: `/booking/booking-index-data?type=ongoing&officeId=${officeId}`, 
                   "data"   : function( d ) {
                     d.search = {
                       value: $('.dt-search').val()

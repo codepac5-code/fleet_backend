@@ -2,6 +2,7 @@
 namespace App\Http\Services\Driver\ChangeConnected\Logic;
 
 use App\Http\Core\InternalInterface\InputServiceInterface;
+use Illuminate\Support\Facades\Auth;
 
 class ChangeConnectedInput implements InputServiceInterface
 {
@@ -13,7 +14,7 @@ class ChangeConnectedInput implements InputServiceInterface
     public function __construct( array $input)
     {
         $this->isConnected  = boolval($input['isConnected']);
-        $this->driverId     = getAuthUser()->id;
+        $this->driverId     = Auth::id();
         $this->latitude     = $input['driverLatitude'];
         $this->longitude    = $input['driverLongitude'];
 

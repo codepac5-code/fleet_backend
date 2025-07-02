@@ -13,18 +13,26 @@
             <a class="nav-link" href="{{ route('office.show',['officeId' => $office->id]) }}"> {{__('messages.overview')}}</a>
         </li>
         <li class="nav-item {{request()->routeIs('vehicle.index') ? 'active' : ''}}">
-            <a class="nav-link" href="{{ route('vehicle.index',$office->id) }}"> {{__('messages.vehicles')}}</a>
+            <a class="nav-link" href="{{ route('vehicle.byOffice', ['officeId' =>$office->id]) }}"> {{__('messages.vehicles')}}</a>
         </li>
         
         <li class="nav-item {{request()->routeIs('driver.byOffice') ? 'active' : ''}}">
             <a class="nav-link" href="{{ route('driver.byOffice', ['officeId' =>$office->id]) }}">{{ __('messages.drivers') }}</a>
         </li>
+        <li class="nav-item {{request()->routeIs('office.orders') ? 'active' : ''}}">
+            <a class="nav-link" href="{{ route('office.orders', ['officeId' =>$office->id]) }}">{{ __('messages.orders') }}</a>
+        </li>
+
+        
+
         <li class="nav-item {{request()->routeIs('setting.comission') ? 'active' : ''}}">
             <a class="nav-link" href="{{ route('setting.comission',['officeId' =>$office->id]) }}">{{__('messages.commission')}}</a>
         </li>
         <li class="nav-item {{request()->routeIs('office.review') ? 'active' : ''}}">
             <a class="nav-link" href="{{ route('office.review',['officeId' =>$office->id]) }}">{{__('messages.Reviews')}}</a>
         </li>
+
+
 
     {{-- 
         <li class="nav-item {{request()->routeIs('service.show') ? 'active' : ''}}">

@@ -13,6 +13,8 @@ use App\Http\Core\Const\Messages\ErrorMessages;
 use App\Http\Core\Const\Messages\SuccessMessages;
 use App\Http\Core\Const\Options\OrderStatus;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\BalanceStatus;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
 use App\Jobs\FollowOrder\MakePendingOrderCardJob;
 use App\Jobs\FollowOrder\PendingOrder;
@@ -151,4 +153,6 @@ class MakeOrderLogic implements Service {
     $order->status = OrderStatus::$Pending;
     OrderRedisModel::storeWithPagenationService($order);
    }
+
+
 }
