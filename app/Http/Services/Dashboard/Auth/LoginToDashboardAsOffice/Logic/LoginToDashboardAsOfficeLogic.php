@@ -12,41 +12,51 @@ use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 
 class LoginToDashboardAsOfficeLogic implements Service {
 
-    private RepositoryCaller $repository ; // access to all model's repositories
+    private RepositoryCaller $repository; // access to all model's repositories
+    private LoginToDashboardAsOfficeInput $input; // added property to hold input
 
     public function __construct(
-    //---------------------------------------------------------------------------------------
-    private LoginToDashboardAsOfficeInput $input,  /*| Pass Request To Service*/
-    //---------------------------------------------------------------------------------------
+        LoginToDashboardAsOfficeInput $input /*| Pass Request To Service*/
     ){
+        $this->input = $input;
         $this->repository = new RepositoryCaller(); // init repository object
     }
 
 
-    public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
-
+    public function execute(): ResponseModel | JsonResponse | View | RedirectResponse
+    {
         $credentials = [
-            'email' => $this->input->getEmail(),
-            'password' => $this->input->get_password(),
+            'email'    => $this->input->getEmail(),
+            'password' => $this->input->getPassword(),
         ];
 
+        logoutAuthUser();
 
-        if( ! authenticate(  $credentials , $this->input->getRemember() , Guard::$Office)){
+        $guard = $this->input->getGuardName();
 
+        if (!$guard) {
             return redirect()->back()
-            ->withErrors(['password' => 'incorect password']);
-            // make_exception( 'You are not allowed to log in from here.');
+                ->withErrors(['role' => 'نوع الحساب غير صالح أو غير معرف']);
         }
-        
+
+        if (!authenticate($credentials, $this->input->getRemember(), $guard)) {
+            return redirect()->back()
+                ->withErrors(['password' => 'كلمة المرور غير صحيحة']);
+        }
 
         session()->regenerate();
 
-        $message = 'welcome to fleet dashboard';
-        // return response()->json(['ppp'=>'ppppp']);
+        $message = 'مرحباً بك في لوحة التحكم';
+
+        if(checkGuard(Guard::$Employee)){
+            // $roles = MainRoles();
+            // if(!authUserHashRoles(['roles']))
+            $message = 'مرحباً بك في فلييت';
+            return redirect(route('booking.index'))->withSuccess($message);
+        }
 
         return redirect(route('home'))->withSuccess($message);
 
-        // $response  = new LoginToDashboardAsOfficeOutput([] , 'welcome to fleet dashboard' , 'home' ,Redirect::ToRoute);
-        // return $response->send_as_array();
-   }
+
+    }
 }

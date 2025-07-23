@@ -56,10 +56,6 @@ class SendJobApplicationRequest extends BaseRequest
 
     protected function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, redirect()->back()
-        ->withErrors($validator)
-        ->withInput());
+        throw new ValidationException($validator);
     }
-    
-
 }

@@ -50,12 +50,11 @@ class SearchOnDriverJob implements ShouldQueue
         }
 
 
-        if ($this->attempt < 3 && RedisManagerData::OrderNotAccepted($search->getOrderId()) ) {
-            SearchOnDriverJob::dispatch($this->data, $this->attempt + 1)
-                ->delay(now()->addSeconds(9))
-                ->onQueue('jobs');
-            
-        }
+        // if ($this->attempt < 3 && RedisManagerData::OrderNotAccepted($search->getOrderId()) ) {
+        //     SearchOnDriverJob::dispatch($this->data, $this->attempt + 1)
+        //         ->delay(now()->addSeconds(9))
+        //         ->onQueue('jobs');
+        //}
 
     }
 
@@ -92,11 +91,8 @@ class SearchOnDriverJob implements ShouldQueue
                         broadcast(new NewOrder($data, $driverId));
                         $notified_drivers[] = $driverId;
 
-
                     }else{
-
                         info('driver >> driverId ='.$driverId.' >> has no service: ' . $sub_service_Id);
-
                     }
                 }
                 // foreach($drivers as $driver){
@@ -122,11 +118,13 @@ class SearchOnDriverJob implements ShouldQueue
                 //     // broadcast(new NewOrder($data, $driverId));
                 // }, $driverIds , $data);
 
-                $order_info = [
-                    'driverIds'=> $notified_drivers,
-                    'radius'   => $radius
-                ];
-                RedisManagerData::storeOrderDetails($orderId , $order_info);
+                    $order_info = [
+                        'driverIds'=> !empty($notified_drivers) ? $notified_drivers :[],
+                        'radius'   => $radius
+                    ];
+            
+                    RedisManagerData::storeOrderDetails($orderId , $order_info);
+                
                 if(empty($notified_drivers)){
                     Log::info("No drivers found in the specified radius.");
                 }
@@ -135,6 +133,13 @@ class SearchOnDriverJob implements ShouldQueue
                 }
 
             } else {
+                
+                $order_info = [
+                    'driverIds'=> [],
+                    'radius'   => $radius
+                ];
+        
+                RedisManagerData::storeOrderDetails($orderId , $order_info);
                 Log::info("No drivers found in the specified radius.");
             }
         } catch (\Throwable $e) {

@@ -54,8 +54,24 @@ use App\Http\Repositories\GeneralSettingRepositories\GeneralSettingRepositoryCal
 use App\Http\Repositories\OfficeServiceRepositories\OfficeServiceRepositoryCaller; 
 use App\Http\Repositories\ServiceRoutesRepositories\ServiceRoutesRepositoryCaller; 
 use App\Http\Repositories\EmployeeRepositories\EmployeeRepositoryCaller; 
+use App\Http\Repositories\RoleRepositories\RoleRepositoryCaller; 
+use App\Http\Repositories\DriversIssueRepositories\DriversIssueRepositoryCaller; 
+use App\Http\Repositories\DriverRepliesIssueRepositories\DriverRepliesIssueRepositoryCaller; 
+use App\Http\Repositories\IssueRepositories\IssueRepositoryCaller; 
+use App\Http\Repositories\ReplyRepositories\ReplyRepositoryCaller; 
+use App\Http\Repositories\HelpSuggestionRepositories\HelpSuggestionRepositoryCaller; 
+use App\Http\Repositories\DepartmentRepositories\DepartmentRepositoryCaller; 
+use App\Http\Repositories\IssueLogRepositories\IssueLogRepositoryCaller; 
 class RepositoryCaller {
 
+	static public function IssueLogRepository(){return (new IssueLogRepositoryCaller);}
+	static public function DepartmentRepository(){return (new DepartmentRepositoryCaller);}
+	static public function HelpSuggestionRepository(){return (new HelpSuggestionRepositoryCaller);}
+	static public function ReplyRepository(){return (new ReplyRepositoryCaller);}
+	static public function IssueRepository(){return (new IssueRepositoryCaller);}
+	static public function DriverRepliesIssueRepository(){return (new DriverRepliesIssueRepositoryCaller);}
+	static public function DriversIssueRepository(){return (new DriversIssueRepositoryCaller);}
+	static public function RoleRepository(){return (new RoleRepositoryCaller);}
 	static public function EmployeeRepository(){return (new EmployeeRepositoryCaller);}
 	static public function ServiceRoutesRepository(){return (new ServiceRoutesRepositoryCaller);}
 	static public function OfficeServiceRepository(){return (new OfficeServiceRepositoryCaller);}

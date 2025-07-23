@@ -39,7 +39,6 @@ class ViewEmployeeListLogic implements Service {
         
                 ->addColumn('full_name', function ($employee) {
                     return view('employee.employee', compact('employee'));
-
                     // return $row->firstName . ' ' . $row->lastName;
                 })
         

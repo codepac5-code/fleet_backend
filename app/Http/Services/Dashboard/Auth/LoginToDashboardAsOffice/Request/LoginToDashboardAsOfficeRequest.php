@@ -8,80 +8,63 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Core\Request\BaseRequest;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\RateLimiter;
-use Laravel\Passport\Http\Middleware\CheckCredentials;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
+
 class LoginToDashboardAsOfficeRequest extends BaseRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-
-       /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'email' => 'required|email|exists:offices,email',
+            'email'    => 'required|email',
             'password' => 'required|string',
-          //  'user_type' =>'required'
+            'role'     => 'required|string|in:employee,manager',  // تم تعديل الحقل هنا
         ];
     }
 
-
-
-    
-
-    /**
-     * Attempt to authenticate the request's credentials.
-     *
-     * @return void
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function authenticate()
     {
-       // $this->ensureIsNotRateLimited();
-//guard('guardName')->
-        if (! Auth::guard(Guard::$Office)->attempt($this->only('email', 'password'), $this->filled('remember'))) {
-            RateLimiter::hit($this->throttleKey()); 
+        $role = $this->input('role'); 
+
+        $guard = null;
+        if ($role === 'employee') {
+            $guard = Guard::$Employee;
+        } elseif ($role === 'manager') {
+            $guard = Guard::$Office;  
+        } else {
+            throw ValidationException::withMessages([
+                'role' => __('نوع الحساب غير صالح.'),
+            ]);
+        }
+
+        if (!Auth::guard($guard)->attempt($this->only('email', 'password'), $this->filled('remember'))) {
+            RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
 
-        $user = Auth::user();
-        if($user->status == 0) {
-            Auth::logout();
+        $user = Auth::guard($guard)->user();
+
+        if ($user->status == 0) {
+            Auth::guard($guard)->logout();
             throw ValidationException::withMessages([
-                'email' => __('auth.account_inactive')
+                'email' => __('auth.account_inactive'),
             ]);
         }
 
-      //  RateLimiter::clear($this->throttleKey());
+        // RateLimiter::clear($this->throttleKey());
     }
 
-
-
-    /**
-     * Ensure the login request is not rate limited.
-     *
-     * @return void
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function ensureIsNotRateLimited()
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -90,30 +73,22 @@ class LoginToDashboardAsOfficeRequest extends BaseRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-                'email'    => trans('auth.throttle', [
+            'email' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
         ]);
     }
 
-
-
-    /**
-     * Get the rate limiting throttle key for the request.
-     *
-     * @return string
-     */
     public function throttleKey()
     {
         return Str::lower($this->input('email')).'|'.$this->ip();
     }
 
-
     protected function failedValidation(Validator $validator)
     {
         throw new ValidationException($validator, redirect()->back()
-        ->withErrors($validator)
-        ->withInput());
+            ->withErrors($validator)
+            ->withInput());
     }
 }

@@ -46,6 +46,136 @@
   <link href="assets/css/main.css" rel="stylesheet">
 
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  background-color: #f0f2f5;
+  direction: rtl;
+  color: #333;
+}
+
+.container1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 20px;
+}
+
+form {
+  background-color: #fff;
+  padding: 30px 35px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  max-width: 480px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: box-shadow 0.3s ease;
+}
+
+form:hover {
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+label {
+  display: block;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #444;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 8px;
+  border: 1.8px solid #ccc;
+  box-sizing: border-box;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #555;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fafafa;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #aaa;
+  font-weight: 400;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #ffcc00;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+  background-color: #fff;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: 'Poppins', sans-serif;
+}
+
+button {
+  width: 100%;
+  background-color: #d9534f;
+  color: white;
+  padding: 16px;
+  border: none;
+  border-radius: 10px;
+  margin-top: 30px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(217, 83, 79, 0.4);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+button:hover {
+  background-color: #c9302c;
+  box-shadow: 0 6px 25px rgba(201, 48, 44, 0.6);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 25px;
+  font-weight: 500;
+  color: #555;
+  user-select: none;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #d9534f;
+}
+
+.checkbox-row label {
+  cursor: pointer;
+  max-width: 90%;
+  font-size: 0.95rem;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #842029;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: none;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
 form {
   background-color: #fff;
   padding: 30px 25px;

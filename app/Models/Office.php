@@ -10,6 +10,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
 
 class Office extends Authenticatable implements HasMedia
 {
@@ -51,6 +52,33 @@ class Office extends Authenticatable implements HasMedia
         'drivers_count',
 
     ];
+
+
+
+    public function scopeForCurrentUser()
+    {
+        $query = $this->query();
+
+        if (Auth::guard('admin')->check()) {
+            return $query;
+        }
+
+        if (Auth::guard('office')->check()) {
+            $office = Auth::guard('office')->user();
+            return $query->where('id', $office->id);
+        }
+
+        if (Auth::guard('employee')->check()) {
+            $employee = Auth::guard('employee')->user();
+            if ($employee->office_id) {
+                return $query->where('id', $employee->officeId);
+            } else {
+                return $query;
+            }
+        }
+
+        return $query;
+    }
 
     public function getCommissionFormattedAttribute()
     {

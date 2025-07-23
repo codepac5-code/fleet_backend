@@ -8,14 +8,14 @@ $auth_user= authSession();
 
 <div class="d-flex justify-content-end align-items-center">
 @if(!$office->trashed())
-{{-- <a class="mr-2" href="{{ route('provider.time-slot',['id' => $provider->id]) }}" title="{{ __('messages.My_time_slot',['form' => __('messages.provider') ]) }}"><i class="fa fa-clock text-primary "></i></a> --}}
+{{-- <a class="mr-2" href="{{ route('office.time-slot',['id' => $office->id]) }}" title="{{ __('messages.My_time_slot',['form' => __('messages.office') ]) }}"><i class="fa fa-clock text-primary "></i></a> --}}
 
 
-    {{-- @if($auth_user->can('provider edit')) --}}
+    @if(auth()->user()->can('edit office'))
     <a class="mr-2" href="{{ route('office.create-page',['id' => $office->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.office') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
-    {{-- @endif --}}
-    {{-- @if($auth_user->can('provider delete')) --}}
-    <a class="mr-2 text-danger" href="{{ route('office.destroy', $office->id) }}" data--submit="provider{{$office->id}}" 
+    @endif
+    @if(auth()->user()->can('delete office'))
+    <a class="mr-2 text-danger" href="{{ route('office.destroy', $office->id) }}" data--submit="office{{$office->id}}" 
         data--confirmation='true'
         data--ajax="true"
         data-datatable="reload"
@@ -24,10 +24,9 @@ $auth_user= authSession();
         data-message='{{ __("messages.delete_msg") }}'>
         <i class="far fa-trash-alt"></i>
     </a>
-    {{-- @endif --}}
+    @endif
 @endif
-{{-- @if(auth()->user()->hasAnyRole(['admin']) && $provider->trashed()) --}}
-@if( $office->trashed())
+@if(auth()->user()->hasAnyRole(MainRoles()) && $office->trashed())
     <a href="{{ route('office.action',['id' => $office->id, 'type' => 'restore']) }}"
         title="{{ __('messages.restore_form_title',['form' => __('messages.office') ]) }}"
         data--submit="confirm_form"

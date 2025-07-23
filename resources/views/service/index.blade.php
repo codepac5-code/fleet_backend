@@ -10,9 +10,10 @@
                       <div class="card-body p-0">
                           <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                               <h5 class="font-weight-bold">{{ $pageTitle ?? trans('messages.list') }}</h5>
-                              {{-- @if($auth_user->can('add service'))  &&  Route::currentRouteName() !=='servicepackage.service' --}}
+                              @if(auth()->user()->can('add service')) 
+                               {{-- &&  Route::currentRouteName() !=='servicepackage.service' --}}
                               <a href="{{ route('service.create') }}" class="float-right mr-1 btn btn-sm btn-primary "><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.service')  ]) }}</a>
-                              {{-- @endif --}}
+                              @endif
                           </div>
                           {{-- {{ $dataTable->table(['class' => 'table  w-100'],false) }} --}}
                       </div>

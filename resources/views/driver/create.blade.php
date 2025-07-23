@@ -43,7 +43,7 @@
                             </div>
     
                             <div class="row">
-                                @if(auth()->user()->hasAnyRole(['super-admin']))
+                            @if(auth()->user()->hasAnyRole(['super-admin']))
                                 <div class="form-group col-md-4">
                                     <label for="officeId" class="form-control-label">{{ __('messages.office') }} <span class="text-danger">*</span></label>
                                     <select name="officeId" id="officeId" class="select2js form-control" required>
@@ -59,8 +59,7 @@
                                     @enderror
                                 </div>
                                 @endif
-                                @if(auth()->user()->hasAnyRole(['office']))
-                                
+                                @if(auth()->user()->hasAnyRole(['office']))            
                                     <input type="hidden" name="officeId" id='officeId' value="{{auth()->user()->id}}">
                                 @endif
     

@@ -18,4 +18,6 @@ class DriverAddress extends Model
         'lang',
         'driverId'
     ];
+
+    
 }

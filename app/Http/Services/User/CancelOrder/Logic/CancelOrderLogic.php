@@ -31,13 +31,22 @@ class CancelOrderLogic implements Service {
         
         $orderId = $this->input->getOrderId();
 
+
         // $key = 'order.'.$orderId.':notAcceptedByDriver';      
 
+        $updated = $this->repository->BookingRepository()
+        ->updateRepository()
+        ->update(['id'=>$orderId],['status'=>OrderStatus::$Cancelled]);
+
+        if($updated < 1){
+            make_exception(__('messages.something_wrong'));
+        }
+        
         if(RedisManagerData::OrderNotAccepted($orderId)){
             $r_data = RedisManagerData::getOrderDetails($orderId);     
-            $driverIds = $r_data ['driverIds'];
+            $driverIds = $r_data['driverIds'];
         
-            foreach($driverIds as $driverId) {
+            foreach( $driverIds as $driverId ) {
                 event((new DeleteOrder($orderId, $driverId)));
                 // dispatch(new HandelRedisEvents('delete_order',[
                 //     'orderId' => $orderId,
@@ -47,6 +56,8 @@ class CancelOrderLogic implements Service {
             RedisManagerData::AcceptOrder($orderId);
 
         }
+
+
 
         
         // $new_count = FleetSystemOperationGo::add_orders_to_pinding_rides(-1);

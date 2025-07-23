@@ -63,6 +63,10 @@ function upload_and_save_file($model, $file, $collection = 'default') {
         }
         
 
+        function checkGuard($guardName){
+            return Auth::guard($guardName)->check();
+        }
+
         function setCatch($key, $value) : void{
 
             if(!Cache::put($key, $value, 600)){
@@ -213,12 +217,33 @@ function upload_and_save_file($model, $file, $collection = 'default') {
 
         }
 
-    function authenticate( $credentials ,  $remember = false , $guardName = 'user' ):bool{
+        
+
+    function authenticate( $credentials ,  $remember = false , $guardName = 'employee' ):bool{
        return Auth::guard($guardName)->attempt($credentials, $remember);
     }
 
+    function authUserHashRoles():bool{
+        return true;
+        // return auth()->user()->hasAnyRole(['admin','office']);
+    }
 
 
+use Illuminate\Support\Str;
+
+if (!function_exists('storeUserNotification')) {
+    function storeUserNotification(int $userId, array $notification): void
+    {
+        $key = "user:notifications-2" ;// "user:{$userId}:notifications";
+
+        $notification['id'] = (string) Str::uuid();
+        $notification['created_at'] = now()->toISOString();
+
+        Redis::lpush($key, json_encode($notification));
+
+        Redis::ltrim($key, 0, 99);
+    }
+}
         // function authSession($force=false){
         //     $session = new \App\Models\User;
         //     if($force){

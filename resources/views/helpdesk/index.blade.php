@@ -1,233 +1,163 @@
 <x-master-layout>
 
-    <head>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script type="text/javascript" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
-    </head>
-    <div class="container-fluid">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <div class="container-fluid mt-4">
+
+
+      <div class="container-fluid">
         <div class="row">
             <div class="col-lg-12">
                 <div class="card card-block card-stretch">
                     <div class="card-body p-0">
                         <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                            <h5 class="fw-bold">{{ $pageTitle ?? trans('messages.list') }}</h5>
-                            @if ($auth_user->can('helpdesk add'))
-                                <a href="{{ route('helpdesk.create') }}" class=" float-end me-1 btn btn-sm btn-primary"><i
-                                        class="fa fa-plus-circle"></i>
-                                    {{ trans('messages.add_form_title', ['form' => trans('messages.query')]) }}</a>
-                            @endif
+                            <h5 class="font-weight-bold">قائمة التذاكر (Issues)</h5>
+                            {{-- @if(auth()->user()->can('add user')) --}}
+                            <a href="{{ route('issues.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.issue')  ]) }}</a>
+                            {{-- @endif --}}
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <div class="row justify-content-between gy-3">
-                    <div class="col-md-6 col-lg-4 col-xl-3">
-                        <!-- <div class="col-md-12">
-                      <form action="{{ route('helpdesk.bulk-action') }}" id="quick-action-form" class="form-disabled d-flex gap-3 align-items-center">
-                        @csrf
-                      <select name="action_type" class="form-control select2" id="quick-action-type" style="width:100%" disabled>
-                          <option value="">{{ __('messages.no_action') }}</option>
-                          <option value="change-status">{{ __('messages.status') }}</option>
-                          <option value="delete">{{ __('messages.delete') }}</option>
-                          <option value="restore">{{ __('messages.restore') }}</option>
-                          <option value="permanently-delete">{{ __('messages.permanent_dlt') }}</option>
-                      </select>
-
-                    <div class="select-status d-none quick-action-field" id="change-status-action" style="width:100%">
-                        <select name="status" class="form-control select2" id="status" style="width:100%">
-                          <option value="open">{{ __('messages.open') }}</option>
-                          <option value="closed">{{ __('messages.closed') }}</option>
-                        </select>
-                    </div>
-                    <button id="quick-action-apply" class="btn btn-primary" data-ajax="true"
-                    {{-- data--submit="{{ route('tax.bulk-action') }}" --}}
-                    data-datatable="reload" data-confirmation='true'
-                    data-title="{{ __('tax', ['form' => __('tax')]) }}"
-                    title="{{ __('tax', ['form' => __('tax')]) }}"
-                    data-message='{{ __('Do you want to perform this action?') }}' disabled>{{ __('messages.apply') }}</button>
-                </div> -->
-
-                        </form>
-                    </div>
-                    <div class="col-md-6 col-lg-4 col-xl-3">
-                        <div class="d-flex align-items-center gap-3 justify-content-end">
-                            <div class="d-flex justify-content-end gap-3">
-                                <div class="datatable-filter ml-auto">
-                                    <select name="column_status" id="column_status" class="select2 form-control"
-                                        data-filter="select" style="width: 100%">
-                                        <option value="">{{ __('messages.all') }}</option>
-                                        <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>
-                                            {{ __('messages.open') }}</option>
-                                        <option value="1" {{ $filter['status'] == '1' ? 'selected' : '' }}>
-                                            {{ __('messages.closed') }}</option>
-                                    </select>
-                                </div>
-                                <div class="input-group input-group-search ms-2">
-                                    <span class="input-group-text" id="addon-wrapping"><i
-                                            class="fas fa-search"></i></span>
-                                    <input type="text" class="form-control dt-search" placeholder="Search..."
-                                        aria-label="Search" aria-describedby="addon-wrapping"
-                                        aria-controls="dataTableBuilder">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table id="datatable" class="table table-striped border">
-
-                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
 
-            window.renderedDataTable = $('#datatable').DataTable({
-                processing: true,
-                serverSide: true,
-                autoWidth: false,
-                responsive: true,
-                dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',
-                ajax: {
-                    "type": "GET",
-                    "url": '{{ route('helpdesk.index_data') }}',
-                    "data": function(d) {
-                        d.search = {
-                            value: $('.dt-search').val()
-                        };
-                        d.filter = {
-                            column_status: $('#column_status').val()
-                        }
-                    },
-                },
-                columns: [
-                    // {
-                    //     name: 'check',
-                    //     data: 'check',
-                    //     title: '<input type="checkbox" class="form-check-input" name="select_all_table" id="select-all-table" onclick="selectAllTable(this)">',
-                    //     exportable: false,
-                    //     orderable: false,
-                    //     searchable: false,
-                    // },
-                    {
-                        data: 'updated_at',
-                        name: 'updated_at',
-                        title: "{{ __('product.lbl_update_at') }}",
-                        orderable: true,
-                        visible: false,
-                    },
-                    {
-                        data: 'id',
-                        name: 'id',
-                        title: "{{ __('messages.id') }}"
-                    },
-                    {
-                        data: 'name',
-                        name: 'name',
-                        title: "{{ __('messages.name') }}"
-                    },
-                    {
-                        data: 'subject',
-                        name: 'subject',
-                        title: "{{ __('messages.subject') }}"
-                    },
-                    {
-                        data: 'datetime',
-                        name: 'datetime',
-                        title: "{{ __('messages.datetime') }}",
-                        orderable: false,
-                        searchable: false,
-                    },
-                    {
-                        data: 'role',
-                        name: 'role',
-                        title: "{{ __('messages.role') }}",
-                        orderable: false,
-                        searchable: false,
-                    },
-                    {
-                        data: 'mode',
-                        name: 'mode',
-                        title: "{{ __('messages.mode') }}",
-                        orderable: false,
-                        searchable: false,
-                    },
-                    {
-                        data: 'status',
-                        name: 'status',
-                        title: "{{ __('messages.status') }}",
-                        orderable: false,
-                        searchable: false,
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false,
-                        title: "{{ __('messages.action') }}"
-                    }
+      
+      <div class="row mb-3">
+          <div class="col-md-3">
+              <select id="filter-status" class="form-control">
+                  <option value="">{{ __('-- الحالة --') }}</option>
+                  <option value="open" style="color: black;">مفتوحة</option>
+                  <option value="processing">قيد المعالجة</option>
+                  <option value="closed">مغلقة</option>
+              </select>
+          </div>
+          <div class="col-md-3">
+              <select id="filter-department" class="form-control">
+                  <option value="">{{ __('-- القسم --') }}</option>
+                  @foreach($departments as $dept)
+                      <option value="{{ $dept->id }}">{{ $dept->name_ar }}</option>
+                  @endforeach
+              </select>
+          </div>
+          <div class="col-md-3">
+              <select id="filter-agent" class="form-control">
+                  <option value="">{{ __('-- الموظف المعين --') }}</option>
+                  @foreach($agents as $agent)
+                      <option value="{{ $agent->id }}">{{ $agent->firstName . ' ' . $agent->lastName }}</option>
+                  @endforeach
+              </select>
+          </div>
+          <div class="col-md-3">
+              <select id="filter-priority" class="form-control">
+                  <option value="">{{ __('-- الأولوية --') }}</option>
+                  <option value="low">منخفضة</option>
+                  <option value="medium">متوسطة</option>
+                  <option value="high">عالية</option>
+              </select>
+          </div>
+      </div>
 
-                ],
-                order: [
-                    ['1', 'desc']
-                ],
-                language: {
-                    processing: "{{ __('messages.processing') }}" // Set your custom processing text
-                }
-            });
-        });
+      <table id="datatable" class="table table-bordered table-striped" style="width:100%">
+          <thead>
+              <tr>
+                  <th><input type="checkbox" id="select-all"></th>
+                  <th>الموضوع</th>
+                  <th>الحالة</th>
+                  <th>الأولوية</th>
+                  <th>القسم</th>
+                  <th>الموظف المعين</th>
+                  <th>آخر تحديث</th>
+                  <th>الإجراءات</th>
+              </tr>
+          </thead>
+      </table>
 
-        function resetQuickAction() {
-            const actionValue = $('#quick-action-type').val();
-            console.log(actionValue)
-            if (actionValue != '') {
-                $('#quick-action-apply').removeAttr('disabled');
+  </div>
 
-                if (actionValue == 'change-status') {
-                    $('.quick-action-field').addClass('d-none');
-                    $('#change-status-action').removeClass('d-none');
-                } else {
-                    $('.quick-action-field').addClass('d-none');
-                }
-            } else {
-                $('#quick-action-apply').attr('disabled', true);
-                $('.quick-action-field').addClass('d-none');
-            }
-        }
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+  <link href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" rel="stylesheet" />
 
-        $('#quick-action-type').change(function() {
-            resetQuickAction()
-        });
+  <script>
+  $(document).ready(function () {
+      var table = $('#datatable').DataTable({
+          processing: true,
+          serverSide: true,
+          ajax: {
+              url: '{{ route("issues.data") }}',
+              data: function (d) {
+                  d.status = $('#filter-status').val();
+                  d.department = $('#filter-department').val();
+                  d.agent = $('#filter-agent').val();
+                  d.priority = $('#filter-priority').val();
+              }
+          },
+          columns: [
+              { data: 'check', name: 'check', orderable: false, searchable: false },
+              { data: 'subject', name: 'subject' },
+              { data: 'status', name: 'status' },
+              { data: 'priority', name: 'priority' },
+              { data: 'department', name: 'department' },
+              { data: 'agentName', name: 'assigned_to' },
+              { data: 'updated_at', name: 'updated_at' },
+              { data: 'action', name: 'action', orderable: false, searchable: false },
+          ],
+          order: [[6, 'desc']],
+          columnDefs: [
+              {
+                  targets: 0,
+                  className: 'dt-body-center',
+              }
+          ],
+          language: {
+              search: "بحث:",
+              lengthMenu: "أظهر _MENU_ مدخلات",
+              info: "عرض _START_ إلى _END_ من أصل _TOTAL_ مدخل",
+              infoEmpty: "لا توجد بيانات متاحة",
+              processing: "جاري التحميل...",
+              paginate: {
+                  first: "الأول",
+                  last: "الأخير",
+                  next: "التالي",
+                  previous: "السابق"
+              },
+          },
+          drawCallback: function () {
+              $('#select-all').prop('checked', false);
+          }
+      });
 
-        $(document).on('update_quick_action', function() {
+     
+      $('#filter-status, #filter-department, #filter-agent, #filter-priority').change(function () {
+          table.draw();
+      });
 
-        })
+      
+      $('#select-all').on('click', function(){
+          var rows = table.rows({ 'search': 'applied' }).nodes();
+          $('input[type="checkbox"]', rows).prop('checked', this.checked);
+      });
 
-        $(document).on('click', '[data-ajax="true"]', function(e) {
-            e.preventDefault();
-            const button = $(this);
-            const confirmation = button.data('confirmation');
+  });
 
-            if (confirmation === 'true') {
-                const message = button.data('message');
-                if (confirm(message)) {
-                    const submitUrl = button.data('submit');
-                    const form = button.closest('form');
-                    form.attr('action', submitUrl);
-                    form.submit();
-                }
-            } else {
-                const submitUrl = button.data('submit');
-                const form = button.closest('form');
-                form.attr('action', submitUrl);
-                form.submit();
-            }
-        });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  function deleteIssue(id) {
+      if (confirm('هل أنت متأكد من حذف هذه التذكرة؟')) {
+          $.ajax({
+              url: '/issues/' + id,
+              type: 'DELETE',
+              headers: {
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}'
+              },
+              success: function(result) {
+                  $('#datatable').DataTable().ajax.reload();
+                  alert('تم حذف التذكرة بنجاح');
+              },
+              error: function() {
+                  alert('حدث خطأ أثناء الحذف');
+              }
+          });
+      }
+  }
+  </script>
 </x-master-layout>

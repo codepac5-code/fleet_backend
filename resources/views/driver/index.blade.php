@@ -11,10 +11,10 @@
                           <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                               <h5 class="font-weight-bold">{{ __('messages.Driver') }}</h5>
                               @if($list_status != 'unassigned' && $list_status !='request')
-                              {{-- @if($auth_user->can('driver add')) --}}
+                              @if($auth_user->can('driver add'))
                               <a href="{{ route('driver.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.Driver')  ]) }}</a>
+                             @endif
                               @endif
-                              {{-- @endif --}}
                           </div>
                       </div>
                   </div>
@@ -110,14 +110,12 @@
                           title: "{{__('messages.name')}}",
                           orderable: true,
                           searchable: false,
-
                       },
                       {
                           data: 'isConected',
                           name: 'isConected',
                           title: "{{__('messages.status')}}",
                           searchable: false,
-
                       },
                       {
                           data: 'office',
@@ -133,7 +131,6 @@
                           title: "{{__('messages.contact_number')}}",
                           searchable: true,
                       },
-
                       {
                           data: 'dues',
                           name: 'dues',
@@ -141,14 +138,12 @@
                           searchable: false,
 
                       },
-
                       // {
                       //     data: 'walletBalance',
                       //     name: 'walletBalance',
                       //     title: "{{__('messages.walletBalance')}}"
                       // },
 
-                      
                       // {
                       //     data: 'address',
                       //     name: 'address',
@@ -161,8 +156,6 @@
                           searchable: false,
 
                       },
-
-
                       {
                           data: 'action',
                           name: 'action',
@@ -225,3 +218,6 @@
       </script>
       <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
   </x-master-layout>
+
+
+  

@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class Driver extends Authenticatable
@@ -61,6 +62,7 @@ class Driver extends Authenticatable
         'is_registered',
     ];
 
+    
     /**
      * The channels the user receives notification broadcasts on.
      */
@@ -69,6 +71,41 @@ class Driver extends Authenticatable
         return 'private-notification-driver.'.$this->id;
     }
 
+
+    public function issues()
+    {
+        return $this->morphMany(Issue::class, 'owner');
+    }
+
+    public function scopeForCurrentUser()
+    {
+        $query = $this->query()->withTrashed();
+
+        if (Auth::guard('admin')->check()) {
+            return $query;
+        }
+
+        if (Auth::guard('office')->check()) {
+            $office = Auth::guard('office')->user();
+            return $query->where('officeId', $office->id);
+        }
+
+        if (Auth::guard('employee')->check()) {
+            $employee = Auth::guard('employee')->user();
+            if ($employee->office_id) {
+                return $query->where('officeId', $employee->officeId);
+            } else {
+                return $query;
+            }
+        }
+
+        return $query;
+    }
+
+    public function replies(){
+        return $this->morphMany(Reply::class, 'sender');
+    }
+    
     public function ratingsReceived()
     {
     return $this->morphMany(Rating::class, 'rated_person');

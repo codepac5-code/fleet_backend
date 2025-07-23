@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class User extends Authenticatable
 {
@@ -38,6 +39,47 @@ class User extends Authenticatable
         'dialCode',
     ];
 
+    public function assignedIssues()
+    {
+        return $this->morphMany(Issue::class, 'assigned_to');
+    }
+
+
+
+    public function scopeForCurrentUser()
+    {
+        $query = $this->query()->withTrashed();
+
+        if (Auth::guard('admin')->check()) {
+            return $query;
+        }
+
+        if (Auth::guard('office')->check()) {
+            $office = Auth::guard('office')->user();
+            return $query->where('officeId', $office->id);
+        }
+
+        if ( Auth::guard('employee')->check()) {
+            $employee = Auth::guard('employee')->user();
+            if ($employee->office_id) {
+                return $query->where('officeId', $employee->officeId);
+            } else {
+                return $query;
+            }
+        }
+        return $query;
+    }
+
+    public function replies()
+{
+    return $this->morphMany(Reply::class, 'sender');
+}
+
+    public function issues()
+    {
+        return $this->morphMany(Issue::class, 'owner');
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -62,9 +104,10 @@ class User extends Authenticatable
         ];
     }
 
-        /**
+    /**
      * The channels the user receives notification broadcasts on.
      */
+    
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'private-notification-user.'.$this->id;

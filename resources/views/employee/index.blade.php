@@ -11,10 +11,10 @@
                           <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                               <h5 class="font-weight-bold">{{ __('messages.employee') }}</h5>
                               @if($list_status != 'unassigned' && $list_status !='request')
-                              {{-- @if($auth_user->can('employee add')) --}}
+                              @if(auth()->user()->can('add employee'))
                               <a href="{{ route('employee.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.Driver')  ]) }}</a>
                               @endif
-                              {{-- @endif --}}
+                              @endif
                           </div>
                       </div>
                   </div>
@@ -54,13 +54,13 @@
               </form>
           </div>
                 <div class="d-flex justify-content-end">
-                  <div class="datatable-filter ml-auto">
+                   {{--<div class="datatable-filter ml-auto">
                     <select name="column_status" id="column_status" class="select2 form-control" data-filter="select" style="width: 100%">
                       <option value="">{{__('messages.all')}}</option>
                       <option value="0" {{$filter['status'] == '0' ? "selected" : ''}}>{{__('messages.inactive')}}</option>
                       <option value="1" {{$filter['status'] == '1' ? "selected" : ''}}>{{__('messages.active')}}</option>
                     </select>
-                  </div> 
+                  </div>  --}}
 
                 <div class="input-group ml-2">
                       <span class="input-group-text" id="addon-wrapping"><i class="fas fa-search"></i></span>

@@ -6,10 +6,10 @@
                     <div class="card-body p-0">
                         <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                             <h5 class="font-weight-bold">{{ $pageTitle ?? trans('messages.list') }}</h5>
-                            @if($auth_user->can('role add'))
-                                <a href="{{ route('permission.add',['type'=>'role']) }}" class="float-right mr-1 btn btn-sm btn-primary loadRemoteModel"><i class="fa fa-plus-circle"></i> {{ trans('messages.add_form_title',['form' => trans('messages.role')  ]) }}</a>
+                            {{-- @if($auth_user->can('role add')) --}}
+                                <a href="{{ route('role.add') }}" class="float-right mr-1 btn btn-sm btn-primary loadRemoteModel"><i class="fa fa-plus-circle"></i> {{ trans('messages.add_form_title',['form' => trans('messages.role')  ]) }}</a>
                                 
-                            @endif
+                            {{-- @endif --}}
                         </div>
                     </div>
                 </div>
@@ -67,6 +67,28 @@
             </div>
         </div>
     </div>
+
+
+<div id="commonModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+</div>
+
+
+<script>
+  $(document).on('click', '.loadRemoteModel', function(e) {
+      e.preventDefault();
+  
+      var url = $(this).attr('href');
+  
+      $.get(url, function(response) {
+          var modalHtml = '<div class="modal-dialog modal-lg" role="document">' + response + '</div>';
+  
+          $('#commonModal').html(modalHtml).modal('show');
+      }).fail(function(xhr) {
+          console.error(xhr.responseText);
+      });
+  });
+  </script>
+  
     <script>
          $(document).ready(function(event) {
 
@@ -114,6 +136,8 @@
                 
             });
       });
+
+      
 
     function resetQuickAction () {
     const actionValue = $('#quick-action-type').val();
@@ -204,6 +228,19 @@
         pos: 'bottom-center'
     });
 }
+
+
+$(document).on('click', '.loadRemoteModel', function(e) {
+    e.preventDefault();
+    var url = $(this).attr('href');
+    $.get(url, function(response) {
+        $('#commonModal .modal-content').html(response);
+        $('#commonModal').modal('show');
+    });
+});
+
     </script>
+
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 

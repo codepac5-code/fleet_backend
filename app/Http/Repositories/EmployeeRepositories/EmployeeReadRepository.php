@@ -53,13 +53,11 @@ class EmployeeReadRepository extends ReadRepository
                 'employeeJobName_en as employeeJobName',
                 'job_description_en as job_description'
             ]);
+
+            $query = $this->model->scopeForCurrentUser()
+            ->select($select);
             
-        if($auth->hasAnyRole(['super-admin'])){
-            $query = Employee::query()->select($select);
-        }
-        elseif($auth->hasAnyRole(['office'])){
-            $query = Employee::query()->select($select)->where(['officeId'=>$auth->id]);
-        }
+      
 
         if ($filter != null) {
             if (isset($filter['column_status'])) {

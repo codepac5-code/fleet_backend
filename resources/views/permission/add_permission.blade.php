@@ -1,5 +1,5 @@
 <!-- Modal -->
-<div class="modal-dialog" role="document">
+{{-- <div class="modal-dialog" role="document"> --}}
     <div class="modal-content">
         <div class="modal-header">
             <h5 class="modal-title" id="exampleModalLabel">{{ $title }}</h5>
@@ -8,7 +8,7 @@
             </button>
         </div>
 
-        <form action="{{ route('permission.save') }}" method="POST" data-toggle="validator">
+        <form action="{{ route('role.save') }}" method="POST" data-toggle="validator">
             @csrf
 
             <div class="modal-body">
@@ -51,7 +51,9 @@
             </div>
         </form>
     </div>
-</div>
+{{-- </div> --}}
+
+
 
 <script>
     $('#parent_id').select2({

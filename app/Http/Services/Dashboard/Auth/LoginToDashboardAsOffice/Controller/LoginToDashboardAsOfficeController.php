@@ -12,9 +12,6 @@ class LoginToDashboardAsOfficeController extends Controller
 {
     public function __invoke(LoginToDashboardAsOfficeRequest $request)
     {
-
-
-        // return $request->all();
         // validate input data and pass it to the service..
         $input = new LoginToDashboardAsOfficeInput($request->validated());
 

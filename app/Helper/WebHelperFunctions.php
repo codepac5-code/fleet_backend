@@ -78,6 +78,14 @@ function logoutAuthUser(){
 }
 
 
+function MainRoles():array{
+ return ['super-admin','office manager', 'admin'];
+}
+
+function MainOfficeRoles():array{
+    return ['office manager'];
+   }
+
 
 function textByLanguage($ar_text , $en_text){
     if(app()->getLocale() == 'ar'){return $ar_text; }

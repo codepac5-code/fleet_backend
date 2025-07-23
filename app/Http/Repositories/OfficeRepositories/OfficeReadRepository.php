@@ -11,4 +11,13 @@ class OfficeReadRepository extends ReadRepository
         $this->model = new Office();
     }
 
+
+
+    public function officeDataTable(){
+        return $this->model
+        ->scopeForCurrentUser()
+        ->orderBy('updated_at','desc');
+    }
+
+
 }

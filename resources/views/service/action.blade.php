@@ -5,11 +5,11 @@
     <div class="d-flex justify-content-end align-items-center">
         
     @if(!$service->trashed())
-    {{-- @if($auth_user->can('service edit')) --}}
+    @if(auth()->user()->can('service edit'))
     <a class="mr-2" href="{{route('service.create', ['id' => $service->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.office') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
-    {{-- @endif --}}
+    @endif
 
-      {{-- @if($auth_user->can('handyman delete')) --}}
+      @if(auth()->user()->can('delete service'))
         <a class="mr-3 text-danger" href="{{ route('service.destroy', $service->id) }}" data--submit="service{{$service->id}}" 
             data--confirmation='true' 
             data--ajax="true"
@@ -21,9 +21,8 @@
         </a>
         @endif
 
-    {{-- @endif --}}
-    {{-- @if(auth()->user()->hasAnyRole(['admin']) && $service->trashed()) --}}
-    @if($service->trashed())
+    @endif
+    @if(auth()->user()->hasAnyRole(MainRoles()) && $service->trashed())
         <a href="{{ route('service.action',['id' => $service->id, 'type' => 'restore']) }}"
             title="{{ __('messages.restore_form_title',['form' => __('messages.service') ]) }}"
             data--submit="confirm_form"

@@ -31,6 +31,18 @@
           'add_balance_question' => 'هل أنت متأكد من إضافة الرصيد',
           'yes_add_now' => 'نعم، إضافة الآن',
           'cancel' => 'إلغاء',
+          'employees' => 'الموظفون',
+          'employee' => 'الموظف',
+          'search_by_name' => 'البحث بالاسم...',
+          'job_title' => 'المسمى الوظيفي',
+          'status_conection' => 'حالة الاتصال',
+          'search' => 'بحث',
+          'confirm_action' => 'هل تريد تنفيذ هذا الإجراء؟',
+          'helpdesk' => 'مكتب الدعم',
+          'online' => 'متصل',
+          'offline' => 'غير متصل',
+          'fleet_employee' => 'موظف تابع لـ فلييت',
+          'role_placeholder' => 'الدور غير محدد',
           'processing' => 'جاري المعالجة',
           'please_wait' => 'يرجى الانتظار...',
           'error' => 'خطأ',
@@ -1147,6 +1159,8 @@
               'searching_user' => 'أنت تبحث عن مستخدم الآن',
               'select_user_type_to_search' => 'يرجى اختيار نوع المستخدم (سائق، مستخدم، مكتب)',
               'invalid_phone' => 'رقم الهاتف غير صحيح.',
+              'ticket_not_found' => 'التيكت غير موجود.',
+              'ticket_already_closed' => 'التيكت مغلق مسبقًا.',
 
               //-================================<<<   APP  >>================
 

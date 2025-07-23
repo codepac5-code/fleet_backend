@@ -27,7 +27,12 @@ class ViewUsersListLogic implements Service {
 
 
 
-        $query = User::query()->orderBy('updated_at','desc')->get();
+        $query = $this->repository->UserRepository()
+        ->readRepository()
+        ->userDataTable();
+        
+        
+        // User::query()->orderBy('updated_at','desc')->get();
         // if (isset($filter)) {
         //     if (isset($filter['column_status'])) {
         //         $query->where('status', $filter['column_status']);

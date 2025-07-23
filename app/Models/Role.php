@@ -12,6 +12,7 @@ use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Guard;
 use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasPermissions;
+use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Traits\RefreshesPermissionCache;
 
 /**
@@ -20,6 +21,7 @@ use Spatie\Permission\Traits\RefreshesPermissionCache;
  */
 class Role extends Model implements RoleContract
 {
+    use HasRoles;
     use HasPermissions;
     use RefreshesPermissionCache;
 
@@ -64,15 +66,15 @@ class Role extends Model implements RoleContract
     /**
      * A role may be given various permissions.
      */
-    public function permissions(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            config('permission.models.permission'),
-            config('permission.table_names.role_has_permissions'),
-            app(PermissionRegistrar::class)->pivotRole,
-            app(PermissionRegistrar::class)->pivotPermission
-        );
-    }
+    // public function permissions(): BelongsToMany
+    // {
+    //     return $this->belongsToMany(
+    //         config('permission.models.permission'),
+    //         config('permission.table_names.role_has_permissions'),
+    //         app(PermissionRegistrar::class)->pivotRole,
+    //         app(PermissionRegistrar::class)->pivotPermission
+    //     );
+    // }
 
     /**
      * A role belongs to some users of the model associated with its guard.
@@ -189,5 +191,9 @@ class Role extends Model implements RoleContract
         }
 
         return $this->permissions->contains($this->permission->getKeyName(), $this->permission->getKey());
+    }
+    public function perms()
+    {
+        return $this->belongsToMany(Permission::class, 'role_has_permissions', 'role_id', 'permission_id');
     }
 }

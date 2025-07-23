@@ -53,7 +53,7 @@ class Role_Layout_PageLogic implements Service {
                 // ->get();  
 
 
-                $permission = ParentPermission::all();//with('permissions')->get();
+                $permission = ParentPermission::get()->unique('name')->values();//with('permissions')->get();
                 
                 // $pp = Permission::whereNull('parent_id')->get();
                

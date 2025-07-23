@@ -23,7 +23,7 @@ class CreateOrUpdateEmployeeInput implements InputServiceInterface
     private $employeeJobName_ar;
     private $job_description_en;
     private $job_description_ar;
-    private $role;
+    private $roles;
 
 
 
@@ -48,7 +48,7 @@ class CreateOrUpdateEmployeeInput implements InputServiceInterface
         $this->employeeJobName_en = $input['employeeJobName_en'];
         $this->job_description_ar = $input['job_description_ar'];
         $this->job_description_en = $input['job_description_en'];
-        $this->role = $input['role'];
+        $this->roles = $input['role'];
 
 
     }
@@ -64,9 +64,9 @@ class CreateOrUpdateEmployeeInput implements InputServiceInterface
 /**
      * Get the value of type
      */ 
-    public function getRoleName()
+    public function getRolesArray()
     {
-        return $this->role;
+        return $this->roles;
     }
         
     /**

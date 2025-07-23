@@ -21,11 +21,22 @@
                             @csrf
                             @method('POST')
 
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
                             @if (isset($employee->id))
                                 <input type="hidden" name="id" value="{{$employee->id}}">
                             @endif
 
-                            {{-- صورة الموظف --}}
+                            
+
                             <div class="card card-block card-stretch mb-4">
                                 <div class="card-body p-1">
                                     <div class="d-flex flex-column align-items-center my-4">
@@ -45,7 +56,6 @@
                                 </div>
                             </div>
 
-                            {{-- القسم 1: معلومات الحساب --}}
                             <div class="border rounded p-3 mb-4">
                                 <h5 class="mb-3">{{ __('messages.account_information') }}</h5>
                                 <div class="row">
@@ -114,20 +124,25 @@
                                     @endif
 
                                     <div class="form-group col-md-4">
-                                        <label>{{ __('messages.role') }} <span class="text-danger">*</span></label>
-                                        <select name="role" class="select2js form-control" required>
-                                            <option value="">{{ __('messages.select_name', ['select' => __('messages.role')]) }}</option>
+                                        <label>{{ __('messages.roles') }} <span class="text-danger">*</span></label>
+                                    
+                                        @php
+                                        
+                                            $selectedRoleNames = old('role', $employee->getRoleNames()->toArray());
+                                        @endphp
+                                    
+                                        <select name="role[]" class="select2js form-control" multiple required>
                                             @foreach($roles as $role)
-                                                <option value="{{ $role->id }}" {{ old('roleId', $employee->roleId ?? '') == $role->id ? 'selected' : '' }}>
+                                                <option value="{{ $role->name }}" {{ in_array($role->name, (array)$selectedRoleNames) ? 'selected' : '' }}>
                                                     {{ $role->name }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </div>
+                                    
                                 </div>
                             </div>
 
-                            {{-- القسم 2: معلومات الوظيفة --}}
                             <div class="border rounded p-3 mb-4">
                                 <h5 class="mb-3">{{ __('messages.job_information') }}</h5>
                                 <div class="row">
@@ -153,7 +168,6 @@
                                 </div>
                             </div>
 
-                            {{-- القسم 3: معلومات العنوان --}}
                             <div class="border rounded p-3 mb-4">
                                 <h5 class="mb-3">{{ __('messages.address_information') }}</h5>
                                 <div class="row">

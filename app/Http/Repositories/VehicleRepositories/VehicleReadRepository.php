@@ -19,19 +19,9 @@ class VehicleReadRepository extends ReadRepository
 
 
     public function dataTableVehicle (){
-        $auth = auth()->user();
-        if($auth->hasAnyRole(['super-admin'])){
-            $query = Vehicle::query();
-        }
-        elseif($auth->hasAnyRole(['office'])){
-            $query = Vehicle::query()->where(['officeId'=>$auth->id]);
-        }
+        // $auth = auth()->user();
 
-        // if ($filter != null) {
-        //     if (isset($filter['column_status'])) {
-        //         $query->where('isConected', $filter['column_status']);
-        //     }
-        // }
+        $query = $this->model->scopeForCurrentUser();
 
        return $query->orderBy('created_at','desc');
     }

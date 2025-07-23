@@ -5,11 +5,11 @@
     <div class="d-flex justify-content-end align-items-center">
         
     @if(!$banner->trashed())
-    {{-- @if($auth_user->can('banner edit')) --}}
+    @if($auth_user->can('edit banner'))
     <a class="mr-2" href="{{route('banner.create', ['id' => $banner->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.office') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
-    {{-- @endif --}}
+    @endif
 
-      {{-- @if($auth_user->can('handyman delete')) --}}
+      @if(app()->user()->can('delete banner')) 
         <a class="mr-3 text-danger" href="{{ route('banner.destroy', $banner->id) }}" data--submit="banner{{$banner->id}}" 
             data--confirmation='true' 
             data--ajax="true"
@@ -19,11 +19,12 @@
             data-message='{{ __("messages.delete_msg") }}'>
             <i class="far fa-trash-alt"></i>
         </a>
-        @endif
+     @endif
+     @endif
 
     {{-- @endif --}}
-    {{-- @if(auth()->user()->hasAnyRole(['admin']) && $banner->trashed()) --}}
-    @if($banner->trashed())
+    @if(auth()->user()->hasAnyRole(MainRoles()) && $banner->trashed())
+    {{-- @if($banner->trashed()) --}}
         <a href="{{ route('banner.action',['id' => $banner->id, 'type' => 'restore']) }}"
             title="{{ __('messages.restore_form_title',['form' => __('messages.banner') ]) }}"
             data--submit="confirm_form"

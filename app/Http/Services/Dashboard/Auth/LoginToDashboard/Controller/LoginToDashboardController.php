@@ -12,8 +12,6 @@ class LoginToDashboardController extends Controller
 {
     public function __invoke(LoginToDashboardRequest $request)
     {
-
-    
         // validate input data and pass it to the service..
         $input = new LoginToDashboardInput( $request->validated());
 

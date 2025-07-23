@@ -44,39 +44,42 @@ class BookingReadRepository extends ReadRepository
     }
 
     public function getBookings(){
-        return $model = $this->model->query()->select(['*'])->orderBy('created_at','asc')->get();
+        return  $this->model->query()
+        ->select(['*'])->orderBy('created_at','asc')->get();
     }
 
     public function getAllBookingWithOrderBy(array $selected = ["*"] , array $with=[] , array $conditions=[] ){
-        return $model = $this->model->query()->select($selected)->with($with)->where($conditions)->orderBy('created_at','desc')->paginate(10);
+        return $this->model
+        ->scopeForCurrentUser()
+        ->select($selected)->with($with)->where($conditions)->orderBy('created_at','desc')->paginate(10);
     }
 
     public function getCompletedOrders($officeId){
-         $model = $this->model->query()->select(['*'])->where(['status'=>OrderStatus::$Completed],['status'=>OrderStatus::$Cancelled],['status'=>OrderStatus::$Hold]);
-        if(auth()->user()->hasRole(['office'])){
-            $model->where(['officeId'=>auth()->user()->id]);
-        }
-        elseif( $officeId != null){
-            $model->where(['officeId'=>$officeId]);
-        }
-       return $model->orderBy('created_at','desc')->get();
+        $model = $this->model
+        ->scopeForCurrentUser()
+        ->select(['*'])
+        ->where(
+            ['status'=>OrderStatus::$Completed],
+            ['status'=>OrderStatus::$Cancelled],
+            ['status'=>OrderStatus::$Hold]
+        );
+
+        return $model->orderBy('created_at','desc')->get();
     }
 
     public function getOngoingOrders($officeId){
-         $model = $this->model->query()->select(['*'])->where(['status'=>OrderStatus::$InProgress]);
-
-        if(auth()->user()->hasRole(['office'])){
-            $model->where(['officeId'=>auth()->user()->id]);
-        }
-        elseif( $officeId != null){
-            $model->where(['officeId'=>$officeId]);
-        }
+         $model = $this->model
+         ->scopeForCurrentUser()
+         ->select(['*'])->where(['status'=>OrderStatus::$InProgress]);
 
         return $model->orderBy('created_at','desc')->get();
     }
 
     public function getPendingOrders(){
-        return $model = $this->model->query()->select(['*'])->where(['status'=>OrderStatus::$SearchOnDriver])->orderBy('created_at','desc')->get();
+        return $this->model
+        ->scopeForCurrentUser()
+        ->select(['*'])
+        ->where(['status'=>OrderStatus::$SearchOnDriver])->orderBy('created_at','desc')->get();
     }
 
 

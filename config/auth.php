@@ -106,7 +106,7 @@ return [
             'model' => env('AUTH_MODEL', App\Models\Office::class),
         ],
         'employees' => [
-            'employee' => 'eloquent',
+            'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Employee::class),
         ],
 

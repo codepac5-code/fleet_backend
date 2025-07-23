@@ -27,4 +27,10 @@ class Admin  extends Authenticatable implements HasMedia
 
     ];
 
+
+    public function assignedIssues(){
+    return $this->morphMany(Issue::class, 'assigned_to');
+    }
+
+
 }

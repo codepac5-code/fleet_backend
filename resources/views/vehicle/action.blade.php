@@ -5,11 +5,11 @@
     <div class="d-flex justify-content-end align-items-center">
         
     @if(!$vehicle->trashed())
-    {{-- @if($auth_user->can('vehicle edit')) --}}
+    @if(auth()->user()->can('edit vehicle'))
     <a class="mr-2" href="{{route('vehicle.create', ['id' => $vehicle->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.office') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
-    {{-- @endif --}}
+    @endif
 
-      {{-- @if($auth_user->can('handyman delete')) --}}
+    @if(auth()->user()->can('delete sub-service'))
         <a class="mr-3 text-danger" href="{{ route('vehicle.destroy', ['vehicleId'=>$vehicle->id]) }}" data--submit="vehicle{{$vehicle->id}}" 
             data--confirmation='true' 
             data--ajax="true"
@@ -21,9 +21,8 @@
         </a>
         @endif
 
-    {{-- @endif --}}
-    {{-- @if(auth()->user()->hasAnyRole(['admin']) && $vehicle->trashed()) --}}
-    @if($vehicle->trashed())
+    @endif
+    @if(auth()->user()->hasAnyRole(MainRoles()) && $vehicle->trashed())
         <a href="{{ route('vehicle.action',['vehicleId' => $vehicle->id, 'type' => 'restore']) }}"
             title="{{ __('messages.restore_form_title',['form' => __('messages.vehicle') ]) }}"
             data--submit="confirm_form"

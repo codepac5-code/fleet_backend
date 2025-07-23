@@ -11,19 +11,27 @@ use App\Http\Services\Driver\Profile\GetProfile\Controller\GetProfileController;
 use App\Http\Services\Driver\ChangeConnected\Controller\ChangeConnectedController;
 use App\Http\Services\Driver\DeleteDriverAccount\Controller\DeleteDriverAccountController;
 use App\Http\Services\Driver\DeleteUserAccount\Controller\DeleteUserAccountController;
+use App\Http\Services\Driver\DriverCloseIssue\Controller\DriverCloseIssueController;
 use App\Http\Services\Driver\Profile\EditImageProfile\Controller\EditImageProfileController;
 use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Controller\ShowPoilceAndPrivceServiceController;
 use App\Http\Services\Driver\GetDriverNotification\Controller\GetDriverNotificationController;
 use App\Http\Services\Driver\GetDriverTermAndCondition\Controller\GetDriverTermAndConditionController;
 use App\Http\Services\Driver\GetDriverWalletHistory\Controller\GetDriverWalletHistoryController;
+use App\Http\Services\Driver\GetIssueDetails\Controller\GetIssueDetailsController;
+use App\Http\Services\Driver\GetIssuesWithReplies\Logic\GetIssuesWithRepliesInput;
 use App\Http\Services\Driver\GetPublicDriverAppSettings\Controller\GetPublicDriverAppSettingsController;
 use App\Http\Services\Driver\ReceiveCompletedOrderInfo\Controller\ReceiveCompletedOrderInfoController;
+use App\Http\Services\Driver\SendDriverIssue\Controller\SendDriverIssueController;
+use App\Http\Services\Driver\SendIssueReply\Controller\SendIssueReplyController;
 use App\Http\Services\Driver\SendJobApplication\Controller\SendJobApplicationController;
+use App\Http\Services\SharedServices\issues\CloeIssue\Controller\CloeIssueController;
+use App\Http\Services\SharedServices\issues\CreateNewIssue\Controller\CreateNewIssueController;
+use App\Http\Services\SharedServices\issues\GetIssuesDetails\Controller\GetIssuesDetailsController;
+use App\Http\Services\SharedServices\issues\GetIssuesWithReplies\Controller\GetIssuesWithRepliesController;
+use App\Http\Services\SharedServices\issues\SendIusseReply\Controller\SendIusseReplyController;
 use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
-use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
-use App\Http\Services\User\GetWalletHistory\Controller\GetWalletHistoryController;
 use App\Http\Services\User\InquireUserOrderStatus\Controller\InquireUserOrderStatusController;
-use App\Http\Services\User\SendReport\Controller\SendReportController;
+use App\Http\Services\User\UserHelpSuggestion\Controller\UserHelpSuggestionController;
 use App\Http\Services\User\WalletManagement\AddBalanceByPaymentMethod\Controller\AddBalanceByPaymentMethodController;
 use App\Http\Services\User\WalletManagement\ConfirmPhone_AddBalance\Controller\ConfirmPhone_AddBalanceController;
 
@@ -44,7 +52,19 @@ Route::post('send-driver-job-application', SendJobApplicationController::class);
 
 
 Route::group(['middleware' => ['auth:driver','set-localization']],function () {
+    Route::get('issues/details', GetIssuesDetailsController::class);
+    Route::post('issues/close', CloeIssueController::class);
+    Route::post('send-reply-issue', SendIusseReplyController::class);
+    Route::get( 'get-driver-issues-with-replies', GetIssuesWithRepliesController::class);
+    Route::get('get/help-suggestions', UserHelpSuggestionController::class);
+    Route::post('ride-report', CreateNewIssueController::class);
+    Route::post('addComplaint', CreateNewIssueController::class);
 
+
+    // Route::post('issues/details', GetIssueDetailsController::class);
+    // Route::post('issues/close', DriverCloseIssueController::class);
+    // Route::post('send-reply-issue', SendIssueReplyController::class);
+    // Route::get( 'get-driver-issues-with-replies', GetIssuesWithRepliesController::class);
     Route::post( 'delete-account', DeleteDriverAccountController::class);
     Route::post('rating',RattingUserController::class);
     Route::post('changeConnected',ChangeConnectedController::class);
@@ -54,7 +74,6 @@ Route::group(['middleware' => ['auth:driver','set-localization']],function () {
     Route::post('earning',EarningController::class);
     Route::post('receive-cash',ReceiveCashController::class);
     Route::post('start-ride',RattingUserController::class);
-    Route::post('addComplaint', SendReportController::class);
     Route::get('wallet/history',GetDriverWalletHistoryController::class);
 
     Route::get('get/payment/method',GetPaymentMethodController::class);

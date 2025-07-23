@@ -24,34 +24,38 @@ class CreateOrUpdateEmployeeRequest extends BaseRequest
      */
     public function rules(): array
     {
-
         $id = $this->id ?? 0;
-        return
-        [
-            'phoneNumber'=>'required|min:10|unique:drivers,phoneNumber,'.$id,
+
+        return [
+            'phoneNumber' => 'required|min:7|unique:drivers,phoneNumber,' . $id,
             'password' => [
-                ($id != 0) ? 'sometimes' : 'required', 
+                ($id != 0) ? 'sometimes' : 'required',
                 'string',
                 'min:8',
                 'confirmed',
                 'regex:/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).+$/',
-            ],   
-            'image' => 'nullable',
-            'officeId'=>'required|numeric',
-            'city'=>'required|string',
-            'country'=>'required|string',
-            'region'=>'required|string',
-            'address'=>'nullable',
-            'firstName'=>'required',
-            'lastName'=>'required',
-            // 'walletBalance'=>'required|nullable',
-            'gender'=>'nullable',
-            'id'=>'sometimes|numeric',
-            'email'=>'required|email',
-            'employeeJobName'=>'required',
-            'role'=>'required|exists:roles,name',
+            ],
+            'image' => 'nullable|image',
+            'officeId' => 'required|numeric',
+            'city' => 'required|string',
+            'country' => 'required|string',
+            'region' => 'required|string',
+            'address' => 'nullable|string',
+            'firstName' => 'required|string',
+            'lastName' => 'required|string',
+            'gender' => 'nullable|in:male,female',
+            'id' => 'sometimes|numeric',
+            'email' => 'required|email|unique:employees,email,' . $id,
             
+            'role' => 'required|array|min:1',
+            'role.*' => 'exists:roles,name',
+            
+            'employeeJobName_en' => 'required|string',
+            'employeeJobName_ar' => 'required|string',
+            'job_description_en' => 'required|string',
+            'job_description_ar' => 'required|string',
         ];
+        
     }
 
     protected function failedValidation(Validator $validator)

@@ -24,7 +24,7 @@ class ViewOfficeListRequest extends BaseRequest
     {
         return
         [
-            // write your rules here..
+            'filter'=>['sometimes'],
         ];
     }
 

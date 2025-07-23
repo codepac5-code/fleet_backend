@@ -25,7 +25,7 @@ class OrderHistoryLogic implements Service {
         // write your logic code..
         $orders = $this->repository->BookingRepository()->readRepository()->getAllBookingWithOrderBy(
             selected:['id','created_at','totalAmount','startAddress','startLatitude','startLongitude', 'time',
-                    'endAddress','endLatitude','endLongitude','distance','paymentId','subServiceId','driverId'],
+                    'endAddress','endLatitude','endLongitude','distance','paymentId','subServiceId','driverId' ,'multiDestnationArray'],
             with: [
                 'driver'=>function($q){
                     return $q->select('id','rating','photo','firstName','lastName','officeDues')->get();

@@ -2,6 +2,7 @@
 namespace App\Http\Services\Dashboard\Auth\LoginToDashboardAsOffice\Logic;
 
 use App\Http\Core\InternalInterface\InputServiceInterface;
+use App\Http\Core\Const\Options\Guard;
 
 class LoginToDashboardAsOfficeInput implements InputServiceInterface
 {
@@ -10,122 +11,105 @@ class LoginToDashboardAsOfficeInput implements InputServiceInterface
     private $guardName;
     private $email;
     private $password;
-    
-    public function __construct( array $input)
+    private $role; 
+
+    public function __construct(array $input)
     {
-        // $this->only        = $input['only'];
-        $this->remember   = isset( $input['remember'])? $input['remember']:false;
-        $this->password    = $input['password'];
-        // $this->guardName   = $input['user_type'];
-        $this->email       = $input['email'];
+        $this->remember = isset($input['remember']) ? $input['remember'] : false;
+        $this->password = $input['password'];
+        $this->email    = $input['email'];
+        $this->role     = $input['role'] ?? null; 
+
+        if ($this->role === 'employee') {
+            $this->guardName = Guard::$Employee;
+        } elseif ($this->role === 'manager') {
+            $this->guardName = Guard::$Office;
+        } else {
+            $this->guardName = null; 
+        }
     }
 
-
-    public function toArray():array{
+    public function toArray(): array
+    {
         return [
-            ''=>''
+            'email'     => $this->email,
+            'password'  => $this->password,
+            'remember'  => $this->remember,
+            'role'      => $this->role,
+            'guardName' => $this->guardName,
         ];
     }
 
-
-
-    /**
-     * Get the value of only
-     */ 
     public function getOnly()
     {
         return $this->only;
     }
 
-    /**
-     * Set the value of only
-     *
-     * @return  self
-     */ 
     public function setOnly($only)
     {
         $this->only = $only;
-
         return $this;
     }
 
-    /**
-     * Get the value of guardName
-     */ 
     public function getGuardName()
     {
         return $this->guardName;
     }
 
-    /**
-     * Set the value of guardName
-     *
-     * @return  self
-     */ 
     public function setGuardName($guardName)
     {
         $this->guardName = $guardName;
-
         return $this;
     }
 
-    /**
-     * Get the value of email
-     */ 
     public function getEmail()
     {
         return $this->email;
     }
 
-    /**
-     * Set the value of email
-     *
-     * @return  self
-     */ 
     public function setEmail($email)
     {
         $this->email = $email;
-
         return $this;
     }
 
-    /**
-     * Get the value of password
-     */ 
-    public function get_password()
+    public function getPassword()
     {
         return $this->password;
     }
 
-    /**
-     * Set the value of password
-     *
-     * @return  self
-     */ 
     public function setPassword($password)
     {
         $this->password = $password;
-
         return $this;
     }
 
-    /**
-     * Get the value of remember
-     */ 
     public function getRemember()
     {
         return $this->remember;
     }
 
-    /**
-     * Set the value of remember
-     *
-     * @return  self
-     */ 
     public function setRemember($remember)
     {
         $this->remember = $remember;
+        return $this;
+    }
 
+    public function getRole()
+    {
+        return $this->role;
+    }
+
+    public function setRole($role)
+    {
+        $this->role = $role;
+        if ($role === 'employee') {
+            $this->guardName = Guard::$Employee;
+        } elseif ($role === 'manager') {
+            $this->guardName = Guard::$Office;
+        } else {
+            $this->guardName = null;
+        }
         return $this;
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Core\Const\Options\Settings\PublicSettingsKies;
 use App\Http\Core\Const\Options\Settings\SettingsTypes;
 use Illuminate\Http\Request;
@@ -14,6 +15,10 @@ use App\Models\Setting;
 use App\Models\Vehicle;
 use App\Models\VehicleBrand;
 use Illuminate\Support\Facades\Artisan;
+
+
+
+
 
 Route::group(['middleware' => ['set-localization']],function () {
 
@@ -72,8 +77,22 @@ Route::get('/lang-switch', function (Request $request) {
 })->name('lang.switch');
 
 
-Route::post('/login-office', LoginToDashboardAsOfficeController::class )
-->name('login-office');
+Route::get('login-office',function(){
+    // $footerSection = FrontendSetting::where('key', 'login-register-setting')->first();
+    // $sectionData = $footerSection ? json_decode($footerSection->value, true) : null;
+    $sectionData['description'] = 'Welcome To ';
+    $sectionData['title'] = 'Welcome To Our Fleet';
+    $sectionData['login_register'] = 1;
+  
+  
+    return view('landing-page.login',compact('sectionData'));
+  });
+
+Route::post('/login-office-check', LoginToDashboardAsOfficeController::class )
+->name('login-office-check');
+
+//    return redirect()->back()->withErrors(['general' => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.']);
+
   
 
 Route::get('/login-admin', function(){
@@ -109,3 +128,38 @@ Route::get('driver-join',function(){
     return view('fleet-landing-page.driverJobApplication',compact('brands','offices'));
 
 })->name('driver-join');
+
+
+
+
+
+
+
+
+
+
+
+
+
+//--------------
+
+
+Route::get('api/user-alerts', [NotificationController::class, 'getNotifications']);
+Route::delete('api/user-alerts', [NotificationController::class, 'clearNotifications']);
+
+
+// Route::get('/issues', [IssueController::class, 'index'])->name('issues.index');
+
+// Route::get('/tickets', [IssueController::class, 'getTickets']);
+// Route::delete('/tickets/{id}', [IssueController::class, 'destroy']);
+
+
+// Route::prefix('api/tickets')->group(function () {
+//     Route::get('/', [IssueController::class, 'index']);  
+//     Route::delete('/{id}', [IssueController::class, 'destroy']);
+
+    
+// });
+
+
+// Route::get('/filters', [IssueController::class, 'filters']);

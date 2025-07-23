@@ -24,6 +24,7 @@ return new class extends Migration
             $table->foreignId('officeId')->references('id')->on('offices')->cascadeOnDelete();
             $table->text('address');
             $table->string('country');
+            $table->enum('role', ['agent', 'admin', 'viewer'])->default('agent');
             $table->string('city');
             $table->string('region');
             $table->boolean('isActive')->default(1);

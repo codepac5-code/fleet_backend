@@ -11,10 +11,10 @@
                           <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                               <h5 class="font-weight-bold">{{ __('messages.user') }}</h5>
                               @if($list_status != 'unassigned' && $list_status !='request')
-                              {{-- @if($auth_user->can('user add')) --}}
+                              @if(auth()->user()->can('add user'))
                               <a href="{{ route('user.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.user')  ]) }}</a>
                               @endif
-                              {{-- @endif --}}
+                              @endif
                           </div>
                       </div>
                   </div>

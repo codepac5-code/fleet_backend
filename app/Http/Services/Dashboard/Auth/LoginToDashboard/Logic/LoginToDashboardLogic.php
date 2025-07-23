@@ -27,6 +27,8 @@ class LoginToDashboardLogic implements Service {
 
         // $this->input->authenticate();
 
+        logoutAuthUser();
+
         $credentials = [
             'email' => $this->input->getEmail(),
             'password' => $this->input->get_password(),

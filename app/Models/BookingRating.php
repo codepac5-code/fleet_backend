@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+
 class BookingRating extends Model
 {
     use HasFactory,SoftDeletes;
@@ -47,18 +49,43 @@ class BookingRating extends Model
         });
     }
 
-    public function scopeMyRating($query){
-        $user = auth()->user();
-        if($user->hasRole('admin') || $user->hasRole('demo_admin')) {
-            $query =  $query;
+    public function scopeForCurrentUser()
+    {
+        $query = $this->query();
+
+        if (Auth::guard('admin')->check()) {
+            return $query;
         }
 
-        if($user->hasRole('provider')) {
-            $query = $query->whereHas('service',function ($q) use($user) {
-                $q->where('provider_id',$user->id);
-            });
+        if (Auth::guard('office')->check()) {
+            $office = Auth::guard('office')->user();
+            return $query->where('officeId', $office->id);
         }
 
-        return  $query;
+        if (Auth::guard('employee')->check()) {
+            $employee = Auth::guard('employee')->user();
+            if ($employee->office_id) {
+                return $query->where('officeId', $employee->officeId);
+            } else {
+                return $query;
+            }
+        }
+
+        return $query;
     }
+
+    // public function scopeMyRating($query){
+    //     $user = auth()->user();
+    //     if($user->hasRole('admin') || $user->hasRole('demo_admin')) {
+    //         $query =  $query;
+    //     }
+
+    //     if($user->hasRole('provider')) {
+    //         $query = $query->whereHas('service',function ($q) use($user) {
+    //             $q->where('provider_id',$user->id);
+    //         });
+    //     }
+
+    //     return  $query;
+    // }
 }

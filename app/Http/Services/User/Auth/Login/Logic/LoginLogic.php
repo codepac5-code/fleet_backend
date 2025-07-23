@@ -32,7 +32,9 @@ class LoginLogic implements Service {
         if($user == null || !$user->is_registered) make_exception(__('messages.account_not_found_phoneNumber'));
 
         //ErrorMessages::getKey(ErrorMessages::$AccountAlreadyExists ,Attributes::User)
-
+        if ( $user->isActive == false){
+            make_exception('تم تقييد حسابك من قبل الشركة ، يرجى المراجعة');
+        }
 
         if (!checkPassword($this->input->getPassword() , $user->password )){
             make_exception(__('messages.incorect_password'));//ErrorMessages::getKey('')

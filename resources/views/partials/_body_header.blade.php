@@ -325,8 +325,76 @@ document.addEventListener("DOMContentLoaded", function () {
         toastContainer.setAttribute("dir", "ltr");
     }
 
+
+    
+
+
+// ------------------- <<<<  for delete    >>>> --------------- 
+async function fetchAndShowNotifications() {
+    try {
+        const response = await fetch('/api/user-alerts');
+        const data = await response.json();
+
+        if (!data.notifications || data.notifications.length === 0) return;
+
+        for (let i = 0; i < data.notifications.length; i++) {
+            const notification = data.notifications[i];
+            showNotificationToast(notification);
+
+            await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+    } catch (error) {
+        console.error('فشل في جلب الإشعارات', error);
+    }
+}
+
+function showNotificationToast(data) {
+    const { title, body, image } = data;
+    const isRTL = document.documentElement.dir === 'rtl';
+
+    const toastId = `toast-${Date.now()}`;
+    const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center border-0 custom-toast" role="alert" style="direction: ${isRTL ? 'rtl' : 'ltr'};">
+            <div class="toast-header">
+                <div class="toast-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+            </div>
+            <div class="d-flex ${isRTL ? 'flex-row' : 'flex-row-reverse'} align-items-center toast-content">
+                ${image ? `<img src="${image}" alt="notification-image" class="toast-image">` : ""}
+                <div class="toast-body text-${isRTL ? 'end' : 'start'}">
+                    <strong>${title}</strong><br>
+                    ${body}
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', toastHtml);
+    document.getElementById('notification-sound').play().catch(error => console.log("الصوت لم يعمل بسبب سياسات المتصفح"));
+
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+
+    setTimeout(() => {
+        toast.hide();
+        toastElement.remove();
+    }, 5000);
+}
+
+fetchAndShowNotifications();
+// -------------------   <<<<  for delete    >>>> --------------- 
+
+
+
+
+
+
+
     socket_notification.on("public-notification-super-admin:new_notification", (data) => {
-        document.getElementById('notification-sound').play().catch(error => console.log("الصوت لم يعمل تلقائيًا بسبب سياسات المتصفح"));
+        document.getElementById('notification-sound').play().catch(error => console.log("الصوت لم يعمل بسبب سياسات المتصفح"));
 
         const { title, body, image } = data;
 
@@ -348,6 +416,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
             </div>
         `;
+
 
         toastContainer.insertAdjacentHTML("beforeend", toastHtml);
 

@@ -5,13 +5,13 @@
     <div class="d-flex justify-content-end align-items-center">
         
     @if(!$employee->trashed())
-    {{-- @if($auth_user->can('update employee')) --}}
+    {{-- @if(auth()->user()->can('update employee')) --}}
     <a class="mr-2" href="{{route('employee.create', ['id' => $employee->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.employee') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
     {{-- @endif --}}
-     @if($auth_user->can('employee changePassword'))
+     @if(auth()->user()->can('employee changePassword'))
       <a class="mr-2" href="{{ route('employee.view.change-password',['id' => $employee->id]) }}" title="{{ __('messages.change_password',['form' => __('messages.employee') ]) }}"><i class="fa fa-lock text-success "></i></a>
       @endif
-      @if($auth_user->can('delete employee'))
+      @if(auth()->user()->can('delete employee'))
         <a class="mr-3 text-danger" href="{{ route('employee.destroy', $employee->id) }}" data--submit="employee{{$employee->id}}" 
             data--confirmation='true' 
             data--ajax="true"
@@ -24,8 +24,7 @@
         @endif
 
     @endif
-    {{-- auth()->user()->hasAnyRole(['admin']) &&  --}}
-    @if($employee->trashed())
+    @if(auth()->user()->hasAnyRole(MainRoles()) &&  $employee->trashed())
         <a href="{{ route('employee.action',['id' => $employee->id, 'type' => 'restore']) }}"
             title="{{ __('messages.restore_form_title',['form' => __('messages.employee') ]) }}"
             data--submit="confirm_form"

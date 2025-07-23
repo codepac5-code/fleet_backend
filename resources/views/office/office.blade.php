@@ -1,5 +1,11 @@
 @if(isset($query->id))
+
+
+@if (auth()->user()->can('office overview'))
 <a href="{{ route('office.show', ['officeId' => $query->id]) }}">
+@else
+<a href="#">
+@endif
   <div class="d-flex gap-3 align-items-center">
     <img src="{{ $query->logo }}" alt="avatar" class="avatar avatar-40 rounded-pill">
     <div class="text-start">

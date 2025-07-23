@@ -1,188 +1,154 @@
 <x-master-layout>
     <div class="container-fluid">
         <div class="row">
-        <div class="col-lg-12">
+            <div class="col-lg-12">
                 <div class="card card-block card-stretch">
                     <div class="card-body p-0">
                         <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                            <h5 class="fw-bold">{{ $pageTitle ?? __('messages.list') }}</h5>
-                                <a href="{{ route('helpdesk.index') }}" class=" float-end btn btn-sm btn-primary"><i class="fa fa-angle-double-left"></i> {{ __('messages.back') }}</a>
+                            <h5 class="fw-bold">{{ __('إنشاء بلاغ جديد') }}</h5>
+                            <a href="{{ route('issues.index') }}" class="btn btn-sm btn-primary">
+                                <i class="fa fa-angle-double-left"></i> {{ __('رجوع') }}
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {{-- النموذج --}}
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        {{ html()->form('POST', route('helpdesk.store'))
-                            ->attribute('enctype', 'multipart/form-data')
-                            ->attribute('data-toggle', 'validator')
-                            ->id('helpdesk-form')
-                            ->open()
-                        }}
-                        {{ html()->hidden('id', $helpdesk->id ?? null) }}
+                        <form method="POST" action="{{ route('issues.store') }}" enctype="multipart/form-data" id="issue-form">
+                            @csrf
+
                             <div class="row">
-                                <div class="form-group col-md-4">
-                                    
-                                    {{ html()->label(__('messages.subject') . ' <span class="text-danger">*</span>', 'subject')->class('form-control-label') }}
-                                    {{ html()->text('subject', $helpdesk->subject)->placeholder(__('messages.subject'))->class('form-control')->attributes(['title' => 'Please enter alphabetic characters and spaces only'])}}
-                                    
-                                    <small class="help-block with-errors text-danger"></small>
+                                {{-- الموضوع --}}
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label" for="subject">{{ __('عنوان البلاغ') }} <span class="text-danger">*</span></label>
+                                    <input type="text" name="subject" id="subject" class="form-control" required placeholder="الموضوع">
                                 </div>
-                                @if(auth()->user()->hasAnyRole(['admin','demo_admin']))
-                                <div class="form-group col-md-4">
-                                    {{ html()->label(__('messages.select_name',[ 'select' => __('messages.users') ]) . ' <span class="text-danger">*</span>', 'subject')->class('form-control-label') }}
-                                    <br />
-                                    {{ html()->select('employee_id', [ optional($helpdesk->users)->id => optional($helpdesk->users)->display_name], optional($helpdesk->users)->id)
-                                        ->class('select2js form-group')
-                                        ->id('employee_id')
-                                        ->required()
-                                        ->attribute('data-placeholder', __('messages.select_name', ['select' => __('messages.users')]))
-                                        ->attribute('data-ajax--url', route('ajax-list', ['type' => 'provider-user-handyman']))
-                                    }}
-                                    
+
+                                {{-- الموظف المخصص --}}
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label">{{ __('تعيين إلى') }} <span class="text-danger">*</span></label>
+                                    <select name="assigned_to_id" class="form-control select2js" required>
+                                        <option value="">{{ __('اختر موظف') }}</option>
+                                        @foreach($employees as $emp)
+                                            <option value="{{ $emp->id }}">{{ $emp->firstName . ' ' . $emp->lastName }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="hidden" name="assigned_to_type" value="App\Models\Employee">
                                 </div>
-                                <div class="form-group col-md-4">
-                                    {{ html()->label(__('messages.mode') . ' <span class="text-danger">*</span>', 'mode')->class('form-control-label') }}
-                                    {{ html()->select('mode',['email' => __('messages.email'),'phone' => __('messages.phone'),'other' => __('messages.other')], $helpdesk->mode)->class('form-control select2js')->required()->id('mode')}}
+
+                                {{-- القسم --}}
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label">{{ __('القسم') }}</label>
+                                    <select name="department_id" class="form-control select2js">
+                                        <option value="">{{ __('اختر قسم') }}</option>
+                                        @foreach($departments as $dept)
+                                            <option value="{{ $dept->id }}">{{ $dept->name_ar }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div class="form-group col-md-4">
-                                    {{ html()->label(__('messages.email') , 'email')->class('form-control-label') }}
-                                    {{ html()->text('email',null)->attributes(['pattern' => '[^@]+@[^@]+\.[a-zA-Z]{2,}'])->placeholder(__('messages.email'))->class('form-control')->id('email')}}
-                                
+
+                       {{-- نوع المُبلّغ --}}
+<div class="form-group col-md-6">
+    <label class="form-control-label">{{ __('نوع المُبلّغ') }} <span class="text-danger">*</span></label>
+    <select name="owner_type" id="owner_type" class="form-control" required>
+        <option value="">{{ __('اختر النوع') }}</option>
+        <option value="user">{{ __('مستخدم') }}</option>
+        <option value="driver">{{ __('سائق') }}</option>
+        <option value="office">{{ __('مكتب') }}</option>
+    </select>
+</div>
+
+{{-- اسم المُبلّغ --}}
+<div class="form-group col-md-6">
+    <label class="form-control-label">{{ __('الاسم') }} <span class="text-danger">*</span></label>
+    <select name="owner_id" id="owner_id" class="form-control select2js" required>
+        <option value="">{{ __('اختر الاسم') }}</option>
+    </select>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ownerTypeSelect = document.getElementById('owner_type');
+        const ownerIdSelect = document.getElementById('owner_id');
+
+        ownerTypeSelect.addEventListener('change', function () {
+            const selectedType = this.value;
+
+            // تفريغ القائمة السابقة
+            ownerIdSelect.innerHTML = '<option value="">جاري التحميل...</option>';
+
+            if (!selectedType) {
+                ownerIdSelect.innerHTML = '<option value="">اختر الاسم</option>';
+                return;
+            }
+
+            fetch(`/owners/by-type?type=${encodeURIComponent(selectedType)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    ownerIdSelect.innerHTML = '<option value="">اختر الاسم</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.name;
+                        ownerIdSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('خطأ في جلب الأسماء:', error);
+                    ownerIdSelect.innerHTML = '<option value="">تعذر التحميل</option>';
+                });
+        });
+    });
+</script>
+
+
+                                {{-- الأولوية --}}
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label">{{ __('الأولوية') }} <span class="text-danger">*</span></label>
+                                    <select name="priority" class="form-control" required>
+                                        <option value="low">{{ __('منخفضة') }}</option>
+                                        <option value="medium">{{ __('متوسطة') }}</option>
+                                        <option value="high">{{ __('مرتفعة') }}</option>
+                                    </select>
                                 </div>
-                                <div class="form-group col-md-4">
-                                    {{ html()->label(__('messages.contact_number') , 'contact_number')->class('form-control-label') }}
-                                    {{ html()->text('contact_number',null)->placeholder(__('messages.contact_number'))->class('form-control contact_number')->id('contact_number')}}
-                                
-                                    <small class="help-block with-errors text-danger " id="contact_number_err"></small>
+
+                                {{-- الحالة --}}
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label">{{ __('الحالة') }} <span class="text-danger">*</span></label>
+                                    <select name="status" class="form-control" required>
+                                        <option value="open">{{ __('مفتوحة') }}</option>
+                                        <option value="processing">{{ __('قيد المعالجة') }}</option>
+                                        <option value="closed">{{ __('مغلقة') }}</option>
+                                    </select>
                                 </div>
-                                @endif
-                                <div class="form-group col-md-4">
-                                    <label class="form-control-label" for="helpdesk_attachment">{{ __('messages.image') }}
-                                    </label>
-                                    <div class="custom-file">
-                                        <input type="file" onchange="preview()"  name="helpdesk_attachment[]" class="custom-file-input"
-                                            data-file-error="{{ __('messages.files_not_allowed') }}" accept="image/*">
-                                        <label
-                                            class="custom-file-label upload-label">{{ __('messages.choose_file',['file' =>  __('messages.attachments') ]) }}</label>
-                                    </div>
+
+                                {{-- المرفقات --}}
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label">{{ __('المرفقات') }}</label>
+                                    <input type="file" name="photo" class="form-control-file" accept="image/*">
                                 </div>
-                               
-                                
+
+                                {{-- الوصف --}}
+                                <div class="form-group col-md-12">
+                                    <label class="form-control-label">{{ __('الوصف') }} <span class="text-danger">*</span></label>
+                                    <textarea name="description" class="form-control" rows="4" required placeholder="اكتب التفاصيل هنا..."></textarea>
+                                </div>
                             </div>
-                            <div class="row helpdesk_attachment_div">
-                            <div class="col-md-12">
 
-
-                                @if(getMediaFileExit($helpdesk, 'helpdesk_attachment'))
-                                @php
-
-                                $attchments = $helpdesk->getMedia('helpdesk_attachment');
-
-                                $file_extention = config('constant.IMAGE_EXTENTIONS');
-                                @endphp
-                                <div class="border-start">
-                                    <p class="ms-2"><b>{{ __('messages.attached_files') }}</b></p>
-                                    <div class="ms-2 my-3">
-                                        <div class="row">
-                                            @foreach($attchments as $attchment )
-                                            <?php
-                                            $extention = in_array(strtolower(imageExtention($attchment->getFullUrl())), $file_extention);
-                                            ?>
-
-                                            <div class="col-md-2 pe-10 text-center galary file-gallary-{{$helpdesk->id}} position-relative"
-                                                data-gallery=".file-gallary-{{$helpdesk->id}}"
-                                                id="helpdesk_attachment_preview_{{$attchment->id}}">
-                                                @if($extention)
-                                                <a id="attachment_files" href="{{ $attchment->getFullUrl() }}"
-                                                    class="list-group-item-action attachment-list" target="_blank">
-                                                    <img src="{{ $attchment->getFullUrl() }}" class="attachment-image"
-                                                        alt="">
-                                                </a>
-                                                @else
-                                                <a id="attachment_files"
-                                                    class="video list-group-item-action attachment-list"
-                                                    href="{{ $attchment->getFullUrl() }}">
-                                                    <img src="{{ asset('images/file.png') }}" class="attachment-file">
-                                                </a>
-                                                @endif
-                                                <a class="text-danger remove-file"
-                                                    href="{{ route('remove.file', ['id' => $attchment->id, 'type' => 'helpdesk_attachment']) }}"
-                                                    data--submit="confirm_form" data--confirmation='true'
-                                                    data--ajax="true" data-toggle="tooltip"
-                                                    title='{{ __("messages.remove_file_title" , ["name" =>  __("messages.attachments") ] ) }}'
-                                                    data-title='{{ __("messages.remove_file_title" , ["name" =>  __("messages.attachments") ] ) }}'
-                                                    data-message='{{ __("messages.remove_file_msg") }}'>
-                                                    <i class="ri-close-circle-line"></i>
-                                                </a>
-                                            </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="row">
-                        <div class="form-group col-md-12">
-                           {{ html()->label(trans('messages.description'). ' <span class="text-danger">*</span>', 'description')->class('form-control-label') }}
-                           {{ html()->textarea('description', $helpdesk->description)->class('form-control textarea')->required()->rows(3)->placeholder(__('messages.description')) }}
-                        </div>
-                                
-                        </div>
-                            
-                            {{ html()->submit( __('messages.save'))->class('btn btn-md btn-primary float-end') }}
-                            {{ html()->form()->close() }}
+                            <button type="submit" class="btn btn-primary float-end mt-3">
+                                <i class="fas fa-save"></i> {{ __('حفظ البلاغ') }}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </x-master-layout>
-<script>
-        function preview() {
-            helpdesk_attachment_preview.src = URL.createObjectURL(event.target.files[0]);
-        }
-        $(document).ready(function() {
-    $(document).on('keyup', '.contact_number', function() {
-        var contactNumberInput = document.getElementById('contact_number');
-        var inputValue = contactNumberInput.value;
-
-        // Remove any characters that aren't digits, +, -, or space
-        var cleanedInput = inputValue.replace(/[^0-9+\- ]/g, '');
-        
-        // Set the cleaned input value back to the input field
-        contactNumberInput.value = cleanedInput;
-        // Check if input exceeds 15 characters
-        if (cleanedInput.length > 15) {
-            $('#contact_number_err').text('Contact number should not exceed 15 characters');
-        } 
-        // Pattern validation for valid input
-        else if (!cleanedInput.match(/^[0-9+\- ]*$/)) {
-            $('#contact_number_err').text('Please enter a valid mobile number');
-        } 
-        // Clear error message if valid
-        else {
-            $('#contact_number_err').text('');
-        }
-    });
-});
-
-        function toggleLanguageForm(languageIndex) {
-            // Hide all language forms
-            document.querySelectorAll('.language-form').forEach(function(form) {
-                form.style.display = 'none';
-            });
-            // Display the selected language form
-            document.getElementById('form-language-' + languageIndex).style.display = 'block';
-   
-            // Remove primary style from all buttons and add it to the selected one
-            document.querySelectorAll('.language-btn').forEach(function(btn) {
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-outline-secondary');
-            });
-            document.querySelectorAll('.language-btn')[languageIndex].classList.add('btn-primary');
-        }
-
-</script>

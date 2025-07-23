@@ -90,7 +90,7 @@ class CreateOrUpdateOfficeLogic implements Service {
         //     } catch (\Throwable $th) {
         //     }
         // }
-        $office->assignRole('office');
+        $office->assignRole('office manager');
 
         $this->repository->OfficeRepository()
         ->createRepository()->addOfficeServices(  $office->id , $this->input->getServiceIds());

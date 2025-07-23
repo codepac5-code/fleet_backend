@@ -7,6 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Core\Response\SendResponse;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Services\Dashboard\ServiceManagement\AddService\Request\AddServiceRequest;
+use App\Models\Department;
+use App\Models\Employee;
+use App\Models\Issue;
+use Illuminate\Support\Facades\DB;
 
 class IndexHelpDesk 
 {
@@ -18,6 +22,27 @@ class IndexHelpDesk
         $pageTitle = trans('messages.helpdesk');
         $auth_user = authSession();
         $assets = ['datatable'];
-        return view('helpdesk.index', compact('pageTitle','auth_user','assets','filter'));
+
+        $departments = Department::select('id', 'name_ar as name')->get();
+
+        $agents = Employee::where('isActive', 1)
+        ->select('id', DB::raw("CONCAT(firstName, ' ', lastName) as name"))
+        ->get();
+
+        $statuses = Issue::select('status')
+            ->distinct()
+            ->pluck('status');
+
+
+        $priorities = Issue::select('priority')->distinct()->pluck('priority');
+        // return response()->json([
+        //     'departments' => $departments,
+        //     'agents' => $agents,
+        //     'statuses' => $statuses,
+        // ]);
+    
+    
+        return view('helpdesk.index', compact('pageTitle','auth_user','departments','agents','statuses'));
     }
+
 }

@@ -11,9 +11,9 @@
                         <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                             <h5 class="font-weight-bold">{{ trans('messages.Office') }}</h5>
                             @if($list_status != 'pending')
-                            {{-- @if($auth_user->can('provider add')) --}}
+                            @if($auth_user->can('add office'))
                             <a href="{{ route('office.create-page') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.Office')  ]) }}</a>
-                            {{-- @endif --}}
+                            @endif
                             @endif
                         </div>
 
@@ -208,6 +208,4 @@
   });
 
     </script>
-    
-  
 </x-master-layout>

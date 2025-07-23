@@ -4,7 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Support\Facades\Auth;
 
 class Booking extends Model
 {
@@ -49,6 +49,8 @@ class Booking extends Model
     ];
 
 
+
+
     
     protected $casts = [
         'userId'   => 'integer',
@@ -67,6 +69,32 @@ class Booking extends Model
 
     public function driver(){
         return $this->belongsTo(Driver::class,'driverId', 'id');
+    }
+
+    
+    public function scopeForCurrentUser()
+    {
+        $query = $this->query();
+
+        if (Auth::guard('admin')->check()) {
+            return $query->withTrashed();
+        }
+
+        if (Auth::guard('office')->check()) {
+            $office = Auth::guard('office')->user();
+            return $query->where('officeId', $office->id)->withTrashed();
+        }
+
+        if (Auth::guard('employee')->check()) {
+            $employee = Auth::guard('employee')->user();
+            if ($employee->office_id) {
+                return $query->where('officeId', $employee->officeId)->withTrashed();
+            } else {
+                return $query->withTrashed();
+            }
+        }
+
+        return $query;
     }
 
     

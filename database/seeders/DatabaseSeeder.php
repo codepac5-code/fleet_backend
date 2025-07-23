@@ -16,36 +16,46 @@ use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
+
+    public function run()
+{
+    $this->call([
+        // DepartmentSeeder::class,
+        // EmployeeSeeder::class,
+        IssueSeeder::class,
+    ]);
+}
+
     /**
      * Seed the application's database.
      */
-    public function run(): void
-    {
-        try {
+    // public function run(): void
+    // {
+    //     try {
 
-            DB::beginTransaction();
+    //         DB::beginTransaction();
 
-            // User::factory(10)->create();
+    //         // User::factory(10)->create();
 
-            // Address::factory(10)->create();
+    //         // Address::factory(10)->create();
 
-            // Service::factory(10)->create();
+    //         // Service::factory(10)->create();
 
-            // Slider::factory(10)->create();
+    //         // Slider::factory(10)->create();
 
-            // SubService::factory(10)->create();
+    //         // SubService::factory(10)->create();
 
-        //    PaymentMethod::factory(4)->create();
+    //     //    PaymentMethod::factory(4)->create();
 
-            // Office::factory(4)->create();
-            Driver::factory(4)->create();
+    //         // Office::factory(4)->create();
+    //         Driver::factory(4)->create();
 
 
-            DB::commit();
-        } catch (\Throwable $th) {
-            print($th->getMessage());
-            DB::rollBack();
-            return ;
-        }
-    }
+    //         DB::commit();
+    //     } catch (\Throwable $th) {
+    //         print($th->getMessage());
+    //         DB::rollBack();
+    //         return ;
+    //     }
+    // }
 }

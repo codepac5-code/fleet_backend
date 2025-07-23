@@ -22,7 +22,15 @@ abstract class OrderRedisModel  {
 
     public static function storeWithPagenationService(Booking $order): void
     {
-        // $value = 
+      
+        if ($order->driverId != null) {
+            $driver = Driver::select(['firstName', 'lastName', 'photo', 'vehicleId','phoneNumber'])
+                ->where(['id' => $order->driverId])
+                ->with('vehicle')  
+                ->first(); 
+            
+                $order->driver = $driver;
+  // $value = 
         // [
         //     "id"=> $order->id,
         //     "startAt"=> $order->startAt,
@@ -59,13 +67,6 @@ abstract class OrderRedisModel  {
         //     "created_at"=>       $order->created_at,
         // ];
 
-        if ($order->driverId != null) {
-            $driver = Driver::select(['firstName', 'lastName', 'photo', 'vehicleId','phoneNumber'])
-                ->where(['id' => $order->driverId])
-                ->with('vehicle')  
-                ->first(); 
-            
-                $order->driver = $driver;
 
             // $value['driver'] = [
             //     'firstName'=> $driver->firstName,
@@ -188,8 +189,8 @@ abstract class OrderRedisModel  {
 
         if($status == OrderStatus::$Pending){
             OrderRedisModel::storeCancelOrderId($orderId);
-         }
         }
+    }
 
     public static function deleteCompletely(int $orderId, string $status): void
     {

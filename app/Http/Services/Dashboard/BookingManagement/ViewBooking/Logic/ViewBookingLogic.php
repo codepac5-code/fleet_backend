@@ -25,27 +25,26 @@ class ViewBookingLogic implements Service {
 
 
 
-        switch($this->input->getPageType()){
+      switch($this->input->getPageType()){
 
-            case'completed':
+            case 'completed':
                 $query = $this->repository->BookingRepository()
                 ->readRepository()->getCompletedOrders($this->input->getOfficeId());
                 return $this->completed_dataTable($query);
                 break;
 
-            case'ongoing':
+            case 'ongoing':
                 $query = $this->repository->BookingRepository()
                 ->readRepository()->getOngoingOrders($this->input->getOfficeId());
                 return $this->ongoing_dataTable($query);
                 break;
-
-                // case'pending':
-             default:
+        
+        // case'pending':
+            default:
                 $query = $this->repository->BookingRepository()
                 ->readRepository()->getPendingOrders();
                 return $this->pending_dataTable($query);
                 break;
-
         }
 
 

@@ -30,7 +30,10 @@ class DriverReadRepository extends ReadRepository
     }
 
     public function getNotifications( $id , $paginate = 15 ,array $selected = ["*"] ) {
-        return $this->model->select($selected)->find($id)->notifications()->paginate($paginate);
+        $user= $this->model->select($selected)->find($id);
+         $notifications = $user->notifications()->paginate($paginate);
+         $user->unreadNotifications->markAsRead();
+        return $notifications;
     }
 
     public function notifyDriver( $id , NotificationModel $notificationModel , array $selected = ["*"] ) {
@@ -39,13 +42,9 @@ class DriverReadRepository extends ReadRepository
 
     public function dataTableDriver( $filter){
 
-        $auth = auth()->user();
-        if($auth->hasAnyRole(['super-admin'])){
-            $query = Driver::query();
-        }
-        elseif($auth->hasAnyRole(['office'])){
-            $query = Driver::query()->where(['officeId'=>$auth->id]);
-        }
+        $query = $this->model->scopeForCurrentUser();
+        
+   
 
         if ($filter != null) {
             if (isset($filter['column_status'])) {

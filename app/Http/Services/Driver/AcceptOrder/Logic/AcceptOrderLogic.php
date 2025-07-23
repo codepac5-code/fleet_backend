@@ -36,8 +36,14 @@ class AcceptOrderLogic implements Service {
         $orderId = $this->input->getOrderId();
 
         
+
         $order = $this->repository->BookingRepository()->readRepository()
         ->find($orderId);
+
+        if($order->status == OrderStatus::$Cancelled || $order->status == OrderStatus::$Hold){
+            $response  = new AcceptOrderOutput(['accept'  => false ]  , 'order cancelled by user');
+            return $response->send_as_object();
+        }
 
 
         if($order->driverId != null && $order->driverId == $this->input->getDriverId() ){

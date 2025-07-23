@@ -71,6 +71,13 @@ class UserReadRepository extends ReadRepository
     }
 
 
+    public function userDataTable(){
+       return $this->model->scopeForCurrentUser()->orderBy('updated_at','desc')->get();
+    }
+        
+        
+
+
 
     public function find(int $id , array $selected = ["*"]){
         return $this->model->select($selected)->find($id);
@@ -94,7 +101,10 @@ class UserReadRepository extends ReadRepository
     }
 
     public function getNotifications( $id , $paginate = 15 ,array $selected = ["*"] ) {
-        return $this->model->select($selected)->find($id)->notifications()->paginate($paginate);
+        $user= $this->model->select($selected)->find($id);
+         $notifications = $user->notifications()->paginate($paginate);
+         $user->unreadNotifications->markAsRead();
+        return $notifications;
     }
 
 

@@ -5,8 +5,12 @@ use App\Http\Core\InternalInterface\InputServiceInterface;
 
 class ViewOfficeListInput implements InputServiceInterface
 {
+
+    private $filter;
     public function __construct( array $input)
-    {}
+    {
+        $this->filter = $input['filter'] ?? [] ;
+    }
 
     // write your input function here..
 
@@ -14,5 +18,12 @@ class ViewOfficeListInput implements InputServiceInterface
         return [
             ''=>''
         ];
+    }
+
+    /**
+     * Get the value of filter
+     */
+    public function getFilter() {
+        return $this->filter;
     }
 }

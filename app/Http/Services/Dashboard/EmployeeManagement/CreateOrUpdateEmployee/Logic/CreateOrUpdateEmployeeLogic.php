@@ -27,6 +27,7 @@ class CreateOrUpdateEmployeeLogic implements Service {
         // if(demoUserPermission()){
         // }
 
+        beginTransaction();
         $ImageManager = new ImageManager();
         
         $data = [
@@ -48,7 +49,7 @@ class CreateOrUpdateEmployeeLogic implements Service {
         ];
 
         if($this->input->hasImage()){
-            $path = $ImageManager->upload($this->input->getProfileImage(), $path = 'images/sub_service');
+            $path = $ImageManager->upload($this->input->getProfileImage(), $path = 'images/employees');
             $path = $ImageManager->withStorge( $path );
             $data['photo'] = $path;
         }
@@ -78,16 +79,19 @@ class CreateOrUpdateEmployeeLogic implements Service {
 
             if( $employee == null ){
                 // $ImageManager->delete( $path);
+                rollbackTransaction();
                 return  redirect()->back()->withErrors(__('messages.somethings_wrong'));
             }
 
             if( $employee->wasRecentlyCreated ){
-                $employee->assignRole($this->input->getRoleName());
                 $message = __( 'messages.save_form',[ 'form' => __('messages.employee') ] );
             }
+            $employee->syncRoles($this->input->getRolesArray());
+
          
         }
 
+        commitTransaction();
 		return redirect(route('employee.index'))->withSuccess($message);
    }
 }

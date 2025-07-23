@@ -19,6 +19,11 @@ use App\Notifications\UserNotification;
 use App\Notifications\PrivateNotification;
 use App\Http\Core\Models\NotificationModel;
 use App\Http\Controllers\HandymanController;
+use App\Http\Controllers\IssueController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\TicketController;
 use App\Http\Core\Classes\CommissionManagement;
 use App\Http\Core\Classes\DashboardEventsName;
 use App\Http\Core\Classes\Operations\FleetSystemOperationGo;
@@ -132,7 +137,9 @@ use App\Http\Services\Dashboard\RatingManagement\ToView\IndexUserRatingControlle
 use App\Http\Services\Dashboard\RatingManagement\UserRattingIndexData\Controller\UserRattingIndexDataController;
 use App\Http\Services\Dashboard\RedisApi\GetOnlyNewOrdersByStatus\Controller\GetOnlyNewOrdersByStatusController;
 use App\Http\Services\Dashboard\RedisApi\GetOrdersByStatus\Controller\GetOrdersByStatusController;
+use App\Http\Services\Dashboard\RoleAndPermission\AddNewRole\Controller\AddNewRoleController;
 use App\Http\Services\Dashboard\RoleAndPermission\Role_Layout_Page\Controller\Role_Layout_PageController;
+use App\Http\Services\Dashboard\RoleAndPermission\ToView\AddRoleViewController;
 use App\Http\Services\Dashboard\RoleAndPermission\UpdateRolesPermissions\Controller\UpdateRolesPermissionsController;
 use App\Http\Services\Dashboard\RolesManagement\ViewRolesList\Controller\ViewRolesListController;
 use App\Http\Services\Dashboard\SubServiceManagement\ViewSubServiceList\Controller\ViewSubServiceListController;
@@ -159,10 +166,12 @@ use App\Http\Services\Dashboard\WalletHistory\Controller\WalletHistoryController
 use App\Http\Services\Driver\Earning\Logic\EarningOutput;
 use App\Http\Services\Driver\GetDriverNotification\Controller\GetDriverNotificationController;
 use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
+use App\Http\Services\User\UserHelpSuggestion\Controller\UserHelpSuggestionController;
 use App\Jobs\SearchOnDriverJob;
 use App\Models\Admin;
 use App\Models\Booking;
 use App\Models\Commissions;
+use App\Models\Employee;
 use App\Models\FleetOffice;
 use App\Models\Office;
 use App\Models\ParentPermission;
@@ -281,7 +290,76 @@ Route::get('changeStatus/{entity_type}',ChangeStatusController::class)->name('ch
 // })->name('ajax-list');
 
 
-Route::group([ 'middleware' => ['auth:office,admin' ,'set-language'] ], function() {
+Route::group([ 'middleware' => ['auth:office,admin,employee' ,'set-language'] ], function() {
+
+  Route::get('test',function(){
+    return view('dashboardTest');
+});
+
+  
+  Route::prefix('api/roles')->group(function () {
+      Route::get('/', [RoleController::class, 'index']);
+      Route::post('/', [RoleController::class, 'store']);
+      Route::get('/{id}', [RoleController::class, 'show']);
+      Route::put('/{id}', [RoleController::class, 'update']);
+      Route::delete('/{id}', [RoleController::class, 'destroy']);
+  
+      Route::post('/{id}/permissions', [RoleController::class, 'assignPermissions']);
+
+
+
+      Route::post('/{role}/permissions/assign', [RoleController::class, 'assignPermission']);
+      Route::post('/{role}/permissions/remove', [RoleController::class, 'removePermission']);
+
+  });
+  
+  Route::prefix('api/permissions')->group(function () {
+      Route::get('/', [PermissionController::class, 'index']);
+      Route::post('/', [PermissionController::class, 'store']);
+      Route::get('/{id}', [PermissionController::class, 'show']);
+      Route::put('/{id}', [PermissionController::class, 'update']);
+      Route::delete('/{id}', [PermissionController::class, 'destroy']);
+  });
+  
+  Route::get('role-permission-control',function(){
+    return view('role.roles');
+ })->name('role-permission');
+  Route::get('/owners/by-type', [IssueController::class, 'getOwnersByType']);
+
+Route::prefix('issues')->group(function () {
+    Route::get('/', [IssueController::class, 'index'])->name('issues.index');
+    Route::get('/data', [IssueController::class, 'data'])->name('issues.data');
+    Route::delete('/{id}', [IssueController::class, 'destroy'])->name('issues.destroy');
+    Route::get('/create', [IssueController::class, 'create'])->name('issues.create');
+    Route::get('/{issue}/edit', [IssueController::class, 'edit'])->name('issues.edit'); 
+    Route::put('update/{issue}', [IssueController::class, 'update'])->name('issues.update'); 
+    Route::post('/store', [IssueController::class, 'store'])->name('issues.store');      
+    Route::get('show/{issue}', [IssueController::class, 'show'])->name('issues.show'); 
+      
+});
+
+
+  Route::prefix('tickets')->group(function () {
+    Route::get('{id}', [TicketController::class, 'show'])->name('tickets.show');
+    // Route::post('{id}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
+    Route::put('{id}/status', [TicketController::class, 'updateStatus'])->name('tickets.status.update');
+    Route::put('{id}/assign', [TicketController::class, 'assign'])->name('tickets.assign');
+
+    Route::post('/{id}/reply-ajax', [TicketController::class, 'replyAjax'])->name('tickets.reply.ajax');
+
+    Route::get('{id}/replies', [TicketController::class, 'fetchReplies'])->name('tickets.replies');
+
+
+    Route::get('/tickets/{id}', [TicketController::class, 'show'])->name('tickets.show');
+    Route::put('/tickets/{id}', [TicketController::class, 'update'])->name('tickets.update');
+    Route::post('/tickets/{id}/close', [TicketController::class, 'close'])->name('tickets.close');
+  });
+
+
+  
+
+  
+
 Route::get('/home', HomeController::class)->name('home');
 
   Route::group(['prefix' => 'service'] ,function () {
@@ -387,7 +465,17 @@ Route::group(['prefix' => 'employee'] , function() {
   Route::get('employee-index-data', ViewEmployeeListController::class )->name('employee.index-data');
   Route::get('/create', CU_EmployeePageController::class )->name('employee.create');
   Route::post('/add', CreateOrUpdateEmployeeController::class)->name('employee.store');
-  Route::delete('destroy/{id}', DestroyEmployeeController::class)->name('employee.destroy');
+  
+  Route::delete('destroy/{id}', function (Request $request, $id) {
+      $employee = Employee::findOrFail($id);
+      $employee->delete();
+  
+      return response()->json([
+          'status' => true,
+          'message' => __('messages.deleted_successfully', ['form' => __('messages.employee')]),
+      ]);
+  })->name('employee.destroy');
+  
   Route::post('driver-bulk-action',BulkActionSubServiceController::class)->name('employee.bulk-action');
 
 });
@@ -481,6 +569,7 @@ Route::group(['prefix' => 'banner'] , function () {
       Route::post('role-bulk-action', Role_Layout_PageController::class)->name('role.bulk-action');
   });
 
+
 route::post('role-permission', Role_Layout_PageController::class)->name('role_layout_page');
 
 Route::group(['prefix' => 'ratings'] , function () {
@@ -536,7 +625,12 @@ Route::group(['prefix' => 'ratings'] , function () {
   //   Route::post('permission/save',[PermissionController::class,'savePermission'])->name('permission.save');
   // });
 
+
   Route::group(['prefix' => 'permissions'], function () {
+
+    Route::get('role/add',AddRoleViewController::class)->name('role.add');
+    Route::post('role/save', AddNewRoleController::class)->name('role.save');
+
     Route::post('update-roles-permission', 
     
     
@@ -712,16 +806,6 @@ Route::get('get-user-info',  function(){
 });
 
 
-Route::get('login-office',function(){
-  // $footerSection = FrontendSetting::where('key', 'login-register-setting')->first();
-  // $sectionData = $footerSection ? json_decode($footerSection->value, true) : null;
-  $sectionData['description'] = 'Welcome To ';
-  $sectionData['title'] = 'Welcome To Our Fleet';
-  $sectionData['login_register'] = 1;
-
-
-  return view('landing-page.login',compact('sectionData'));
-});
 
 
 
@@ -772,7 +856,45 @@ Route::get('test3',function(){
 ));
 });
 
+Route::get('net', function(){
+  return view('nbh.n');
+});
+
+
+
+
+
+
+Route::get('get/help-suggestions', UserHelpSuggestionController::class);
 Route::get('/bassam', function(){
+
+//   storeUserNotification(
+//     5, 
+//     'رد جديد على المشكلة', 
+//     'لقد تلقيت ردًا جديدًا على المشكلة رقم #123', 
+//     'https://cdn-icons-png.flaticon.com/512/1827/1827373.png'
+// );
+
+$admin = Admin::first();
+
+// $permissions = $admin->getAllPermissions();
+// return response($permissions);
+  $admin->assignRole(Roles::Super_Admin );
+  return 'done';
+
+// User::first()->issues()->create([
+//   'subject'=>'ss',
+//   'description'=>'dd',
+//   'photo'=>'dd',
+// ]);
+
+ $issues = User::with('issues.replies')->first();
+ return response()->json($issues);
+  // Role::create(['name'=>'office manager' ,'guard'=>'web']);
+  $user = office::first();
+  // $user->7(['office manager']);
+
+  return 'done';
 
   // $admin = Admin::first();
   // $admin->assignRole(Roles::Super_Admin );

@@ -41,7 +41,7 @@ class InquireUserOrderStatusLogic implements Service {
         //     $response_data['order'] = $order;
         // }
 
-        if( $order->status == OrderStatus::$Hold){
+        if( $order->status == OrderStatus::$Hold || $order->status == OrderStatus::$Cancelled){
             $response_data = ['hold'=>true , 'order'=>$order];
         }
 
