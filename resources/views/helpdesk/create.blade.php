@@ -5,70 +5,65 @@
                 <div class="card card-block card-stretch">
                     <div class="card-body p-0">
                         <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                            <h5 class="fw-bold">{{ __('إنشاء بلاغ جديد') }}</h5>
+                            <h5 class="fw-bold">{{ __('Create New Issue') }}</h5>
                             <a href="{{ route('issues.index') }}" class="btn btn-sm btn-primary">
-                                <i class="fa fa-angle-double-left"></i> {{ __('رجوع') }}
+                                <i class="fa fa-angle-double-left"></i> {{ __('Back') }}
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {{-- النموذج --}}
+    
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
                         <form method="POST" action="{{ route('issues.store') }}" enctype="multipart/form-data" id="issue-form">
                             @csrf
-
+    
                             <div class="row">
-                                {{-- الموضوع --}}
                                 <div class="form-group col-md-6">
-                                    <label class="form-control-label" for="subject">{{ __('عنوان البلاغ') }} <span class="text-danger">*</span></label>
-                                    <input type="text" name="subject" id="subject" class="form-control" required placeholder="الموضوع">
+                                    <label class="form-control-label" for="subject">{{ __('Issue Title') }} <span class="text-danger">*</span></label>
+                                    <input type="text" name="subject" id="subject" class="form-control" required placeholder="Subject">
                                 </div>
-
-                                {{-- الموظف المخصص --}}
+    
                                 <div class="form-group col-md-6">
-                                    <label class="form-control-label">{{ __('تعيين إلى') }} <span class="text-danger">*</span></label>
+                                    <label class="form-control-label">{{ __('Assign To') }} <span class="text-danger">*</span></label>
                                     <select name="assigned_to_id" class="form-control select2js" required>
-                                        <option value="">{{ __('اختر موظف') }}</option>
+                                        <option value="">{{ __('Select Employee') }}</option>
                                         @foreach($employees as $emp)
                                             <option value="{{ $emp->id }}">{{ $emp->firstName . ' ' . $emp->lastName }}</option>
                                         @endforeach
                                     </select>
                                     <input type="hidden" name="assigned_to_type" value="App\Models\Employee">
                                 </div>
-
-                                {{-- القسم --}}
+    
                                 <div class="form-group col-md-6">
-                                    <label class="form-control-label">{{ __('القسم') }}</label>
+                                    <label class="form-control-label">{{ __('Department') }}</label>
                                     <select name="department_id" class="form-control select2js">
-                                        <option value="">{{ __('اختر قسم') }}</option>
+                                        <option value="">{{ __('Select Department') }}</option>
                                         @foreach($departments as $dept)
-                                            <option value="{{ $dept->id }}">{{ $dept->name_ar }}</option>
+                                            <option value="{{ $dept->id }}">{{ $dept->name_en }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-
-                       {{-- نوع المُبلّغ --}}
-<div class="form-group col-md-6">
-    <label class="form-control-label">{{ __('نوع المُبلّغ') }} <span class="text-danger">*</span></label>
-    <select name="owner_type" id="owner_type" class="form-control" required>
-        <option value="">{{ __('اختر النوع') }}</option>
-        <option value="user">{{ __('مستخدم') }}</option>
-        <option value="driver">{{ __('سائق') }}</option>
-        <option value="office">{{ __('مكتب') }}</option>
-    </select>
-</div>
-
-{{-- اسم المُبلّغ --}}
-<div class="form-group col-md-6">
-    <label class="form-control-label">{{ __('الاسم') }} <span class="text-danger">*</span></label>
-    <select name="owner_id" id="owner_id" class="form-control select2js" required>
-        <option value="">{{ __('اختر الاسم') }}</option>
-    </select>
-</div>
+    
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label">{{ __('Reporter Type') }} <span class="text-danger">*</span></label>
+                                    <select name="owner_type" id="owner_type" class="form-control" required>
+                                        <option value="">{{ __('Select Type') }}</option>
+                                        <option value="user">{{ __('User') }}</option>
+                                        <option value="driver">{{ __('Driver') }}</option>
+                                        <option value="office">{{ __('Office') }}</option>
+                                    </select>
+                                </div>
+    
+                                <div class="form-group col-md-6">
+                                    <label class="form-control-label">{{ __('Name') }} <span class="text-danger">*</span></label>
+                                    <select name="owner_id" id="owner_id" class="form-control select2js" required>
+                                        <option value="">{{ __('Select Name') }}</option>
+                                    </select>
+                                </div>
+    
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {

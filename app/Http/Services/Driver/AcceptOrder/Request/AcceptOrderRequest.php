@@ -24,7 +24,7 @@ class AcceptOrderRequest extends BaseRequest
     {
         return
         [
-           'orderId'=>['required']
+           'orderId'=>['required','exists:bookings,id']
         ];
     }
 

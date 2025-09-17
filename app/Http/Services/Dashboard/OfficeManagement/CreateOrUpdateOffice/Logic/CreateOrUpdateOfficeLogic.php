@@ -2,6 +2,7 @@
 namespace App\Http\Services\Dashboard\OfficeManagement\CreateOrUpdateOffice\Logic;
 
 use App\Http\Core\Classes\ImageManager;
+use App\Http\Core\Const\Options\Roles;
 use Illuminate\Support\Facades\DB;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
@@ -90,7 +91,7 @@ class CreateOrUpdateOfficeLogic implements Service {
         //     } catch (\Throwable $th) {
         //     }
         // }
-        $office->assignRole('office manager');
+        $office->assignRole(Roles::Office->value);
 
         $this->repository->OfficeRepository()
         ->createRepository()->addOfficeServices(  $office->id , $this->input->getServiceIds());

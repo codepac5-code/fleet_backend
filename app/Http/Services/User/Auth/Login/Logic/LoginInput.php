@@ -7,12 +7,15 @@ class LoginInput implements InputServiceInterface
 {
     private string $phoneNumber;
     private string $password;
+    private string $dialCode;
+
 
 
     public function __construct(  $input =[] ,
     ){
         $this->password     = $input['password'];
         $this->phoneNumber  = $input['phoneNumber'];
+        $this->dialCode = $input['dialCode'];
     }
 
     public function toArray(){
@@ -59,5 +62,14 @@ class LoginInput implements InputServiceInterface
         $this->password = $password;
 
         return $this;
+    }
+
+    /**
+     * Get the value of dialCode
+     *
+     * @return string
+     */
+    public function getDialCode(): string {
+        return $this->dialCode;
     }
 }

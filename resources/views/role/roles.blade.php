@@ -390,12 +390,19 @@
             max-width: 100%;
           }
         }
+
+
+
+
       </style>
       
-    <div class="container" id="app">
+
+
+
+      <div class="container" id="app">
 
         <!-- Tabs -->
-        <div class="tabs" role="tablist" aria-label="التنقل بين التابات">
+        <div class="tabs" role="tablist" >
           <button id="tabRolesBtn" class="active" role="tab" aria-selected="true" aria-controls="rolesTab">الرولات</button>
           <button id="tabPermissionsBtn" role="tab" aria-selected="false" aria-controls="permissionsTab">الصلاحيات</button>
         </div>
@@ -458,24 +465,24 @@
       
         <!-- Permissions Tab -->
         <section id="permissionsTab" style="display:none;" role="tabpanel" tabindex="0">
-          <div class="permissions-container">
+          <div class="permissions-container" style="display:flex; gap: 1rem;">
       
             <!-- Categories Sidebar -->
-            <nav class="permission-categories" role="navigation" aria-label="تصنيفات الصلاحيات" id="categoriesNav">
+            <nav class="permission-categories" role="navigation" aria-label="تصنيفات الصلاحيات" id="categoriesNav" style="min-width: 180px; border: 1px solid #ddd; padding: 0.5rem; border-radius: 5px;">
               <!-- categories buttons injected here -->
             </nav>
       
             <!-- Permissions Table -->
-            <div class="permissions-table" role="region" aria-live="polite" aria-label="جدول الصلاحيات">
-              <table>
+            <div class="permissions-table" style="flex-grow: 1; overflow-x:auto;">
+              <table aria-label="جدول الصلاحيات">
                 <thead>
                   <tr>
                     <th>الصلاحية</th>
-                    <th id="permissionsRolesHeaders"><!-- roles headers injected here --></th>
+                    <!-- Role columns injected dynamically -->
                   </tr>
                 </thead>
                 <tbody id="permissionsTableBody">
-                  <!-- permissions rows injected here -->
+                  <!-- Permissions rows injected here -->
                 </tbody>
               </table>
             </div>
@@ -490,464 +497,286 @@
           role="alert"
           aria-live="assertive"
           aria-atomic="true"
-          style="display:none;"
+          style="display:none; position: fixed; bottom: 1rem; right: 1rem; background:#333; color:#fff; padding: 0.5rem 1rem; border-radius: 4px;"
         ></div>
       
       </div>
       
       <script>
-        (function () {
-          // عناصر الـ DOM
-          const app = document.getElementById('app');
-          const tabRolesBtn = document.getElementById('tabRolesBtn');
-          const tabPermissionsBtn = document.getElementById('tabPermissionsBtn');
-          const rolesTab = document.getElementById('rolesTab');
-          const permissionsTab = document.getElementById('permissionsTab');
-          const rolesTableBody = document.getElementById('rolesTableBody');
-          const searchRoleInput = document.getElementById('searchRoleInput');
-          const openAddRoleBtn = document.getElementById('openAddRoleBtn');
-          const addRoleModal = document.getElementById('addRoleModal');
-          const newRoleNameInput = document.getElementById('newRoleNameInput');
-          const cancelAddRoleBtn = document.getElementById('cancelAddRoleBtn');
-          const saveAddRoleBtn = document.getElementById('saveAddRoleBtn');
+        const apiBase = '/api';
       
-          const categoriesNav = document.getElementById('categoriesNav');
-          const permissionsTableBody = document.getElementById('permissionsTableBody');
-          const permissionsRolesHeaders = document.getElementById('permissionsRolesHeaders');
+        // State
+        let roles = [];
+        let permissions = [];
+        let categories = [];
+        let selectedCategoryId = null;
       
+        // Cached elements
+        const tabRolesBtn = document.getElementById('tabRolesBtn');
+        const tabPermissionsBtn = document.getElementById('tabPermissionsBtn');
+        const rolesTab = document.getElementById('rolesTab');
+        const permissionsTab = document.getElementById('permissionsTab');
+        const categoriesNav = document.getElementById('categoriesNav');
+        const permissionsTableBody = document.getElementById('permissionsTableBody');
+        const rolesTableBody = document.getElementById('rolesTableBody');
+      
+        // Toast helper
+        function showToast(message) {
           const toast = document.getElementById('toast');
+          toast.textContent = message;
+          toast.style.display = 'block';
+          setTimeout(() => {
+            toast.style.display = 'none';
+          }, 3000);
+        }
       
-          // بيانات التطبيق
-          let roles = [];
-          let filteredRoles = [];
-          let permissions = [];
-          let categories = [];
-          let rolePermissions = {}; // { roleId: { permissionId: true/false } }
+        // Switch tabs
+        tabRolesBtn.addEventListener('click', () => {
+          tabRolesBtn.classList.add('active');
+          tabRolesBtn.setAttribute('aria-selected', 'true');
+          tabPermissionsBtn.classList.remove('active');
+          tabPermissionsBtn.setAttribute('aria-selected', 'false');
+          rolesTab.style.display = 'block';
+          permissionsTab.style.display = 'none';
+        });
       
-          let editingRoleId = null;
-          let editRoleName = '';
+        tabPermissionsBtn.addEventListener('click', () => {
+          tabPermissionsBtn.classList.add('active');
+          tabPermissionsBtn.setAttribute('aria-selected', 'true');
+          tabRolesBtn.classList.remove('active');
+          tabRolesBtn.setAttribute('aria-selected', 'false');
+          rolesTab.style.display = 'none';
+          permissionsTab.style.display = 'flex';
+        });
       
-          let activeCategoryId = null;
-      
-          // --- Utils ---
-          function showToast(message) {
-            toast.textContent = message;
-            toast.style.display = 'block';
-            setTimeout(() => {
-              toast.style.display = 'none';
-            }, 8000);
+        // Fetch roles
+        async function fetchRoles() {
+          try {
+            const res = await fetch(apiBase + '/roles');
+            if (!res.ok) throw new Error('خطأ في جلب الرولات');
+            roles = await res.json();
+            renderRoles();
+          } catch (error) {
+            showToast(error.message);
           }
+        }
       
-          // --- API Calls ---
-          async function fetchRoles() {
-            try {
-              const res = await fetch('/api/roles');
-              if (!res.ok) throw new Error('فشل جلب الرولات');
-              roles = await res.json();
-              filteredRoles = [...roles];
-            } catch (e) {
-              showToast(e.message);
-            }
-          }
-      
-          async function fetchPermissions() {
-            try {
-              const res = await fetch('/api/permissions');
-              if (!res.ok) throw new Error('فشل جلب الصلاحيات');
-      
-              permissions = await res.json();
-      
-              // استخراج التصنيفات من الـ parent مباشرة
-              const uniqueCategoriesMap = {};
-              permissions.forEach(p => {
-                const parent = p.parent;
-                const catId = parent?.id ?? 0;
-                const catName = parent?.name ?? 'غير مصنف';
-                uniqueCategoriesMap[catId] = catName;
-              });
-      
-              // تحويل الكائن إلى مصفوفة التصنيفات
-              categories = Object.entries(uniqueCategoriesMap).map(([id, name]) => ({
-                id: parseInt(id),
-                name
-              }));
-      
-              activeCategoryId = categories.length > 0 ? categories[0].id : null;
-      
-            } catch (e) {
-              showToast(e.message);
-            }
-          }
-      
-          async function fetchRolePermissions() {
-            try {
-              // بما أن صلاحيات الرولات تأتي مع الرولات (role.perms)، سنملأ rolePermissions بناء على ذلك
-              rolePermissions = {};
-              roles.forEach(role => {
-                rolePermissions[role.id] = {};
-                (role.perms || []).forEach(p => {
-                  rolePermissions[role.id][p.id] = true;
-                });
-              });
-            } catch (e) {
-              showToast(e.message);
-            }
-          }
-      
-          async function createRoleAPI(name) {
-            try {
-              const res = await fetch('/api/roles', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name }),
-              });
-              if (!res.ok) throw new Error('فشل إنشاء الرول');
-              return await res.json();
-            } catch (e) {
-              showToast(e.message);
-              throw e;
-            }
-          }
-      
-          async function updateRoleAPI(id, name) {
-            try {
-              const res = await fetch(`/api/roles/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name }),
-              });
-              if (!res.ok) throw new Error('فشل تحديث اسم الرول');
-              return await res.json();
-            } catch (e) {
-              showToast(e.message);
-              throw e;
-            }
-          }
-      
-          async function deleteRoleAPI(id) {
-            try {
-              const res = await fetch(`/api/roles/${id}`, { method: 'DELETE' });
-              if (!res.ok) throw new Error('فشل حذف الرول');
-            } catch (e) {
-              showToast(e.message);
-              throw e;
-            }
-          }
-      
-          // دالة إسناد الصلاحية إلى الرول باسم الصلاحية
-          async function assignPermissionToRole(roleId, permissionName) {
-            const res = await fetch(`/api/roles/${roleId}/permissions/assign`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ permission: permissionName }),
-            });
-            if (!res.ok) throw new Error('فشل إسناد الصلاحية');
-          }
-      
-          // دالة إزالة الصلاحية من الرول باسم الصلاحية
-          async function removePermissionFromRole(roleId, permissionName) {
-            const res = await fetch(`/api/roles/${roleId}/permissions/remove`, {
-              method: 'POST', // أو DELETE حسب تصميم API
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ permission: permissionName }),
-            });
-            if (!res.ok) throw new Error('فشل إزالة الصلاحية');
-          }
-      
-          // --- Render functions ---
-          function renderRolesTable() {
-            rolesTableBody.innerHTML = '';
-      
-            if (filteredRoles.length === 0) {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `<td colspan="3" style="text-align: center; color: #999;">لا توجد رولات لعرضها</td>`;
-              rolesTableBody.appendChild(tr);
-              return;
-            }
-      
-            filteredRoles.forEach((role, index) => {
-              const tr = document.createElement('tr');
-              tr.dataset.roleId = role.id;
-      
-              const tdIndex = document.createElement('td');
-              tdIndex.textContent = index + 1;
-      
-              const tdName = document.createElement('td');
-      
-              if (editingRoleId === role.id) {
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'edit-input';
-                input.value = editRoleName;
-                input.setAttribute('aria-label', 'تعديل اسم الرول');
-      
-                input.addEventListener('input', e => {
-                  editRoleName = e.target.value;
-                });
-      
-                input.addEventListener('keydown', e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    saveRoleEdit(role.id);
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    cancelRoleEdit();
-                  }
-                });
-      
-                tdName.appendChild(input);
-                setTimeout(() => input.focus(), 10);
-              } else {
-                tdName.textContent = role.name;
-              }
-      
-              const tdActions = document.createElement('td');
-      
-              if (editingRoleId === role.id) {
-                const saveBtn = document.createElement('button');
-                saveBtn.className = 'action-btn';
-                saveBtn.title = 'حفظ';
-                saveBtn.innerHTML = '<i class="fas fa-check"></i>';
-                saveBtn.addEventListener('click', () => saveRoleEdit(role.id));
-      
-                const cancelBtn = document.createElement('button');
-                cancelBtn.className = 'action-btn cancel';
-                cancelBtn.title = 'إلغاء';
-                cancelBtn.innerHTML = '<i class="fas fa-times"></i>';
-                cancelBtn.addEventListener('click', cancelRoleEdit);
-      
-                tdActions.appendChild(saveBtn);
-                tdActions.appendChild(cancelBtn);
-              } else {
-                const editBtn = document.createElement('button');
-                editBtn.className = 'action-btn';
-                editBtn.title = 'تعديل';
-                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-                editBtn.addEventListener('click', () => startEditRole(role.id));
-      
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'action-btn delete';
-                deleteBtn.title = 'حذف';
-                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                deleteBtn.addEventListener('click', () => confirmDeleteRole(role.id, role.name));
-      
-                tdActions.appendChild(editBtn);
-                tdActions.appendChild(deleteBtn);
-              }
-      
-              tr.appendChild(tdIndex);
-              tr.appendChild(tdName);
-              tr.appendChild(tdActions);
-      
-              rolesTableBody.appendChild(tr);
-            });
-          }
-      
-          function renderCategories() {
-            categoriesNav.innerHTML = '';
-            categories.forEach(cat => {
-              const btn = document.createElement('button');
-              btn.type = 'button';
-              btn.textContent = cat.name;
-              btn.className = (activeCategoryId === cat.id) ? 'active' : '';
-              btn.setAttribute('aria-pressed', activeCategoryId === cat.id);
-              btn.addEventListener('click', () => {
-                activeCategoryId = cat.id;
-                renderCategories();
-                renderPermissionsTable();
-              });
-              categoriesNav.appendChild(btn);
-            });
-          }
-      
-          function renderPermissionsTable() {
-            permissionsTableBody.innerHTML = '';
-            permissionsRolesHeaders.innerHTML = '';
-      
-            // عرض رؤوس أعمدة الرولات
-            roles.forEach(role => {
-              const span = document.createElement('span');
-              span.textContent = role.name;
-              span.title = role.name;
-              permissionsRolesHeaders.appendChild(span);
-            });
-      
-            // صلاحيات التصنيف المختار
-            const filteredPermissions = permissions.filter(p => (p.parent?.id ?? 0) === activeCategoryId);
-      
-            if (filteredPermissions.length === 0) {
-              const tr = document.createElement('tr');
-              const td = document.createElement('td');
-              td.colSpan = roles.length + 1;
-              td.style.textAlign = 'center';
-              td.style.color = '#999';
-              td.textContent = 'لا توجد صلاحيات لهذا التصنيف';
-              tr.appendChild(td);
-              permissionsTableBody.appendChild(tr);
-              return;
-            }
-      
-            filteredPermissions.forEach(permission => {
-              const tr = document.createElement('tr');
-              const tdName = document.createElement('td');
-              tdName.textContent = permission.name;
-              tr.appendChild(tdName);
-      
-              roles.forEach(role => {
-                const td = document.createElement('td');
-                td.style.textAlign = 'center';
-      
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.setAttribute('aria-label', `صلاحية ${permission.name} للرول ${role.name}`);
-                checkbox.checked = !!(rolePermissions[role.id] && rolePermissions[role.id][permission.id]);
-      
-                checkbox.addEventListener('change', async e => {
-                  try {
-                    if (e.target.checked) {
-                      await assignPermissionToRole(role.id, permission.name);
-                      if (!rolePermissions[role.id]) rolePermissions[role.id] = {};
-                      rolePermissions[role.id][permission.id] = true;
-                    } else {
-                      await removePermissionFromRole(role.id, permission.name);
-                      if (!rolePermissions[role.id]) rolePermissions[role.id] = {};
-                      rolePermissions[role.id][permission.id] = false;
-                    }
-                    showToast('تم تحديث الصلاحية بنجاح');
-                  } catch (error) {
-                    showToast(error.message || 'حدث خطأ أثناء التحديث');
-                    e.target.checked = !e.target.checked; // إعادة الحالة السابقة عند الخطأ
-                  }
-                });
-      
-                td.appendChild(checkbox);
-                tr.appendChild(td);
-              });
-      
-              permissionsTableBody.appendChild(tr);
-            });
-          }
-      
-          // --- Events for Roles Tab ---
-          searchRoleInput.addEventListener('input', e => {
-            const val = e.target.value.trim().toLowerCase();
-            filteredRoles = roles.filter(r => r.name.toLowerCase().includes(val));
-            renderRolesTable();
+        // Render roles table
+        function renderRoles() {
+          rolesTableBody.innerHTML = '';
+          roles.forEach((role, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${i+1}</td>
+              <td>${role.name}</td>
+              <td>
+                <!-- أزرار يمكن تضيفها لاحقاً -->
+                <button data-id="${role.id}" class="btn-edit" disabled>تعديل</button>
+                <button data-id="${role.id}" class="btn-delete" disabled>حذف</button>
+              </td>
+            `;
+            rolesTableBody.appendChild(tr);
           });
+        }
       
-          openAddRoleBtn.addEventListener('click', () => {
-            newRoleNameInput.value = '';
-            addRoleModal.style.display = 'block';
-            newRoleNameInput.focus();
-          });
+        // Fetch categories (parent permissions)
+        async function fetchCategories() {
+          try {
+            // نفترض عندك API يرجع parent_permissions مثلاً /api/parent-permissions
+            const res = await fetch(apiBase + '/permissions'); 
+            if (!res.ok) throw new Error('خطأ في جلب تصنيفات الصلاحيات');
+            const perms = await res.json();
       
-          cancelAddRoleBtn.addEventListener('click', () => {
-            addRoleModal.style.display = 'none';
-          });
+            // تجميع parent permissions
+            // لأن الباك يرجع الصلاحيات مع parent مرفقة
+            const parentsMap = {};
+            perms.forEach(p => {
+              if(p.parent) parentsMap[p.parent.id] = p.parent;
+            });
+            categories = Object.values(parentsMap);
       
-          saveAddRoleBtn.addEventListener('click', async () => {
-            const name = newRoleNameInput.value.trim();
-            if (!name) {
-              alert('يرجى إدخال اسم الرول');
-              return;
+            // إذا مافي تصنيفات (ممكن يكون الكل بنفس الفئة)
+            if(categories.length === 0 && perms.length > 0){
+              // ممكن نعتمد فئة واحدة عامة
+              categories = [{id: null, name: 'عام'}];
             }
-            try {
-              const newRole = await createRoleAPI(name);
-              roles.push(newRole);
-              filteredRoles = [...roles];
-              renderRolesTable();
-              renderPermissionsTable();
-              addRoleModal.style.display = 'none';
-              showToast('تم إنشاء الرول بنجاح');
-            } catch {
-              // خطأ يتم التعامل معه في createRoleAPI
-            }
-          });
       
-          // --- Roles Editing ---
-          function startEditRole(id) {
-            editingRoleId = id;
-            const role = roles.find(r => r.id === id);
-            editRoleName = role ? role.name : '';
-            renderRolesTable();
-          }
-      
-          function cancelRoleEdit() {
-            editingRoleId = null;
-            editRoleName = '';
-            renderRolesTable();
-          }
-      
-          async function saveRoleEdit(id) {
-            const name = editRoleName.trim();
-            if (!name) {
-              alert('يرجى إدخال اسم الرول');
-              return;
-            }
-            try {
-              await updateRoleAPI(id, name);
-              const role = roles.find(r => r.id === id);
-              if (role) role.name = name;
-              editingRoleId = null;
-              editRoleName = '';
-              filteredRoles = [...roles];
-              renderRolesTable();
-              renderPermissionsTable();
-              showToast('تم تحديث اسم الرول بنجاح');
-            } catch {
-              // التعامل مع الخطأ ضمن updateRoleAPI
-            }
-          }
-      
-          function confirmDeleteRole(id, name) {
-            if (confirm(`هل أنت متأكد من حذف الرول "${name}"؟`)) {
-              deleteRole(id);
-            }
-          }
-      
-          async function deleteRole(id) {
-            try {
-              await deleteRoleAPI(id);
-              roles = roles.filter(r => r.id !== id);
-              filteredRoles = [...roles];
-              renderRolesTable();
-              renderPermissionsTable();
-              showToast('تم حذف الرول بنجاح');
-            } catch {
-              // الخطأ يتم التعامل معه في deleteRoleAPI
-            }
-          }
-      
-          // --- Tabs switching ---
-          tabRolesBtn.addEventListener('click', () => {
-            tabRolesBtn.classList.add('active');
-            tabPermissionsBtn.classList.remove('active');
-            rolesTab.style.display = 'block';
-            permissionsTab.style.display = 'none';
-          });
-      
-          tabPermissionsBtn.addEventListener('click', () => {
-            tabPermissionsBtn.classList.add('active');
-            tabRolesBtn.classList.remove('active');
-            permissionsTab.style.display = 'block';
-            rolesTab.style.display = 'none';
-          });
-      
-          // --- Init ---
-          async function init() {
-            await fetchRoles();
-            await fetchPermissions();
-            await fetchRolePermissions();
-            renderRolesTable();
             renderCategories();
-            renderPermissionsTable();
+          } catch (error) {
+            showToast(error.message);
           }
+        }
       
-          init();
+        // Render categories sidebar
+        function renderCategories() {
+          categoriesNav.innerHTML = '';
+          categories.forEach((cat, i) => {
+            const btn = document.createElement('button');
+            btn.textContent = cat.name || 'بدون تصنيف';
+            btn.classList.add('category-btn');
+            btn.style.display = 'block';
+            btn.style.width = '100%';
+            btn.style.marginBottom = '0.3rem';
+            btn.style.padding = '0.3rem';
+            btn.style.border = 'none';
+            btn.style.background = i === 0 ? '#007BFF' : '#eee';
+            btn.style.color = i === 0 ? '#fff' : '#000';
+            btn.style.borderRadius = '4px';
+            btn.style.cursor = 'pointer';
+            btn.dataset.id = cat.id;
       
-        })();
+            if(i === 0) selectedCategoryId = cat.id;
+      
+            btn.addEventListener('click', () => {
+              selectedCategoryId = cat.id;
+              document.querySelectorAll('.category-btn').forEach(b => {
+                b.style.background = '#eee';
+                b.style.color = '#000';
+              });
+              btn.style.background = '#007BFF';
+              btn.style.color = '#fff';
+      
+              renderPermissions();
+            });
+      
+            categoriesNav.appendChild(btn);
+          });
+        }
+      
+        // Fetch permissions with parent data
+        async function fetchPermissions() {
+          try {
+            const res = await fetch(apiBase + '/permissions');
+            if (!res.ok) throw new Error('خطأ في جلب الصلاحيات');
+            permissions = await res.json();
+            renderPermissions();
+          } catch (error) {
+            showToast(error.message);
+          }
+        }
+      
+        // Render permissions table filtered by selected category
+        function renderPermissions() {
+          permissionsTableBody.innerHTML = '';
+          if (!selectedCategoryId && categories.length > 0 && categories[0].id !== null) {
+            // No selected category but we have categories? pick first by default
+            selectedCategoryId = categories[0].id;
+          }
+          // Filter permissions by parent id
+          const filtered = permissions.filter(p => {
+            // If category id null means general
+            if(selectedCategoryId === null) return !p.parent;
+            return p.parent && p.parent.id == selectedCategoryId;
+          });
+      
+          // Table header - dynamic roles columns
+          const thead = document.querySelector('#permissionsTab table thead tr');
+          // Reset except first th (permission name)
+          thead.innerHTML = `<th>الصلاحية</th>`;
+          roles.forEach(role => {
+            const th = document.createElement('th');
+            th.textContent = role.name;
+            thead.appendChild(th);
+          });
+      
+          filtered.forEach(perm => {
+            const tr = document.createElement('tr');
+            tr.dataset.permissionId = perm.id;
+      
+            // Permission name
+            const tdName = document.createElement('td');
+            tdName.textContent = perm.name;
+            tr.appendChild(tdName);
+      
+            // For each role, add a checkbox if that role has the permission
+            roles.forEach(role => {
+              const td = document.createElement('td');
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+      
+              // To check if role has this permission:
+              // We call /api/roles/{id} to get role permissions or cache them
+              // To optimize: let's cache role permissions in memory first
+      
+              td.appendChild(checkbox);
+              tr.appendChild(td);
+      
+              // Load role permissions (once) and set checkbox
+              loadRolePermissions(role.id).then(rolePerms => {
+                checkbox.checked = rolePerms.includes(perm.name);
+              });
+      
+              // On change, assign/remove permission via API
+              checkbox.addEventListener('change', async () => {
+                try {
+                  if(checkbox.checked){
+                    // assign permission to role
+                    const res = await fetch(`${apiBase}/roles/${role.id}/permissions/assign`, {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({ permission_name: perm.name })
+                    });
+                    if(!res.ok) throw new Error('خطأ في تعيين الصلاحية');
+                    showToast(`تم تعيين صلاحية "${perm.name}" للرول "${role.name}"`);
+                    // update cache
+                    rolePermissionsCache[role.id].push(perm.name);
+                  } else {
+                    // remove permission
+                    const res = await fetch(`${apiBase}/roles/${role.id}/permissions/remove`, {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({ permission_name: perm.name })
+                    });
+                    if(!res.ok) throw new Error('خطأ في إزالة الصلاحية');
+                    showToast(`تم إزالة صلاحية "${perm.name}" من الرول "${role.name}"`);
+                    // update cache
+                    rolePermissionsCache[role.id] = rolePermissionsCache[role.id].filter(p => p !== perm.name);
+                  }
+                } catch (e) {
+                  showToast(e.message);
+                  checkbox.checked = !checkbox.checked; // rollback
+                }
+              });
+            });
+      
+            permissionsTableBody.appendChild(tr);
+          });
+        }
+      
+        // Cache for role permissions to avoid multiple requests
+        const rolePermissionsCache = {};
+      
+        // Load permissions for a role once and cache
+        async function loadRolePermissions(roleId) {
+          if(rolePermissionsCache[roleId]){
+            return rolePermissionsCache[roleId];
+          }
+          try {
+            const res = await fetch(`${apiBase}/roles/${roleId}/permissions`);
+            if(!res.ok) throw new Error('خطأ في جلب صلاحيات الرول');
+            const data = await res.json();
+            // data format assumed: array of permissions with "name" prop
+            const permsNames = data.map(p => p.name);
+            rolePermissionsCache[roleId] = permsNames;
+            return permsNames;
+          } catch (e) {
+            showToast(e.message);
+            return [];
+          }
+        }
+      
+        // Initial load
+        async function init(){
+          await fetchRoles();
+          await fetchCategories();
+          await fetchPermissions();
+        }
+    
+        init();
       </script>
+
       
+  
     
     <style>
       /* Reset and base styles */

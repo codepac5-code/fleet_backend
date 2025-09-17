@@ -21,7 +21,7 @@
                             @csrf
                             @method('POST')
 
-                            @if ($errors->any())
+                            {{-- @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul class="mb-0">
                                         @foreach ($errors->all() as $error)
@@ -29,7 +29,7 @@
                                         @endforeach
                                     </ul>
                                 </div>
-                            @endif
+                            @endif --}}
 
                             @if (isset($employee->id))
                                 <input type="hidden" name="id" value="{{$employee->id}}">
@@ -112,6 +112,9 @@
                                                 <input type="password" name="password" class="form-control" required>
                                                 <span class="input-group-text toggle-password" data-target="password"><i class="fa fa-eye"></i></span>
                                             </div>
+                                            @error('password')
+                                            <small class="text-danger">{{ $message }}</small>
+                                        @enderror
                                         </div>
 
                                         <div class="form-group col-md-4">
@@ -149,21 +152,34 @@
                                     <div class="form-group col-md-6">
                                         <label>{{ __('messages.job_title_en') }} <span class="text-danger">*</span></label>
                                         <input type="text" name="employeeJobName_en" class="form-control" value="{{ old('employeeJobName_en', $employee->employeeJobName_en ?? '') }}" required>
+                                        @error('employeeJobName_en')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                     </div>
 
                                     <div class="form-group col-md-6">
                                         <label>{{ __('messages.job_title_ar') }} <span class="text-danger">*</span></label>
                                         <input type="text" name="employeeJobName_ar" class="form-control" value="{{ old('employeeJobName_ar', $employee->employeeJobName_ar ?? '') }}" required>
+                                        @error('employeeJobName_ar')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
+                                   
                                     </div>
 
                                     <div class="form-group col-md-6">
                                         <label>{{ __('messages.job_description_en') }}</label>
                                         <textarea name="job_description_en" class="form-control">{{ old('job_description_en', $employee->job_description_en ?? '') }}</textarea>
+                                        @error('job_description_en')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                     </div>
 
                                     <div class="form-group col-md-6">
                                         <label>{{ __('messages.job_description_ar') }}</label>
                                         <textarea name="job_description_ar" class="form-control">{{ old('job_description_ar', $employee->job_description_ar ?? '') }}</textarea>
+                                        @error('job_description_ar')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                     </div>
                                 </div>
                             </div>

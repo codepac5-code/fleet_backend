@@ -13,6 +13,27 @@ class BookingReadRepository extends ReadRepository
         $this->model = new Booking();
     }
 
+    public function getScheduledBookingsForAuthDriver(){
+
+        return $this->model::with(['subService','user','payment'])
+        ->where('driverId', auth()->id())
+        ->where('is_scheduled', true)
+        ->where('scheduled_time', '>=', now())
+        ->orderBy('scheduled_time', 'asc')
+        ->get();
+        }
+    
+
+    public function getScheduledBookingsForAuthUser(){
+
+        return $this->model::with(['subService','driver','payment'])
+        ->where('userId', auth()->id())
+        ->where('is_scheduled', true)
+        ->where('scheduled_time', '>=', now())
+        ->orderBy('scheduled_time', 'asc')
+        ->get();
+    }
+
     public function getEarning(array $date ,array $selected = ["*"], array $conditions=[]){
         $summary = DB::table('bookings')
         ->select(

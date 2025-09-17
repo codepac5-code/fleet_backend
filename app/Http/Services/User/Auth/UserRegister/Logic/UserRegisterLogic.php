@@ -44,6 +44,7 @@ class UserRegisterLogic implements Service {
                     'firstName'     =>$this->input->getFirstName(),
                     'lastName'      =>$this->input->getLastName(),
                     'phoneNumber'   =>$this->input->getPhoneNumber(),
+                    'dialCode'      =>$this->input->getDialCode(),
                     'password'      =>$hashedPassword,
                 ]
             );
@@ -112,7 +113,7 @@ class UserRegisterLogic implements Service {
         $config = [
             'base_url' => 'https://message.dashboard.technoplus.tech',
             'api_key' => '51|OE7uqfEx7BJzGpzCtFBHC9McoZxJT25oG9jybb5e72747175',
-            'session_id' => '4a501269-dbdf-456d-b1e9-d61e1b424276',
+            'session_id' => '1102d8e0-f7d2-457c-b1db-a1d4287fee37',
             'phone' => $phoneNumber, 
             'otp' => $otpCode
         ];
@@ -123,7 +124,7 @@ class UserRegisterLogic implements Service {
                 'Accept' => 'application/json',
             ])->post($config['base_url'] . '/whatsapp/api/v1/message/text/send', [
                 'session_id' => $config['session_id'],
-                'receiver' => '+963' . substr($config['phone'], 1),
+                'receiver' => $this->input->getDialCode() . $config['phone'],
                 'text' => $this->generateOtpMessage($userName, $otpCode)
             ]);
 
@@ -138,9 +139,5 @@ class UserRegisterLogic implements Service {
         }
     }
 
-
-    
-
-  
 
 }

@@ -12,7 +12,7 @@
                               <h5 class="font-weight-bold">{{ __('messages.employee') }}</h5>
                               @if($list_status != 'unassigned' && $list_status !='request')
                               @if(auth()->user()->can('add employee'))
-                              <a href="{{ route('employee.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.Driver')  ]) }}</a>
+                              <a href="{{ route('employee.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ __('messages.add_form_title',['form' => __('messages.employee')  ]) }}</a>
                               @endif
                               @endif
                           </div>

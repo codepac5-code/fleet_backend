@@ -50,5 +50,15 @@ $auth_user= authSession();
         <i class="far fa-trash-alt text-danger"></i>
     </a>
 @endif
+
+@if(auth()->user()->can('office change custom commission'))
+
+<a class="edit-commission-btn text-primary d-flex align-items-center" 
+   href="javascript:void(0);" 
+   title="{{ __('messages.edit_commission') }}"
+   style="margin-{{ app()->getLocale() === 'ar' ? 'left' : 'right' }}:5px; gap:0.3rem;">
+   <i class="fas fa-percentage"></i>
+</a>
+@endif
 </div>
 </form>

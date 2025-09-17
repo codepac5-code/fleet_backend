@@ -18,7 +18,8 @@ class Employee extends Authenticatable implements HasMedia
 
     use HasFactory, Notifiable , HasApiTokens , HasRoles , InteractsWithMedia  , SoftDeletes ,InteractsWithMedia ;
 
-    
+    protected $guard_name = 'employee';
+
     protected $table = 'employees';
     
     // protected $guard_name = 'employee';
@@ -45,6 +46,11 @@ class Employee extends Authenticatable implements HasMedia
         'photo',
         'role', 
     ];
+
+
+    public function departments(){
+    return $this->belongsToMany(Department::class);
+    }
 
 
     public function assignedIssues()

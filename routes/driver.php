@@ -24,6 +24,7 @@ use App\Http\Services\Driver\ReceiveCompletedOrderInfo\Controller\ReceiveComplet
 use App\Http\Services\Driver\SendDriverIssue\Controller\SendDriverIssueController;
 use App\Http\Services\Driver\SendIssueReply\Controller\SendIssueReplyController;
 use App\Http\Services\Driver\SendJobApplication\Controller\SendJobApplicationController;
+use App\Http\Services\Driver\StartApplication\Controller\StartApplicationController;
 use App\Http\Services\SharedServices\issues\CloeIssue\Controller\CloeIssueController;
 use App\Http\Services\SharedServices\issues\CreateNewIssue\Controller\CreateNewIssueController;
 use App\Http\Services\SharedServices\issues\GetIssuesDetails\Controller\GetIssuesDetailsController;
@@ -52,6 +53,7 @@ Route::post('send-driver-job-application', SendJobApplicationController::class);
 
 
 Route::group(['middleware' => ['auth:driver','set-localization']],function () {
+    Route::post('start-application', StartApplicationController::class);
     Route::get('issues/details', GetIssuesDetailsController::class);
     Route::post('issues/close', CloeIssueController::class);
     Route::post('send-reply-issue', SendIusseReplyController::class);

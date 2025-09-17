@@ -39,7 +39,7 @@ class LoginToDashboardLogic implements Service {
         }
         
 
-        session()->regenerate();
+        // session()->regenerate();
         // $user = getAuthUser();
 
         // if($user->status == 0) {

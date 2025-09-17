@@ -46,9 +46,10 @@ class LoginToDashboardAsOfficeLogic implements Service {
 
         session()->regenerate();
 
-        $message = 'مرحباً بك في لوحة التحكم';
+        $message = 'welcome to fleet';
 
         if(checkGuard(Guard::$Employee)){
+            
             // $roles = MainRoles();
             // if(!authUserHashRoles(['roles']))
             $message = 'مرحباً بك في فلييت';

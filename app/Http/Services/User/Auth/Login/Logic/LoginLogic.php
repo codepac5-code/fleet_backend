@@ -29,8 +29,9 @@ class LoginLogic implements Service {
         $userReadRepository = $this->repository->UserRepository()->readRepository();
         $user = $userReadRepository->getByValue('phoneNumber' , $this->input->getPhoneNumber());
 
-        if($user == null || !$user->is_registered) make_exception(__('messages.account_not_found_phoneNumber'));
-
+        if($user == null || !$user->is_registered || $user->dialCode == $this->input->getDialCode()
+          ) make_exception(__('messages.account_not_found_phoneNumber'));
+        // || 
         //ErrorMessages::getKey(ErrorMessages::$AccountAlreadyExists ,Attributes::User)
         if ( $user->isActive == false){
             make_exception('تم تقييد حسابك من قبل الشركة ، يرجى المراجعة');

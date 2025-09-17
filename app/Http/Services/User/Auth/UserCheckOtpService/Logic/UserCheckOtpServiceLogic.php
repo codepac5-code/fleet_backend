@@ -23,7 +23,7 @@ class UserCheckOtpServiceLogic implements Service {
     public function execute (): ResponseModel {
 
         if (getCatch("user_id_".$this->input->getUserId()) == null) {
-            make_exception(ErrorMessages::getKey(__('messages.invalid_otp')),422);
+            make_exception(__('messages.invalid_otp'),422);
         }
 
         $userReadRepository = $this->repository->UserRepository()->readRepository();

@@ -171,12 +171,8 @@ class ViewVehicleListLogic implements Service {
             })
 
             ->editColumn('updated_at', function ($query) {
-                $diff = Carbon::now()->diffInHours($query->updated_at);
-                if ($diff < 25) {
-                    return $query->updated_at->diffForHumans();
-                } else {
-                    return $query->updated_at->isoFormat('llll');
-                }
+              return Carbon::now()->diffInHours($query->updated_at);
+               
             })
             ->addIndexColumn()
             ->rawColumns(['check' ,'id' ,'office','driver' ,'status','action'])

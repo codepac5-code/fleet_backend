@@ -24,6 +24,11 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->double('walletBalance')->default(0);
             $table->tinyInteger('status')->default('1');
+            $table->decimal('driversDues', 15, 2)->default(0); 
+            $table->decimal('fleetDues', 15, 2)->default(0);
+            $table->boolean('isFleetCommissionCustom')->default(false);    
+            $table->decimal('FleetCommissionCustomValue', 10, 2)->default(0);    
+            $table->decimal('commissionCustomValue', 10, 2)->default(0);                              
             $table->decimal('commission_with_office_car', 10, 2)->default(0);
             $table->decimal('commission_with_driver_car', 10, 2)->default(0);
             $table->decimal('driver_commission_precentage', 10, 2)->default(70);
@@ -45,12 +50,12 @@ return new class extends Migration
 
 
             //-----------------
-            $table->decimal('withdrawn_amount', 15, 2)->default(0);
-            $table->decimal('available_amount', 15, 2)->default(0);
-            $table->decimal('total_income', 15, 2)->default(0);
-            $table->decimal('drivers_debt', 15, 2)->default(0); 
-            $table->decimal('fleet_debt', 15, 2)->default(0);
-            $table->bigInteger('drivers_count')->default(0);
+            // $table->decimal('withdrawn_amount', 15, 2)->default(0);
+            // $table->decimal('available_amount', 15, 2)->default(0);
+            // $table->decimal('total_income', 15, 2)->default(0);
+            // $table->decimal('drivers_debt', 15, 2)->default(0); 
+            // $table->decimal('fleet_debt', 15, 2)->default(0);
+            // $table->bigInteger('drivers_count')->default(0);
 
             //-----------------
             $table->timestamps();

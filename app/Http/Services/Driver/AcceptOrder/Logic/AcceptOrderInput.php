@@ -11,7 +11,7 @@ class AcceptOrderInput implements InputServiceInterface
     public function __construct( array $input)
     {
         $this->orderId = $input['orderId'];
-        $this->driverId = $input['driverId'];
+        $this->driverId = getAuthUser()->id;
 
     }
 

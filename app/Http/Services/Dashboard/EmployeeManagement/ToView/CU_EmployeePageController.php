@@ -36,7 +36,17 @@ class CU_EmployeePageController extends Controller
         $cities = City::all(); 
 
         $repository = new RepositoryCaller();
-        $roles = Role::where(['status'=>true])->where('name','!=','super-admin')->get();
+
+        
+        $excludeRoles = array_merge(MainRoles(), MainOfficeRoles());
+        if(!auth()->guard('admin')->check()){
+            $excludeRoles = array_merge( $excludeRoles , ['demo admin']);
+        }
+
+        $roles = Role::where('status', true)
+            ->whereNotIn('name', $excludeRoles)
+            ->where('guard_name','office')
+            ->get();
 
         return view('employee.create', compact('pageTitle' ,'roles' ,'auth_user' , 'offices','cities','countries','employee'));
     }

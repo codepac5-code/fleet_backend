@@ -7,7 +7,11 @@ use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\Const\Options\OrderStatus;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\BalanceStatus;
+use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletRedisModel;
 use App\Models\Booking;
+use App\Models\Driver;
+use App\Models\FleetOffice;
 use App\Models\Office;
 use Carbon\Carbon;
 use App\Models\User;
@@ -73,7 +77,7 @@ class HomeLogic implements Service {
         $data['revenueData']            = $this->getMonthlyRevenue();
  
  
-        //----------------------
+       // ----------------------
  
         $system_statistic = $this->repository->FleetStatisticRepository()->readRepository()->getFirstByConditions([]);
  
@@ -89,27 +93,34 @@ class HomeLogic implements Service {
         $data['offices-due-amount']=  $system_statistic->offices_debt;
         $data['drivers-due-amount']=  $system_statistic->drivers_debt;
 
-        $offices = Office::where('created_at', '>=', Carbon::now()->subDays(2))->limit(7)->get();
+        // $offices = Office::where('created_at', '>=', Carbon::now()->subDays(2))->limit(7)->get();
 
-        $users = User::where('created_at', '>=', Carbon::now()->subDays(2))->limit(7)->get();
-        // $orders = Booking::where('created_at', '>=', Carbon::now()->subDays(2))->get();
+        // $users = User::where('created_at', '>=', Carbon::now()->subDays(2))->limit(7)->get();
+        // // $orders = Booking::where('created_at', '>=', Carbon::now()->subDays(2))->get();
 
-        $orders = Booking::where('created_at', '>=', Carbon::now()->subDays(2))->limit(7)->get();
+        // $orders = Booking::where('created_at', '>=', Carbon::now()->subDays(2))->limit(7)->get();
 
         $auth_user = authSession();
-        $isOffice  = Office::find(1);
+        $isOffice  = false;
 
     //  $auth_user->assignRole('office');
         // dd(auth()->user()->hasAnyRole(['office']));
-
-    
+        $office = FleetOffice::first();
+        $pendingAmount = FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Pending) ?? 0;
+        $driverDues = Driver::sum('fleetDues');
+        $officeDues = Office::sum('fleetDues');
+        $walletBalance = $office->walletBalance;
         return view('dashboard.dashboard', compact(
             'data',
             'offices',  
             'users',
             'orders',
             'auth_user',
-            'isOffice'
+            'isOffice',
+            'walletBalance',
+            'officeDues',
+            'driverDues',
+            'pendingAmount'
             ));
     }
 
@@ -166,14 +177,25 @@ class HomeLogic implements Service {
         $orders = Booking::where('created_at', '>=', Carbon::now()->subDays(2))->limit(7)->get();
 
         $auth_user = authSession();
-        $isOffice  = Office::find(1);
+        $isOffice  = true;
+
+        $office = Office::find($officeId);
+        $pendingAmount = FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Pending) ?? 0;
+        $driverDues = Driver::where(['officeId'=>$officeId])->sum('officeDues');
+        $fleetDues = $office->fleetDues;
+        $walletBalance = $office->walletBalance;
+        
         return view('dashboard.office-dashboard', compact(
             'data',
+            'fleetDues',
             'offices',  
             'users',
             'orders',
             'auth_user',
-            'isOffice'
+            'isOffice',
+            'driverDues',
+            'walletBalance',
+            'pendingAmount'
             ));
     }
 

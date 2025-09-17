@@ -37,7 +37,7 @@
                         
                         <!-- Office Commission Title -->
                         <div class="mb-2">
-                            <h5 class="font-weight-bold">{{ __('messages.fleet_commission') }}</h5>
+                            <h5 class="font-weight-bold">{{ __('messages.office_commission') }}</h5>
                         </div>
 
                         <!-- Office Commission -->
@@ -50,7 +50,7 @@
                         
                         <!-- Driver Commission Title -->
                         <div class="mb-2">
-                            <h5 class="font-weight-bold">{{ __('messages.office_commission') }}</h5>
+                            <h5 class="font-weight-bold">{{ __('messages.driver_commission') }}</h5>
                         </div>
                         <!-- Driver Commission -->
                         <div class="custom-commission-input-group mb-3 d-flex align-items-center">

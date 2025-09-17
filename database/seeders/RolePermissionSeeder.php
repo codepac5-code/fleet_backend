@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Http\Core\Const\Options\Guard;
 use App\Http\Core\Const\Options\Roles;
+use App\Models\Admin;
 use App\Models\ParentPermission;
 use App\Models\Permission;
 use App\Models\Role;
@@ -26,6 +27,7 @@ class RolePermissionSeeder extends Seeder
         DB::table('role_has_permissions')->truncate();
         DB::table('roles')->truncate();
         DB::table('permissions')->truncate();
+        DB::table('parent_permissions')->truncate();
 
         Schema::enableForeignKeyConstraints();
 
@@ -59,14 +61,16 @@ class RolePermissionSeeder extends Seeder
                 'view user list',
             ],
             'driver' => [
+                'driver change custom commission',
                 'add driver',
                 'delete driver',
-                'edit user',
+                'edit driver',
                 'view driver list',
                 'assign permissions',
                 'view drivers new style',
             ],
             'office' => [
+                'office change custom commission',
                 'add office',
                 'delete office',
                 'update office',
@@ -96,8 +100,23 @@ class RolePermissionSeeder extends Seeder
             'system' => [
                 'assign permissions',
                 'edit commission',
-                
             ],
+            'orders' => [
+                'show order details',
+                'edit order status',
+            ],
+            'banners'=> [
+                'view banner list',
+            ],
+            'department' => [
+                'add department',
+                'delete department',
+                'update department',
+                'view department list',
+            ],
+            'issues' =>[
+                'issues add',
+            ]
         ];
 
         foreach ($guardNames as $guardName) {
@@ -142,14 +161,14 @@ class RolePermissionSeeder extends Seeder
             // Office
             'add office',
             'delete office',
-            'update office',
+            'edit office',
             'view office list',
             'office overview',
 
             // Driver
             'add driver',
             'delete driver',
-            'edit user',
+            'edit driver',
             'view driver list',
             'assign permissions',
             'view drivers new style',
@@ -173,12 +192,37 @@ class RolePermissionSeeder extends Seeder
             'delete service',
 
             // System
+            'view commission',
             'edit commission',
+
+
+            // order
+            'show order details',
+            'edit order status',
+
+
+            'add department',
+            'delete department',
+            'update department',
+            'view department list',
+
+            'issues add',
+
+            'driver change custom commission',
+
+            'office change custom commission',
+
+
         ];
 
 
         $this->assignPermissionsToRoleManually( Roles::Super_Admin->value , Guard::$Admin,  $super_admin_permissions);
      
+        $admins = Admin::all();
+
+        foreach($admins as $admin){
+        $admin->assignRole(Roles::Super_Admin->value);    
+        }
 
         // $role->syncPermissions($super_admin_permissions);
 
@@ -209,18 +253,25 @@ class RolePermissionSeeder extends Seeder
             // Driver
             'add driver',
             'delete driver',
-            'edit user',
+            'edit driver',
             'view driver list',
             'assign permissions',
             'view drivers new style',
 
-            // User
-            'add user',
-            'delete user',
-            'edit user',
-            'view user list',
+            
             // System
+            'view commission',
             'edit commission',
+
+            'add department',
+            'delete department',
+            'update department',
+            'view department list',
+
+            'issues add',
+
+            'driver change custom commission',
+
         ];
 
 
@@ -249,16 +300,32 @@ $emp_permissions = [
     // Driver
     'add driver',
     'delete driver',
-    'edit user',
+    'edit driver',
     'view driver list',
     'assign permissions',
     'view drivers new style',
 
     // User
-    'add user',
-    'delete user',
-    'edit user',
-    'view user list',
+    // 'add user',
+    // 'delete user',
+    // 'edit user',
+    // 'view user list',
+
+    // order
+    'show order details',
+    'edit order status',
+
+
+    'add department',
+    'delete department',
+    'update department',
+    'view department list',
+
+    'issues add',
+
+    'driver change custom commission',
+    'view commission',
+
 ];
 
 $emp_role = Role::firstOrCreate([
@@ -269,6 +336,28 @@ $emp_role = Role::firstOrCreate([
 $this->assignPermissionsToRoleManually( Roles::Employee->value , Guard::$Employee,  $emp_permissions);
 
 
+
+$demo_admin_permissions = [
+    'view service list',
+    'view sub-service list',
+    'view user list',
+    'view driver list',
+    'view office list',
+    'view employee list',
+    'view vehicle list',
+    'view dashboard',
+    'view roles',
+    'view department list',
+    'view commission',
+
+];
+
+$demo_admin_role = Role::firstOrCreate([
+    'name' => 'demo admin',
+    'guard_name' => Guard::$Employee,
+]);
+
+$this->assignPermissionsToRoleManually('demo admin', Guard::$Employee, $demo_admin_permissions);
 // // 🟠 Fleet Employee
 // $fleetEmployeeRole = Role::firstOrCreate([
 //     'name' => 'fleet_employee',

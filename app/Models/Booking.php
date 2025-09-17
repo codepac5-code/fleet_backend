@@ -41,11 +41,13 @@ class Booking extends Model
         'fleetCommissionValue',
         'paymentStatus', 
         'PaymentDatetime',
+        'paymentType',
         'isPercentage',
         'reason',
         'driverCommissionPercentage',
         'officeCommissionPercentage',
         'fleetCommissionPercentage',
+        'is_scheduled', 'scheduled_time', 'isReminderSent', 'reminderSentAt'
     ];
 
 
@@ -53,6 +55,7 @@ class Booking extends Model
 
     
     protected $casts = [
+        'scheduled_time' => 'datetime',
         'userId'   => 'integer',
         'subServiceId'    => 'integer',
         'officeId'   => 'integer',
@@ -72,7 +75,7 @@ class Booking extends Model
     }
 
     
-    public function scopeForCurrentUser()
+    public function scopeForCurrentUser($withTrashed = false)
     {
         $query = $this->query();
 
@@ -80,14 +83,14 @@ class Booking extends Model
             return $query->withTrashed();
         }
 
-        if (Auth::guard('office')->check()) {
+        else if (Auth::guard('office')->check()) {
             $office = Auth::guard('office')->user();
             return $query->where('officeId', $office->id)->withTrashed();
         }
 
-        if (Auth::guard('employee')->check()) {
+        else if (Auth::guard('employee')->check()) {
             $employee = Auth::guard('employee')->user();
-            if ($employee->office_id) {
+            if ($employee->officeId) {
                 return $query->where('officeId', $employee->officeId)->withTrashed();
             } else {
                 return $query->withTrashed();

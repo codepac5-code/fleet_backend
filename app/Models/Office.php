@@ -18,6 +18,7 @@ class Office extends Authenticatable implements HasMedia
     use HasFactory, Notifiable , HasApiTokens , HasRoles , InteractsWithMedia  , SoftDeletes ;
 
     protected $table = 'offices';
+    protected $guard_name = 'office';
     /**
      * The attributes that are mass assignable.
      *
@@ -41,19 +42,31 @@ class Office extends Authenticatable implements HasMedia
         'driver_commission_precentage',
         'driver_car_commission_precentage',
         'walletBalance',
+        'fleetDues',
+        'driverDues',
+        'isFleetCommissionCustom',
+        'FleetCommissionCustomValue',
+        'commissionCustomValue',
 
 
         //-----------
-        'total_income',
-        'withdrawn_amount',
-        'available_amount',
-        'drivers_debt',
-        'fleet_debt',
-        'drivers_count',
+        // 'total_income',
+        // 'withdrawn_amount',
+        // 'available_amount',
+        // 'drivers_debt',
+        // 'fleet_debt',
+        // 'drivers_count',
 
     ];
 
 
+
+    public function customerStats()
+    {
+        return $this->belongsToMany(User::class, 'office_user_stats', 'officeId', 'userId')
+                    ->withPivot('totalBookings', 'totalAmount', 'totalDistance', 'lastBookingAt', 'averageRating', 'lastPaymentStatus')
+                    ->withTimestamps();
+    }
 
     public function scopeForCurrentUser()
     {

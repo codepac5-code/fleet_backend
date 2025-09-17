@@ -55,6 +55,7 @@ use App\Http\Services\User\GetReferralMessage\Controller\GetReferralMessageContr
 use App\Http\Services\User\GetUserTermAndCondition\Controller\GetUserTermAndConditionController;
 use App\Http\Services\User\InquireUserOrderStatus\Controller\InquireUserOrderStatusController;
 use App\Http\Services\User\SendReport\Controller\SendReportController;
+use App\Http\Services\User\StartApplication\Controller\StartApplicationController;
 use App\Http\Services\User\UserHelpSuggestion\Controller\UserHelpSuggestionController;
 use App\Http\Services\User\WalletManagement\AddBalanceByPaymentMethod\Controller\AddBalanceByPaymentMethodController;
 use App\Http\Services\User\WalletManagement\ConfirmPhone_AddBalance\Controller\ConfirmPhone_AddBalanceController;
@@ -76,6 +77,7 @@ Route::group(['middleware' => ['set-localization']], function () {
 });
 
 Route::group(['middleware' => ['auth:user','set-localization']], function () {
+    Route::post('start-application', StartApplicationController::class);
     Route::get('issues/details', GetIssuesDetailsController::class);
     Route::post('issues/close', CloeIssueController::class);
     Route::post('send-reply-issue', SendIusseReplyController::class);
@@ -135,8 +137,23 @@ Route::group(['prefix' => 'wallet'], function () {
 });
 
 
-Route::post('ride-report', CreateNewIssueController::class);
-Route::post('addComplaint', CreateNewIssueController::class);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Route::group(['prefix' => 'payment'], function () {
     Route::post('/fleet-wallet',FleetWalletPaymentController::class);

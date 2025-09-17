@@ -1,5 +1,5 @@
 @if(isset($driver->id))
-  {{-- <a href="{{ route('driver.detail', ['id' => $query->id]) }}"> --}}
+  <a href="{{ route('wallet.history', ['identifier' => $driver->id , 'userType'=>'driver']) }}">
     <div class="d-flex gap-3 align-items-center">
       <img src="{{ $driver->photo }}" alt="avatar" class="avatar avatar-45 rounded-pill">
       <div class="text-start">
@@ -9,7 +9,7 @@
               <span>{{'driver' ?? '--' }}</span>
       </div>
     </div>
-  {{-- </a> --}}
+  </a>
 @else
 
   <div class="align-items-center">

@@ -11,6 +11,7 @@ return [
     'post_jobs' => 'Post Job',
     'previous' => 'Previous',
     'next' => 'Next',
+    'myCustomers'=>'my customers',
     'post' => 'Post',
     'no_previous_post' => 'No Previous Post',
     'no_next_post' => 'No Next Post',

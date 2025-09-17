@@ -3,6 +3,8 @@ namespace App\Http\Services\Apis\MTNPaymentApi\Logic;
 
 use App\Helper\Helper;
 use App\Http\Core\Const\APIs\MTN_API;
+use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\Const\Options\PaymentType;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
@@ -76,6 +78,15 @@ class MTNPaymentApiLogic implements Service {
 
         info($payment_response);
 
+        $this->repository->BookingRepository()->updateRepository()->update(
+            ['id'=>$this->input->getOrderId()],[
+                'status'    => OrderStatus::$Completed ,
+                'paymentType' => PaymentType::$Electronic,
+                'paymentStatus'=> 'paid',
+                'PaymentDatetime'=>now()
+            ]
+        );
+        
         $response  = new MTNPaymentApiOutput( [
             'operationNumber'=> $payment_response['OperationNumber'],
             'invoiceId'=> $invoice->id] ,

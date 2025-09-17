@@ -20,7 +20,6 @@ return new class extends Migration
             $table->double('amount'); 
             $table->double('balance_before')->nullable(); 
             $table->double('balance_after')->nullable(); 
-            $table->string('transaction_reference', 100)->nullable(); 
             $table->string('description');
             $table->string('description_en');
             $table->string('paymentName');
@@ -28,6 +27,11 @@ return new class extends Migration
             // $table->unsignedBigInteger('related_id')->nullable();
             $table->morphs('source');
             $table->string('status', 50)->default('pending')->comment('pending , completed , failed'); 
+            $table->string('transaction_type')->nullable()->comment('income, withdrawal, commission, due, etc');
+            $table->string('transaction_reference', 100)->nullable();
+
+            $table->index(['transaction_type']);
+
             // $table->string('source_type', 100)->nullable()->comment('Ride , Deposit '); 
             // $table->unsignedBigInteger('source_id')->nullable();
             $table->timestamps();

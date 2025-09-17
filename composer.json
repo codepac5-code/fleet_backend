@@ -19,6 +19,7 @@
         "saikiran/geohash": "^1.0",
         "spatie/laravel-medialibrary": "^11.10",
         "spatie/laravel-permission": "^6.9",
+        "stripe/stripe-php": "^17.5",
         "yajra/laravel-datatables": "11.0",
         "yajra/laravel-datatables-oracle": "11.0"
     },

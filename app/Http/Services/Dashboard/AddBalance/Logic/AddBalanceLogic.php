@@ -48,7 +48,8 @@ class AddBalanceLogic implements Service {
             break;
 
 
-            // add blance to driver
+            // add blance to driver.
+            
             case 'driver': $driver = $this->repository->DriverRepository()
             ->readRepository()->getByValue('id' , $this->input->getUserId());
 
@@ -63,7 +64,8 @@ class AddBalanceLogic implements Service {
                 $new_balance = $driver->walletBalance + $amount;
                 $dues = 0;
 
-            }else
+            }
+            else
             {
                 $new_balance = $driver->walletBalance + $this->input->getAmount();
             }

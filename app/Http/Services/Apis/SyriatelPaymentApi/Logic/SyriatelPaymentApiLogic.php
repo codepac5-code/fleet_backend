@@ -2,6 +2,8 @@
 namespace App\Http\Services\Apis\SyriatelPaymentApi\Logic;
 
 use App\Http\Core\Const\APIs\Syriatel_API;
+use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\Const\Options\PaymentType;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
@@ -87,7 +89,17 @@ class SyriatelPaymentApiLogic implements Service {
         {
 
         
+
+        $this->repository->BookingRepository()->updateRepository()->update(
+                ['id'=>$this->input->getOrderId()],[
+                    'status'    => OrderStatus::$Completed ,
+                    'paymentType' => PaymentType::$Electronic,
+                    'paymentStatus'=> 'paid',
+                    'PaymentDatetime'=>now()
+                ]
+            );
          commitTransaction();
+
          $response  = new SyriatelPaymentApiOutput( [
             'operationNumber'=> 0,
             'invoiceId'=> $syriatel_invoice->id]  , 'invoice created successfully!');
@@ -103,6 +115,10 @@ class SyriatelPaymentApiLogic implements Service {
         }
                 
     }
+
+
+
+
 
 
 

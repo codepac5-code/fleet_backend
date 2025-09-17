@@ -21,8 +21,10 @@ class GetProfileLogic implements Service {
         // write your logic code..
 
         //$photoUrl =  env('APP_URL') .$this->input->getDriver();
-
-        $response  = new GetProfileOutput($this->input->getDriver() , '');
+        $data = $this->input->getDriver();
+        $data['ScheduledOrdersCount'] = 3;
+        $response  = new GetProfileOutput(
+            $data , '');
         return $response->send_as_object();
    }
 }

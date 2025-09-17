@@ -385,6 +385,45 @@
         </div>
     @endif --}}
 
+    <style>
+        /* الوضع العادي */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+    background-color: #fff;
+}
+
+th {
+    font-weight: bold;
+    background-color: #f2f2f2;
+}
+
+/* الوضع الداكن */
+body.dark table {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark th, 
+body.dark td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f0e68c; /* أصفر باهت ليتماشى مع #F8A609 */
+    background-color: #1e1e2f;
+}
+
+body.dark th {
+    background-color: #2b2b3d;
+    color: #f8a609; /* اللون الأصفر الأساسي */
+}
+
+    </style>
+
     <h3 class="mb-3 mt-3">{{__('messages.booking_summery')}}</h3>
     <div class="table-responsive border-bottom">
         <table class="table text-nowrap align-middle mb-0">

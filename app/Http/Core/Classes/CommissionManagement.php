@@ -9,8 +9,18 @@ use Illuminate\Support\Facades\Log;
 abstract class CommissionManagement {
 
     public static function OrderCommissionCalculation(Booking $order , $driver = null) : Booking{
+
+     
         if($driver == null && $order->driver != null){
             $driver = $order->driver;
+        }
+
+        if( $driver->isOfficeCommissionCustom){
+            $order->fleetCommissionValue  = ($driver->fleetCommissionCustomValue / 100) * $order->amount;
+            $order->driverCommissionValue = ($driver->driverCommissionCustomValue / 100) * $order->amount;
+            $order->save();
+            info('save commissions of order #'.$order->id.'in database');
+            return $order;
         }
   
         
@@ -56,6 +66,7 @@ abstract class CommissionManagement {
             // calculate office commission  
             $office_totalAmount      = ($fleet->office_commission_value / 100)  * $order->amount;
             $order->officeCommissionValue = ($office->commission_with_driver_car / 100) * $office_totalAmount;
+            
             // calculate driver car commission from office commission 
             $order->driverCommission = ($office->driver_car_commission_precentage / 100) * $office_totalAmount;
 
@@ -102,7 +113,6 @@ abstract class CommissionManagement {
         $order->save();
         info('save commissions of order #'.$order->id.'in database');
         return $order;
-
     }
 
 

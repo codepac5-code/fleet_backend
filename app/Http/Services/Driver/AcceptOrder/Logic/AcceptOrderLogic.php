@@ -1,15 +1,19 @@
 <?php
 namespace App\Http\Services\Driver\AcceptOrder\Logic;
 
+use App\Events\ReminderScheduledOrderForDriver;
+use App\Events\ReminderScheduledOrderForUser;
 use Carbon\Carbon;
 use App\Http\Core\Classes\CommissionManagement;
 use App\Http\Core\Classes\Operations\FleetSystemOperationGo;
 use App\Http\Core\Classes\RedisManagerData;
 use App\Http\Core\Classes\StatisticsEvent;
+use App\Http\Core\Const\Options\AppScreenName;
 use App\Jobs\HandelRedisEvents;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\Const\Options\OrderStatus;
 use App\Http\Core\InternalInterface\Service;
+use App\Http\Core\Models\NotificationModel;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\BalanceStatus;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletModel;
@@ -17,6 +21,10 @@ use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletRe
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\OfficeWallet\OfficeWalletModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\OfficeWallet\OfficeWalletRedisModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
+use App\Jobs\GeneralPurposeJob;
+use App\Jobs\ScheduledOrders\ReminderDriver;
+use App\Jobs\ScheduledOrders\ReminderUser;
+use App\Models\Booking;
 
 class AcceptOrderLogic implements Service {
 
@@ -34,6 +42,15 @@ class AcceptOrderLogic implements Service {
     public function execute (): ResponseModel {
         
         $orderId = $this->input->getOrderId();
+
+        $runAt = Carbon::parse(now())->addSeconds(10);
+        ReminderUser::dispatch(756)->delay($runAt);
+        ReminderDriver::dispatch(756)->delay($runAt);
+
+        // GeneralPurposeJob::dispatch(self::class ,'set_reminder_for_user_and_driver',[
+        //     $orderId
+        //     //$order_data['scheduled_time'    
+        //     ])->delay($runAt);
 
         
 
@@ -252,6 +269,13 @@ class AcceptOrderLogic implements Service {
         ->readRepository()->getByValue('id', $order->userId);
 
 
+        $runAt = Carbon::parse($order->scheduled_time)->subMinutes(30);
+        GeneralPurposeJob::dispatch(self::class ,'set_reminder_for_user_and_driver',[
+            $order->id
+            //$order_data['scheduled_time'    
+            ])->delay($runAt);
+
+
     return  [ 
         "startAddress" => $order->startAddress,
         "startLatitude" => (double)$order->startLatitude,
@@ -269,7 +293,7 @@ class AcceptOrderLogic implements Service {
         'firstName' => $user->firstName,
         'lastName' => $user->lastName,
         'phoneNumber' => $user->phoneNumber,
-        'officePhone'=>'0935501111',
+        'officePhone'=>'0933301111',
         'waypoints' => json_decode($order->multiDestnationArray),
         'kmPrice' =>(double) $sub_service->kmPrice,
         'minutePrice' =>(double) $sub_service->minutePrice,
@@ -287,6 +311,53 @@ class AcceptOrderLogic implements Service {
             OfficeWalletRedisModel::addBalanceValueByBalanceStatus($order_after_commission->officeId, BalanceStatus::$Pending , $order_after_commission->fleetCommissionValue);
         }
     }
+
+
+    public function set_reminder_for_user_and_driver( $orderId  ){
+
+        // $order  = Booking::with(['subService','driver','payment'])->find($orderId);
+        
+        // if($order->status == OrderStatus::$Pending && $order->driverId != null){
+        //     $order->status = OrderStatus::$InProgress;
+        //     $order->save();
+        //     // driver
+    
+        //     event(new ReminderScheduledOrderForDriver($order, $order->driverId));
+    
+        //     $driver_notification_model = new NotificationModel(
+        //         'تذكير',
+        //         "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+        //         'تذكير',
+        //         "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+        //         "https://fleetapp.net/storage/images/system/notification/wallet/add_to_wallet_notification.png",
+    
+        //         // AssetManagement::getWalletCreditNotificationImage(),
+        //         true,
+        //         AppScreenName::Wallet_History_Screen->value        
+        //     );
+            
+        //     $this->repository->DriverRepository()->readRepository()->notifyDriver( $order->driverId , $driver_notification_model );
+    
+    
+        //     //user
+        //     event(new ReminderScheduledOrderForUser($order,  $order->userId));
+    
+    
+        //     $user_notification_model = new NotificationModel(
+        //         'تذكير',
+        //         "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+        //         'تذكير',
+        //         "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+        //         "https://fleetapp.net/storage/images/system/notification/wallet/remove_from_wallet_notification.png",
+        //         // AssetManagement::getWalletDebitNotificationImage(),
+        //         true,
+        //         AppScreenName::Wallet_History_Screen->value        
+        //     );
+            // $this->repository->UserRepository()->readRepository()->notifyUser( $order->userId , $user_notification_model);
+    
+        // }
+    
+        }
 
 
 
@@ -315,6 +386,3 @@ class AcceptOrderLogic implements Service {
 
 
 
-        
-
-    

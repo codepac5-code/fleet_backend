@@ -42,6 +42,11 @@ class IssueController extends Controller
                   ->where('assigned_to_type', \App\Models\Employee::class);
         }
 
+        if ($request->has('searchSubject') && $request->searchSubject != '') {
+            $query->where('subject', 'like', '%' . $request->searchSubject . '%');
+        }
+        
+
         return DataTables::of($query)
             ->addColumn('check', function ($issue) {
                 return '
@@ -51,24 +56,55 @@ class IssueController extends Controller
             })
 
             ->editColumn('subject', fn($issue) => e($issue->subject))
-
             ->editColumn('status', function ($issue) {
                 return match ($issue->status) {
-                    'open' => '<span class="badge bg-success"><i class="fas fa-door-open me-1"></i> مفتوحة</span>',
-                    'processing' => '<span class="badge bg-warning text-dark"><i class="fas fa-spinner me-1"></i> قيد المعالجة</span>',
-                    'closed' => '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> مغلقة</span>',
+                    'open' => '<span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2"
+                                style="background-color: rgba(33, 150, 243, 0.15); color: #1565C0; font-weight: 500; text-shadow: 0 0 0.2px #fff;
+                                       font-family: \'Tajawal\', sans-serif; font-size: 0.95rem;">
+                                <i class="fas fa-eye me-1"></i> قيد المراجعة
+                              </span>',
+            
+                    'processing' => '<span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2"
+                                style="background-color: rgba(255, 193, 7, 0.18); color: #FF6F00; font-weight: 500; text-shadow: 0 0 0.2px #fff;
+                                       font-family: \'Tajawal\', sans-serif; font-size: 0.95rem;">
+                                <i class="fas fa-spinner fa-spin me-1"></i> قيد المعالجة
+                              </span>',
+            
+                    'closed' => '<span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2"
+                                style="background-color: rgba(244, 67, 54, 0.15); color: #B71C1C; font-weight: 500; text-shadow: 0 0 0.2px #fff;
+                                       font-family: \'Tajawal\', sans-serif; font-size: 0.95rem;">
+                                <i class="fas fa-lock me-1"></i> مغلقة
+                              </span>',
+            
                     default => $issue->status
                 };
             })
-
+            
             ->editColumn('priority', function ($issue) {
                 return match ($issue->priority) {
-                    'low' => '<span class="badge bg-info text-dark"><i class="fas fa-arrow-down me-1"></i> منخفضة</span>',
-                    'medium' => '<span class="badge bg-primary"><i class="fas fa-equals me-1"></i> متوسطة</span>',
-                    'high' => '<span class="badge bg-danger"><i class="fas fa-arrow-up me-1"></i> عالية</span>',
+                    'low' => '<span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2"
+                                style="background-color: rgba(0, 188, 212, 0.15); color: #00838F; font-weight: 500; text-shadow: 0 0 0.2px #fff;
+                                       font-family: \'Tajawal\', sans-serif; font-size: 0.95rem;">
+                                <i class="fas fa-arrow-down me-1"></i> منخفضة
+                              </span>',
+            
+                    'medium' => '<span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2"
+                                style="background-color: rgba(76, 175, 80, 0.15); color: #2E7D32; font-weight: 500; text-shadow: 0 0 0.1px #fff;
+                                       font-family: \'Tajawal\', sans-serif; font-size: 0.95rem;">
+                                <i class="fas fa-arrows-alt-h me-1"></i> متوسطة
+                              </span>',
+            
+                    'high' => '<span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2"
+                                style="background-color: rgba(233, 30, 99, 0.15); color: #AD1457; font-weight: 500; text-shadow: 0 0 0.1px #fff;
+                                       font-family: \'Tajawal\', sans-serif; font-size: 0.95rem;">
+                                <i class="fas fa-arrow-up me-1"></i> عالية
+                              </span>',
+            
                     default => $issue->priority
                 };
             })
+            
+            
 
             ->addColumn('department', fn($issue) => $issue->department?->name_ar ?? '<span class="text-muted">--</span>')
 
@@ -82,19 +118,11 @@ class IssueController extends Controller
             ->editColumn('updated_at', fn($issue) => $issue->updated_at?->format('Y-m-d H:i'))
 
             ->addColumn('action', function ($issue) {
-                $delete = "deleteIssue({$issue->id})";
-                $showUrl = route("tickets.show", $issue->id);
+                // $delete = "deleteIssue({$issue->id})";
+                // $showUrl = route("tickets.show", $issue->id);
 
-                return '
-                    <div class="btn-group" role="group">
-                        <a href="'.$showUrl.'" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i> عرض
-                        </a>
-                        <button onclick="'.$delete.'" class="btn btn-sm btn-outline-danger">
-                            <i class="fas fa-trash-alt"></i> حذف
-                        </button>
-                    </div>
-                ';
+                return view('helpdesk.action',compact('issue'));
+                ;
             })
 
             ->rawColumns(['check', 'status', 'priority', 'department', 'agentName', 'action'])
@@ -126,7 +154,7 @@ class IssueController extends Controller
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'assigned_to_id' => 'required|exists:employees,id',
-            'assigned_to_type' => 'required|string',  // مثلا 'App\Models\Employee'
+            'assigned_to_type' => 'required|string',  
             'department_id' => 'nullable|exists:departments,id',
             'mode' => 'nullable|string',
             'priority' => 'required|in:low,medium,high',

@@ -1,4 +1,9 @@
 <x-guest-layout>
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
    <section class="login-content">
        <div class="bubbles">
            <div class="bubble large"></div>
@@ -69,6 +74,14 @@
           </div>
        </div>
     </section>
+
+    <script>
+      if (performance.navigation.type === 2) {
+          window.location.reload(true);
+      }
+      </script>
+      
+      
    
    <style>
      body {

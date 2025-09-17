@@ -36,7 +36,7 @@
                         
                         <!-- Office Commission Title -->
                         <div class="mb-2">
-                            <h5 class="font-weight-bold">{{ __('messages.fleet_commission') }}</h5>
+                            <h5 class="font-weight-bold">{{ __('messages.office_commission') }}</h5>
                         </div>
 
                         <!-- Office Commission -->

@@ -26,6 +26,21 @@ class WalletTransaction extends Model
             'paymentName_en'
     ];
 
+    public function fromUser()
+    {
+        return $this->morphTo(__FUNCTION__, 'from_type', 'from_id');
+    }
+
+    public function toUser()
+    {
+        return $this->morphTo(__FUNCTION__, 'to_type', 'to_id');
+    }
+
+    public function source()
+    {
+        return $this->morphTo();
+    }
+
 
     public static function SelectWithTranslate(){
 
@@ -88,6 +103,11 @@ class WalletTransaction extends Model
         }
      
 
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(WalletTransactionGroup::class, 'transaction_reference', 'transaction_reference');
     }
     // $table->unsignedBigInteger('from_wallet_id'); 
     // $table->unsignedBigInteger('to_wallet_id'); 

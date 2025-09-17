@@ -99,7 +99,7 @@ class ViewHelpDeskLogic implements Service {
         })
         ->editColumn('status' , function ($query){
             $status = $query->status;
-            if($status == 0){
+            if($status == false){
                 $status = '<span class="badge text-success bg-success-subtle">'.'open'.'</span>';
             }else{
                 $status = '<span class="badge text-danger bg-danger-subtle">'.'closed'.'</span>';

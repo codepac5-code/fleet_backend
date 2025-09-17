@@ -6,8 +6,11 @@ use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Services\Apis\MTNPaymentApi\Logic\MTNPaymentApiInput;
 use App\Http\Services\Apis\MTNPaymentApi\Logic\MTNPaymentApiLogic;
+use App\Http\Services\Apis\StripePayment\Logic\StripePaymentInput;
+use App\Http\Services\Apis\StripePayment\Logic\StripePaymentLogic;
 use App\Http\Services\Apis\SyriatelPaymentApi\Logic\SyriatelPaymentApiInput;
 use App\Http\Services\Apis\SyriatelPaymentApi\Logic\SyriatelPaymentApiLogic;
+use App\Services\StripeService;
 
 class PaymentServiceLogic  {
 
@@ -25,6 +28,18 @@ class PaymentServiceLogic  {
             null,
             "The '".$name. "' payment is not available!"
         )); 
+    }
+
+    public function stripe($request){
+
+        // validate input data and pass it to the service..
+        $input = new StripePaymentInput($request->validated());
+
+        $service = new StripePaymentLogic($input); // call the service's logic
+        // execute service and get result..
+        $result = $service->execute();
+
+
     }
     
    public function syriatel($request) {
@@ -52,5 +67,8 @@ class PaymentServiceLogic  {
     public function cash($request){
         
     }
+
+
+    
    
 }

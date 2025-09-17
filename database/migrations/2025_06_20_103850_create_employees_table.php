@@ -21,7 +21,8 @@ return new class extends Migration
             $table->string('employeeJobName_ar',60);
             $table->string('job_description_en',60);
             $table->string('job_description_ar',60);
-            $table->foreignId('officeId')->references('id')->on('offices')->cascadeOnDelete();
+            $table->unsignedBigInteger('officeId')->nullable();
+            $table->foreign('officeId')->references('id')->on('offices')->onDelete('set null');
             $table->text('address');
             $table->string('country');
             $table->enum('role', ['agent', 'admin', 'viewer'])->default('agent');

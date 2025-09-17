@@ -1,5 +1,8 @@
 <?php
 namespace App\Http\Services\User\MakeOrder\Logic;
+
+use App\Events\ReminderScheduledOrderForDriver;
+use App\Events\ReminderScheduledOrderForUser;
 use Error;
 use App\Events\SearchOnDriver;
 use App\Http\Core\Classes\Operations\FleetSystemOperationGo;
@@ -11,14 +14,18 @@ use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Const\Messages\ErrorMessages;
 use App\Http\Core\Const\Messages\SuccessMessages;
+use App\Http\Core\Const\Options\AppScreenName;
 use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\Models\NotificationModel;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\BalanceStatus;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
 use App\Jobs\FollowOrder\MakePendingOrderCardJob;
 use App\Jobs\FollowOrder\PendingOrder;
+use App\Jobs\GeneralPurposeJob;
 use App\Models\Booking;
+use Carbon\Carbon;
 
 class MakeOrderLogic implements Service {
 
@@ -71,6 +78,9 @@ class MakeOrderLogic implements Service {
             $order_data['couponId'] = $coupon->id;
             $order_data['discount'] = $coupon->discount;
         }
+
+
+
         // create order..
         $order = $booking_c_repo->create($order_data);
 
@@ -83,30 +93,45 @@ class MakeOrderLogic implements Service {
 
 
         $data = [
-                'startAddress'          =>$this->input->getStartAddress(),
-                'endAddress'            =>$this->input->getEndAddress(),
-                'time'                  =>$this->input->getTime(),
-                'startLatitude'         =>$this->input->getStartLatitude(),
-                'startLongitude'        =>$this->input->getStartLongitude(),
-                'endLatitude'           =>$this->input->getEndLatitude(),
-                'endLongitude'          =>$this->input->getEndLongitude(),
-                'distance'              =>$this->input->getDistance(),
-                'couponCode'=>$this->input->getCouponCode(),
-                'subService'=>$sub_service->name,
-                'subServiceId'=>$sub_service->id,
-                'userId'=>$this->input->getUserId(),
-                'orderId'=>$order->id,
-                'paymentMethod'=>$payment_methods->name,
-                'totalAmount'=>$order->totalAmount,
-                'amount'=>$this->input->getAmount(),
-                'waypoints' => $this->input->multiDestnationArray
+                'startAddress'          => $this->input->getStartAddress(),
+                'endAddress'            => $this->input->getEndAddress(),
+                'time'                  => $this->input->getTime(),
+                'startLatitude'         => $this->input->getStartLatitude(),
+                'startLongitude'        => $this->input->getStartLongitude(),
+                'endLatitude'           => $this->input->getEndLatitude(),
+                'endLongitude'          => $this->input->getEndLongitude(),
+                'distance'              => $this->input->getDistance(),
+                'couponCode'     => $this->input->getCouponCode(),
+                'subService'     => $sub_service->name,
+                'subServiceId'   => $sub_service->id,
+                'userId'         => $this->input->getUserId(),
+                'orderId'        => $order->id,
+                'paymentMethod'  => $payment_methods->name,
+                'totalAmount'    => $order->totalAmount,
+                'amount'         => $this->input->getAmount(),
+                'waypoints'      => $this->input->multiDestnationArray,
+                'is_scheduled'   => $order->is_scheduled,
+                'scheduled_time' => $order->scheduled_time,
         ];
 
         commitTransaction();
         SearchOnDriverJob::dispatch($data)
         ->onQueue('jobs');
 
+        if($this->input->getIsScheduled()){
+            $order_data['is_scheduled']     = $this->input->getIsScheduled();
+            $order_data['scheduled_time']   = $this->input->getScheduledTime();
+            $runAt = Carbon::parse($this->input->getScheduledTime())->subMinutes(30);
+            // GeneralPurposeJob::dispatch(self::class ,'set_reminder_for_user_and_driver',[
+            // $order->id
+            // //$order_data['scheduled_time'    
+            // ])->delay($runAt);
+
+            // 'is_scheduled', 'scheduled_time', 'isReminderSent', 'reminderSentAt'
+        }
+
         $this->redisOrderDatabaseModel($order->id);
+
 
         // MakePendingOrderCardJob::dispatch($order->id);
         
@@ -154,5 +179,55 @@ class MakeOrderLogic implements Service {
     OrderRedisModel::storeWithPagenationService($order);
    }
 
+   public function send_user_remender(){
+    
+   }
 
-}
+//    public function set_reminder_for_user_and_driver( $orderId  ){
+
+//     $order  = Booking::with(['subService','driver','payment'])->find($orderId);
+
+//     if($order->status == OrderStatus::$Pending && $order->driverId != null){
+//         $order->status = OrderStatus::$InProgress;
+//         $order->save();
+//         // driver
+
+//         event(new ReminderScheduledOrderForDriver($order, $order->driverId));
+
+//         $driver_notification_model = new NotificationModel(
+//             'تذكير',
+//             "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+//             'تذكير',
+//             "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+//             "https://fleetapp.net/storage/images/system/notification/wallet/add_to_wallet_notification.png",
+
+//             // AssetManagement::getWalletCreditNotificationImage(),
+//             true,
+//             AppScreenName::Wallet_History_Screen->value        
+//         );
+        
+//         $this->repository->DriverRepository()->readRepository()->notifyDriver( $order->driverId , $driver_notification_model );
+
+
+//         //user
+//         event(new ReminderScheduledOrderForUser($order,  $order->userId));
+
+
+//         $user_notification_model = new NotificationModel(
+//             'تذكير',
+//             "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+//             'تذكير',
+//             "لديك رحلة تبدأ بعد نصف ساعة من الآن",
+//             "https://fleetapp.net/storage/images/system/notification/wallet/remove_from_wallet_notification.png",
+//             // AssetManagement::getWalletDebitNotificationImage(),
+//             true,
+//             AppScreenName::Wallet_History_Screen->value        
+//         );
+//         $this->repository->UserRepository()->readRepository()->notifyUser( $order->userId , $user_notification_model);
+
+
+
+//     }
+
+            // 'is_scheduled', 'scheduled_time', 'isReminderSent', 'reminderSentAt'
+   }

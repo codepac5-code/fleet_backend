@@ -12,6 +12,9 @@ use App\Models\FrontendSetting;
 use App\Events\DriverPositionChanged;
 use App\Events\HoldOrder;
 use App\Events\NewMessage;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DriverController;
+use App\Http\Controllers\FleetDashboardController;
 use App\Http\Core\Const\APIs\MTN_API;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
@@ -20,10 +23,14 @@ use App\Notifications\PrivateNotification;
 use App\Http\Core\Models\NotificationModel;
 use App\Http\Controllers\HandymanController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\OfficeCustomerController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\testController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\WalletTransactionController;
 use App\Http\Core\Classes\CommissionManagement;
 use App\Http\Core\Classes\DashboardEventsName;
 use App\Http\Core\Classes\Operations\FleetSystemOperationGo;
@@ -167,6 +174,7 @@ use App\Http\Services\Driver\Earning\Logic\EarningOutput;
 use App\Http\Services\Driver\GetDriverNotification\Controller\GetDriverNotificationController;
 use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
 use App\Http\Services\User\UserHelpSuggestion\Controller\UserHelpSuggestionController;
+use App\Jobs\ScheduledOrders\ReminderUser;
 use App\Jobs\SearchOnDriverJob;
 use App\Models\Admin;
 use App\Models\Booking;
@@ -176,6 +184,7 @@ use App\Models\FleetOffice;
 use App\Models\Office;
 use App\Models\ParentPermission;
 use App\Models\Permission;
+use App\Models\PublicUserAppSetting;
 use App\Models\Rating;
 use App\Models\Role;
 use App\Models\Service;
@@ -183,9 +192,11 @@ use App\Models\Setting;
 use App\Models\UserNotification_model;
 use App\Models\UserReport;
 use App\Models\Vehicle;
+use App\Models\WalletTransaction;
 use App\Notifications\BroadcastSuperAdminNotification;
 use Illuminate\Http\Request;
 use Illuminate\Redis\RedisManager;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Spatie\Permission\PermissionRegistrar;
 use Yajra\DataTables\DataTables;
@@ -277,6 +288,7 @@ Route::get('/notification.counts', function () {return 'changeStatus';})->name('
 
 
 
+
 // Route::group(['middleware' => ['auth:admin']], function()
 // {
 //     Route::get('/home', HomeController::class)->name('home');
@@ -292,9 +304,205 @@ Route::get('changeStatus/{entity_type}',ChangeStatusController::class)->name('ch
 
 Route::group([ 'middleware' => ['auth:office,admin,employee' ,'set-language'] ], function() {
 
-  Route::get('test',function(){
-    return view('dashboardTest');
+  Route::post('/office/customers/data', [OfficeCustomerController::class, 'officeCustomersData'])->name('office.customers.data');
+
+  Route::get('office/{officeId}/customer/{customerId}', [OfficeCustomerController::class, 'show'])->name('customer.show');
+  Route::get('/customers', [OfficeCustomerController::class, 'index'])
+      ->name('customer.index');
+
+  Route::prefix('wallet-transactions')->group(function () {
+    Route::get('/', [WalletTransactionController::class, 'index'])->name('wallet-transactions.index');
+    Route::get('/data', [WalletTransactionController::class, 'data'])->name('wallet-transactions.data');
+    Route::get('/{id}', [WalletTransactionController::class, 'show'])->name('wallet-transactions.show'); 
 });
+
+  Route::group(['prefix' => 'department'], function () {
+
+    Route::get('/', [DepartmentController::class, 'index'])->name('department.index');
+
+    Route::get('/index-data', [DepartmentController::class, 'getData'])->name('department.index-data');
+
+    Route::get('/create_page', [DepartmentController::class, 'create'])->name('department.create');
+
+    Route::post('/bulk-action', [DepartmentController::class, 'bulkAction'])->name('departments.bulk-action');
+
+    Route::delete('/destroy/{department}', [DepartmentController::class, 'destroy'])->name('department.destroy');
+
+    Route::get('/edit/{department}', [DepartmentController::class, 'edit'])->name('departments.edit');
+
+});
+
+
+
+  Route::resource('departments', DepartmentController::class);
+
+  // Route::resource('departments', DepartmentController::class);
+
+
+Route::get('/user/bookings/data', [\App\Http\Controllers\UserBookingController::class, 'getUserBookings'])
+    ->name('user.bookings.data');
+
+
+   
+  Route::get('/driver/bookings/data',function(Request $request){
+    $query = Booking::query()->where('driverId',  $request->userId);
+
+    
+    if ($request->startDate && $request->endDate) {
+        $query->whereDate('startAt', '>=', $request->startDate)
+              ->whereDate('startAt', '<=', $request->endDate);
+    }
+
+    if ($request->bookingId) {
+        $query->where('id', $request->bookingId);
+    }
+
+    return DataTables::of($query)
+        ->addColumn('driverCommissionValue', fn($row) => number_format($row->driverCommissionValue, 2))
+        ->addColumn('fleetCommissionValue', fn($row) => number_format($row->fleetCommissionValue, 2))
+        ->addColumn('officeCommissionValue', fn($row) => number_format($row->officeCommissionValue, 2))
+        ->toJson();
+  })->name('driver.bookings.data');
+
+
+
+
+  Route::prefix('api')->group(function () {
+
+
+
+  
+Route::get('/dashboard-stats', function(Request $request){
+
+
+  $start = Carbon::parse($request->start_date)->startOfDay();
+  $end = Carbon::parse($request->end_date)->endOfDay();
+
+      if (Auth::guard('admin')->check()) {
+        $user = FleetOffice::first();
+        $orders = Booking::query();
+        $totalRevenue = Booking::where( 'status', OrderStatus::$Completed )
+        ->whereBetween('created_at',[$start, $end])
+        ->sum('fleetCommissionValue');
+    }
+    else if (Auth::guard('office')->check()) {
+        $user = Auth::user();
+        $orders = Booking::query()->where('officeId', $user->id);
+        $totalRevenue = $orders->where('status',OrderStatus::$Completed)
+        ->whereBetween('created_at',[$start, $end])
+        ->sum('officeCommissionValue');
+    }
+    else if (Auth::guard('employee')->check()) {
+        $employee = Auth::guard('employee')->user();
+        if ($employee->office_id) {
+            $user = Office::find($employee->office_id);
+            $orders = Booking::query()->where('officeId', $employee->office_id);
+            $totalRevenue = $orders->where('status',OrderStatus::$Completed)
+            ->whereBetween('created_at',[$start, $end])
+            ->sum('officeCommissionValue');
+        } else {
+            $user = FleetOffice::first();
+            $orders = Booking::query()->where('officeId', null);
+        }
+    } else {
+        make_exception('no user');
+    }
+    
+    $orders = $orders
+    ->where('status', OrderStatus::$Completed)
+    ->whereBetween('created_at', [$start, $end]);
+
+                    //  return response()->json($orders->get());
+    $paymentStats = (clone $orders)
+        ->selectRaw("
+            COUNT(CASE WHEN paymentType = 'electronic' THEN 1 END) AS electronicPayments,
+            COUNT(CASE WHEN paymentType = 'cash' THEN 1 END) AS cashPayments,
+            COUNT(CASE WHEN paymentType = 'fleet_wallet' THEN 1 END) AS walletPayments,
+            COUNT(*) as trips
+        ")
+        ->first();
+    
+    // $totalRevenue = WalletTransaction::where('to_type', get_class($user))
+    //     ->where('to_id', $user->id)
+    //     ->whereBetween('created_at', [$request->start, $request->end])
+    //     ->sum('amount');
+    
+    $walletWithdrawn = WalletTransaction::where('from_type', get_class($user))
+        ->where('from_id', $user->id)
+        ->whereBetween('created_at', [$start, $end])
+        ->sum('amount');
+    
+    return response()->json([
+        'electronicPayments' => $paymentStats->electronicPayments ?? 0,
+        'cashPayments'       => $paymentStats->cashPayments ?? 0,
+        'walletPayments'     => $paymentStats->walletPayments ?? 0,
+        'trips'              => $paymentStats->trips ?? 0,
+        'totalRevenue'       => getPriceFormat($totalRevenue),
+        'walletWithdrawn'    => getPriceFormat($walletWithdrawn),
+      ]);
+    
+    });
+    
+    
+
+
+
+
+  Route::get('/wallet-stats', function(){
+
+
+    if (Auth::guard('admin')->check()) {
+      $office = FleetOffice::first();
+      $pendingAmount = FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Pending) ?? 0;
+      $driverDues = Driver::sum('fleetDues');
+      $officeDues = Office::sum('fleetDues');
+      $walletBalance = $office->walletBalance;
+      
+  }
+  
+  else if (Auth::guard('office')->check()) {
+      $office = Auth::guard('office')->user();
+      $office = Office::find($office->id);
+      $pendingAmount = FleetWalletRedisModel::getBalanceValueByStatus(BalanceStatus::$Pending) ?? 0;
+      $driverDues = Driver::sum('officeDues');
+      $officeDues = $office->fleetDues;
+      $walletBalance = $office->walletBalance;
+
+  }
+  
+  else if (Auth::guard('employee')->check()) {
+      $employee = Auth::guard('employee')->user();
+      if ($employee->officeId) {
+        $office = Office::find($employee->officeId);
+      } else {
+         return;
+      }
+  }
+  
+  
+    // $walletBalance = $office->walletBalance;
+
+  
+    return response()->json([
+        'walletBalance' =>getPriceFormat($walletBalance) ,// $availableWithdrawal ,// getPriceFormat($availableWithdrawal),
+        'pendingAmount' => getPriceFormat($pendingAmount),
+        'driverDues' => getPriceFormat($driverDues),
+        'officeDues' => getPriceFormat($officeDues),
+    ]);
+  });
+
+  });
+
+
+
+
+
+
+  Route::get('/fleet/dashboard-stats', [FleetDashboardController::class, 'getDashboardStats'])->name('fleet.dashboard.stats');
+
+  Route::get('test' ,function(){
+    return view('test4');
+  });
 
   
   Route::prefix('api/roles')->group(function () {
@@ -324,6 +532,10 @@ Route::group([ 'middleware' => ['auth:office,admin,employee' ,'set-language'] ],
   Route::get('role-permission-control',function(){
     return view('role.roles');
  })->name('role-permission');
+
+
+
+ 
   Route::get('/owners/by-type', [IssueController::class, 'getOwnersByType']);
 
 Route::prefix('issues')->group(function () {
@@ -396,6 +608,8 @@ Route::get('test3',function(){
 Route::post('office-save-slot', CreateOrUpdateOfficeController::class )->name('office.store');
 //['middleware' => ['permission:provider list']
 Route::group(['prefix' => 'office'], function () {
+  Route::post('update-commission', [OfficeController::class, 'updateCommission'])
+  ->name('office.updateCommission');
     Route::get('/', IndexOfficeController::class)->name('office.index');
     Route::get('create', CU_OfficePageController::class)->name('office.create-page');
     Route::get('provider/list/{status?}', function(){return 'office';})->name('office.pending');
@@ -484,6 +698,9 @@ Route::group(['prefix' => 'driver'] , function() {
   Route::get('/',IndexDriverController::class)->name('driver.index');
   Route::get('driver-index-data', ViewDriversListController::class )->name('driver.index-data');
   Route::get('driver-order-history', GetOrderHistoryController::class )->name('driver.order-history');
+  Route::post('update-commission', [DriverController::class, 'updateCommission'])
+  ->name('driver.updateCommission');
+
 
   Route::get('/create', CU_DriverPageController::class )->name('driver.create');
   Route::post('/add', CreateOrUpdateDriverController::class)->name('driver.store');
@@ -867,6 +1084,78 @@ Route::get('net', function(){
 
 Route::get('get/help-suggestions', UserHelpSuggestionController::class);
 Route::get('/bassam', function(){
+
+
+  // $test = new testController();
+  // $test->test();
+
+
+  $order  = Booking::with(['driver', 'subService','payment'])->first();
+
+  ReminderUser::dispatch(554)->delay(now()->addSeconds(50));
+  info('wait... nnnn');
+
+  return 'done';
+
+  $uae_ar = [
+    'country_name' => 'الإمارات العربية المتحدة',
+    'search_country' => 'ae',
+    'continent' => 'آسيا',
+    'currency_name' => 'الدرهم الإماراتي',
+    'currency_symbol' => 'د.إ',
+    'unit' => 'د.إ',
+    'symbol' => 'د.إ',
+    // 'currency_subunit' => 'فلس',
+    // 'phone_format' => '+971 5# ### ####',
+    // 'country_code' => 'AE',
+    // 'calling_code' => '+971',
+    // 'timezone' => 'Asia/Dubai',
+    // 'flag' => 'https://flagcdn.com/ae.svg',
+    // 'latitude' => 24.0000,
+    // 'longitude' => 54.0000,
+    // 'currency_decimals' => 2,
+    // 'is_active' => true,
+    // 'iban_supported' => true,
+    // 'swift_supported' => true,
+];
+
+$uae_en = [
+    'country_name' => 'United Arab Emirates',
+    'search_country' => 'ae',
+    'continent' => 'Asia',
+    'currency_name' => 'UAE Dirham',
+    'currency_symbol' => 'AED',
+    'unit' => 'AED',
+    'symbol' => 'AED',
+    // 'currency_subunit' => 'Fils',
+    // 'phone_format' => '+971 5# ### ####',
+    // 'country_code' => 'AE',
+    // 'calling_code' => '+971',
+    // 'timezone' => 'Asia/Dubai',
+    // 'flag' => 'https://flagcdn.com/ae.svg',
+    // 'latitude' => 24.0000,
+    // 'longitude' => 54.0000,
+    // 'currency_decimals' => 2,
+    // 'is_active' => true,
+    // 'iban_supported' => true,
+    // 'swift_supported' => true,
+];
+
+PublicUserAppSetting::
+create([
+'type'=>'public_settings' ,
+'name'=>'country_settings',
+'key' =>'country',
+'ar_value'=> json_encode($uae_ar) ,
+'en_value'=> json_encode($uae_en)
+]);
+
+
+return 'done';
+
+  return User::all();
+
+
 
 //   storeUserNotification(
 //     5, 

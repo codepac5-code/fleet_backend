@@ -54,6 +54,12 @@ class Driver extends Authenticatable
         'fleetDues',
         'officeDues',
         'vehicleId',
+        'fleetCommissionCustomValue',
+        'driverCommissionCustomValue',
+        'isOfficeCommissionCustom',
+        'isFleetCommissionCustom',
+
+
     ];
 
     protected $hidden = [

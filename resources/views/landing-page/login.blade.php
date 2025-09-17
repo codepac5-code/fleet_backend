@@ -230,20 +230,17 @@
       font-size: 1.3rem;
     }
 
-    /* الطرف الأيمن */
     .toggle-btn:first-child {
       border-top-right-radius: 35px;
       border-bottom-right-radius: 35px;
       border-right: 1px solid #ddd;
     }
 
-    /* الطرف الأيسر */
     .toggle-btn:last-child {
       border-top-left-radius: 35px;
       border-bottom-left-radius: 35px;
     }
 
-    /* حالة الزر النشط */
     .toggle-btn.active {
       background: linear-gradient(90deg, #ff7043 0%, #ffb300 100%);
       color: white;
@@ -252,7 +249,6 @@
       z-index: 1;
     }
 
-    /* تأثير المرور */
     .toggle-btn:hover:not(.active) {
       background-color: #ffe3b8;
       color: #ff7043;
@@ -338,13 +334,15 @@
     
       <div style="text-align: center;">
         <a href="/" class="header-logo" style="text-decoration: none; display: inline-block; direction: ltr;">
-          <span class="site-logo" style="font-size:100px; font-weight: 600; color: #FFC107; font-family: 'Poppins', sans-serif; line-height: 1;">
-            fleet.<span style="font-size: 45px; vertical-align: top; color: #FFC107;"></span>
-          </span>
+            <img id="siteLogo" 
+                 src="{{ asset('storage/system/logos/employee_logo.png') }}" 
+                 alt="Fleet Logo" 
+                 style="height:120px; width:auto; margin-bottom:0px;"> 
         </a>
-      </div>
+    </div>
     
-      <h1 class="form-title">تسجيل الدخول</h1>
+    <h1 class="form-title" style="margin-top:0;">تسجيل الدخول</h1>
+    
     
       @if ($errors->any())
       @if (! $errors->has('email') && ! $errors->has('password'))
@@ -352,11 +350,23 @@
     <div class="alert alert-danger">
       <div style="color: #D8000C; background-color: #FFD2D2; border-radius: 8px; padding: 12px; margin-bottom: 20px; text-align: center; font-weight: 600;">
       
-        <ul>
-          @foreach ($errors->all() as $error)
+        
+        @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+        {{-- <ul> --}}
+
+          
+          {{-- @foreach ($errors->all() as $error)
               <li>{{ $error }}</li>
-      @endforeach
-      </ul>  
+      @endforeach --}}
+      {{-- </ul>   --}}
       </div>
      
     </div>
@@ -408,13 +418,43 @@
         <span id="togglePasswordDesc" class="sr-only"></span>
       </div>
     
-      <button type="submit">تسجيل الدخول</button>
+      <button type="submit" id="loginBtn">تسجيل الدخول</button>
+      {{-- <button type="button" id="loginBtn">تسجيل الدخول</button> --}}
+
     
       <p class="form-footer">ليس لديك حساب؟ <a href="#">سجل الآن</a></p>
     </form>
     
   </section>
-
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const loginBtn = document.getElementById("loginBtn");
+        const form = document.querySelector("form");
+        const tokenInput = document.querySelector('input[name="_token"]');
+    
+        loginBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+    
+            fetch("{{ route('refresh-csrf') }}", {
+                method: "GET",
+                credentials: "same-origin"
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    tokenInput.value = data.token;
+                    form.submit();
+                } else {
+                    console.error("لم يتم استلام CSRF Token جديد");
+                }
+            })
+            .catch(err => {
+                console.error("خطأ في جلب CSRF Token:", err);
+            });
+        });
+    });
+    </script>
+    
   <script>
     const switchButtons = document.querySelectorAll('.toggle-btn');
     const roleInput = document.getElementById('roleInput');
@@ -430,10 +470,15 @@
 
         const role = btn.getAttribute('data-role');
         roleInput.value = role;
+
+        if (role === 'employee') {
+          siteLogo.src = "{{ asset('storage/system/logos/employee_logo.png') }}";
+        } else if (role === 'manager') {
+          siteLogo.src = "{{ asset('storage/system/logos/office_logo.png') }}";
+        }
       });
     });
 
-    // زر إظهار/إخفاء كلمة المرور
     const passwordInput = document.getElementById('password');
     const togglePasswordBtn = document.getElementById('togglePassword');
     togglePasswordBtn.addEventListener('click', () => {
@@ -443,6 +488,9 @@
       togglePasswordBtn.querySelector('i').classList.toggle('fa-eye-slash');
     });
   </script>
+
+
+
 
 </body>
 </html>

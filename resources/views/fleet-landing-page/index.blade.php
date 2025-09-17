@@ -85,7 +85,7 @@
               <nav class="navbar navbar-expand-lg">
                 <a class="navbar-brand" href="index.html">
             <h1 style="
-            font-size: 37px; 
+            font-size: 45px; 
             color: #ffcc00; 
             font-weight: bold; 
             font-family: 'Segoe UI', sans-serif; 
@@ -95,6 +95,39 @@
             </h1>
                   <!-- <img src="assets/images/logo/logo.svg" alt="Logo" /> -->
                 </a>
+
+                <a
+                class="login-btn me-2"
+                href="{{ route('login.office') }}"
+              >
+                تسجيل الدخول
+              </a>
+            
+              <style>
+             .login-btn {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            color: #fff; 
+            font-size: 14px; 
+            font-weight: 600;
+            padding: 10px 22px;
+            border-radius: 30px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+            letter-spacing: 0.4px; 
+            margin-right: 17px; 
+          }
+
+          .login-btn:hover {
+            background: rgba(255, 204, 0, 0.25);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 17px rgba(255, 204, 0, 0.35);
+          }
+
+            
+              </style>
                 <button
                   class="navbar-toggler"
                   type="button"
@@ -164,6 +197,8 @@
                 </ul>
               </div>
 
+ 
+
               <!---lang-->
               <div class="lang-switcher">
                 <button class="lang-btn" id="langToggle">
@@ -191,8 +226,9 @@
                 });
               </script>
                 <!-- navbar collapse -->
-
+             
                 <div class="navbar-btn d-none d-sm-inline-block">
+                 
                   <a
                     class="main-btn"
                     data-scroll-nav="0"
@@ -200,7 +236,6 @@
                     rel="nofollow"
                   >
                   حمل التطبيق الآن
-                    <!-- Download Now -->
                   </a>
                 </div>
               </nav>
@@ -1085,7 +1120,7 @@
                 </div>
                 <ul class="contact">
                   <li>0586000926</li>
-                  <li>CodePac@gmail.com</li>
+                  <li>fleet@gmail.com</li>
                   <!--<li>www.CodePac.com</li>-->
                   <li>
                    دبي  - برج العرب<br/>
@@ -1106,7 +1141,7 @@
               <div class="copyright d-sm-flex justify-content-between">
                 <div class="copyright-content">
                   <p class="text">
-                    Designed and Developed by CodePac - 2025
+                    Designed and Developed by Fleet - 2025
                     <!-- <a href="" rel="nofollow"> codeP </a> -->
                   </p>
                 </div>

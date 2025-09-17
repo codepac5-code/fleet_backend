@@ -11,11 +11,16 @@ class Create_PDF_Controller extends Controller
 {
     public function __invoke( Request $request , $id )
     {
-        $data =AppSetting::take(1)->first();
-        // $bookingdata = Booking::with('handymanAdded', 'payment', 'bookingExtraCharge')->myBooking()->find($id);
-        $bookingdata = Booking::with('driver', 'payment', 'service')->find($id);
-        $pdf = Pdf::loadView('booking.invoice',['bookingdata'=>$bookingdata ,'data'=> $data]);
+
+        $booking = Booking::with(['driver.office', 'office', 'user', 'subService.service', 'coupon'])->findOrFail($id);
+        $pdf = Pdf::loadView('booking.invoice', compact('booking'));
         return $pdf->download('invoice.pdf');
+
+        // $data =AppSetting::take(1)->first();
+        // // $bookingdata = Booking::with('handymanAdded', 'payment', 'bookingExtraCharge')->myBooking()->find($id);
+        // $bookingdata = Booking::with('driver', 'payment', 'service')->find($id);
+        // $pdf = Pdf::loadView('booking.invoice',['bookingdata'=>$bookingdata ,'data'=> $data]);
+        // return $pdf->download('invoice.pdf');
         
     }
 }

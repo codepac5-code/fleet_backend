@@ -79,6 +79,7 @@ class SearchOnDriverJob implements ShouldQueue
                  ->select('id', 'isConected')
                  ->get();
                  
+                 
                  foreach($drivers as $driver){
                      //   broadcast(new NewOrder($data, $driver->id));
                      event((new NewOrder($data, $driver->id)));
@@ -87,7 +88,7 @@ class SearchOnDriverJob implements ShouldQueue
                         //     'data' => $data,
                         //     'driverId' => $driverId,
                         // ]));
-                     }
+                    }
 
                 // foreach($driverIds as $driverId){
                 //         dispatch(new HandelRedisEvents('new_order', [

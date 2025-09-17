@@ -431,9 +431,8 @@ button:hover {
 
                 </div>
                 <ul class="contact">
-                  <li>+963900000000</li>
+                  <li>0586000926</li>
                   <li>info@gmail.com</li>
-                  <li>www.CodePac.com</li>
                   <li>
                    اتوستراد  - برج تالا<br/>
                    الامارات العربية المتحدة ، دبي 
@@ -453,7 +452,7 @@ button:hover {
               <div class="copyright d-sm-flex justify-content-between">
                 <div class="copyright-content">
                   <p class="text">
-                    Designed and Developed by CodePac - 2025
+                    Designed and Developed by Fleet - 2025
                     <!-- <a href="" rel="nofollow"> codeP </a> -->
                   </p>
                 </div>

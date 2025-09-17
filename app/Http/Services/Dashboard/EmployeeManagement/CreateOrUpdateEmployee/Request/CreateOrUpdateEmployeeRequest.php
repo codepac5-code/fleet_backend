@@ -36,7 +36,7 @@ class CreateOrUpdateEmployeeRequest extends BaseRequest
                 'regex:/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).+$/',
             ],
             'image' => 'nullable|image',
-            'officeId' => 'required|numeric',
+            // 'officeId' => 'nullable|numeric',
             'city' => 'required|string',
             'country' => 'required|string',
             'region' => 'required|string',

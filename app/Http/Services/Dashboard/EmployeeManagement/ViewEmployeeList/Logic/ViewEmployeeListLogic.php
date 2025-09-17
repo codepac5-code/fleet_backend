@@ -50,7 +50,7 @@ class ViewEmployeeListLogic implements Service {
                     return getGenderByLanguage($row->gender);
                 })
                 ->editColumn('role', function ($row) {
-                    return 'ghjkn';
+                    return 'employee';
                 })
         
                 ->editColumn('isActive', function ($row) {

@@ -22,6 +22,8 @@ class MakeOrderInput implements InputServiceInterface
     private $amount;
     private $time;
     public $multiDestnationArray;
+    public $is_scheduled;
+    public $scheduled_time;
 
     public function __construct( array $input)
     {
@@ -39,7 +41,11 @@ class MakeOrderInput implements InputServiceInterface
         $this->userId           = $input['userId'];
         $this->amount           = $input['amount'];
         $this->time             = $input['durationDiff'];
-        $this->multiDestnationArray           = $input['multiDestnationArray'];
+        $this->multiDestnationArray = $input['multiDestnationArray'];
+        $this->scheduled_time = $input['scheduled_time'];
+
+        $this->scheduled_time != null ? $this->is_scheduled = true 
+                                      : $this->is_scheduled = false;
     }
 
     public function bookingData() : Array{
@@ -59,6 +65,8 @@ class MakeOrderInput implements InputServiceInterface
             'durationDiff'   => $this->getTime(),
             'time'           => $this->getTime(),
             'multiDestnationArray'   => json_encode($this->multiDestnationArray),
+            'scheduled_time' => $this->scheduled_time,
+            'is_scheduled' =>$this->is_scheduled 
         ];
     }
     // write your input function here..
@@ -353,5 +361,19 @@ class MakeOrderInput implements InputServiceInterface
         $this->amount = $amount;
 
         return $this;
+    }
+
+    /**
+     * Get the value of is_scheduled
+     */
+    public function getIsScheduled() {
+        return $this->is_scheduled;
+    }
+
+    /**
+     * Get the value of scheduled_time
+     */
+    public function getScheduledTime() {
+        return $this->scheduled_time;
     }
 }

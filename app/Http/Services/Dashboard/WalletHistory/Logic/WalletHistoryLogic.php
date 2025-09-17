@@ -27,27 +27,27 @@ class WalletHistoryLogic implements Service {
 
         switch($this->input->getUserType()){
 
-            case 'user' : $customerdata =$this->repository->UserRepository()
-            ->readRepository()->getByValue('phoneNumber',$this->input->getIdentifier());
-            if($customerdata == null){
+            case 'user' : $userdata =$this->repository->UserRepository()
+            ->readRepository()->getByValue('id',$this->input->getIdentifier());
+            if($userdata == null){
                 return redirect()->back()
              ->withErrors(['identifier' => __('messages.invalid_phone')]);
             }
             
             $transactions = $this->repository->WalletTransactionRepository()->readRepository()
-            ->getUserWalletTransactions_paginate( $customerdata , 8);
+            ->getUserWalletTransactions_paginate( $userdata , 8);
             
-            $data  ['walletBalance'] = $customerdata->walletBalance;
+            $data  ['walletBalance'] = $userdata->walletBalance;
             $data  ['transactions']  = $transactions ;
             $isDriver = false;
             $userType = 'user';
-            return view('wallet.user',compact('data','pageTitle','customerdata','isDriver','userType'));
+            return view('wallet.user',compact('data','pageTitle','userdata','isDriver','userType'));
             break;
             
             
             case 'driver': 
                 $customerdata = $this->repository->DriverRepository()
-                ->readRepository()->getByValue('phoneNumber' , $this->input->getIdentifier());
+                ->readRepository()->getByValue('id' , $this->input->getIdentifier());
 
                 if($customerdata == null){
                     return redirect()->back()
@@ -62,7 +62,7 @@ class WalletHistoryLogic implements Service {
                 $isDriver = true;
                 $userType = 'driver';
                 $car = $customerdata->vehicle;
-                return view('wallet.user',compact('data','pageTitle','customerdata','isDriver','userType','car'));
+                return view('wallet.driver',compact('data','pageTitle','customerdata','isDriver','userType','car'));
                 break;
 
 

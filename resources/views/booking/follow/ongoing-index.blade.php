@@ -55,9 +55,8 @@
     </div>
 
     @php
-    $officeId = $officeId ?? 0;
-
-@endphp
+        $officeId = $officeId ?? 0;
+    @endphp
  
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {

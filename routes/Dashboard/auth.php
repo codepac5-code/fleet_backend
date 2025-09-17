@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\NotificationController;
 use App\Http\Core\Const\Options\Settings\PublicSettingsKies;
 use App\Http\Core\Const\Options\Settings\SettingsTypes;
@@ -10,19 +9,79 @@ use App\Http\Services\Dashboard\Auth\LoginToDashboard\Controller\LoginToDashboar
 use App\Http\Services\Dashboard\Auth\LoginToDashboardAsOffice\Controller\LoginToDashboardAsOfficeController;
 use App\Http\Services\WebSite\GetPrivacyPolicyPage\Controller\GetPrivacyPolicyPageController;
 use App\Http\Services\WebSite\ViewFleetLandingPage\Controller\ViewFleetLandingPageController;
+use App\Models\Booking;
 use App\Models\Office;
 use App\Models\Setting;
-use App\Models\Vehicle;
 use App\Models\VehicleBrand;
-use Illuminate\Support\Facades\Artisan;
+use App\Services\StripeService;
+use Stripe\PaymentIntent;
+use Stripe\Stripe;
+
+Route::get('/strip/test',function(){
+    $booking = Booking::find(657);
+    return view('stripe_test',compact('booking'));
+});
 
 
+// Route::get('/checkout/{booking}', [PaymentController::class, 'checkout'])->name('checkout');
 
+
+Route::post('/payment',function(Request $request){
+    $request->validate([
+        'payment_method' => 'required|string',
+        'booking_id' => 'required|exists:bookings,id',
+    ]);
+
+    $booking = Booking::findOrFail($request->booking_id);
+
+    Stripe::setApiKey(config('services.stripe.secret'));
+
+    try {
+        // Create PaymentIntent if not exists
+        if (!$booking->stripe_payment_intent_id) {
+            $intent = PaymentIntent::create([
+                'amount' => $booking->totalAmount * 100, // in cents
+                'currency' => 'usd',
+                'payment_method' => $request->payment_method,
+                'confirmation_method' => 'manual',
+                'confirm' => true,
+            ]);
+
+            $booking->stripe_payment_intent_id = $intent->id;
+            $booking->paymentStatus = $intent->status;
+            $booking->save();
+        } else {
+            // Retrieve existing intent
+            $intent = PaymentIntent::retrieve($booking->stripe_payment_intent_id);
+            $intent->confirm();
+            $booking->paymentStatus = $intent->status;
+            $booking->save();
+        }
+
+        return response()->json([
+            'status' => $intent->status,
+            'intent_id' => $intent->id
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'failed',
+            'error' => $e->getMessage()
+        ], 400);
+    }
+})->name('payments.process');
+
+
+Route::get('/font',function(){
+    return view('font');
+});
 
 
 Route::group(['middleware' => ['set-localization']],function () {
 
-
+Route::get('/refresh-csrf', function () {
+    return response()->json(['token' => csrf_token()]);
+})->name('refresh-csrf');
+    
 Route::get('/ppp',function(){
     $conditions = [
         'type'  => SettingsTypes::$PublicSettings,
@@ -30,11 +89,11 @@ Route::get('/ppp',function(){
     ];
 
     $select = select_by_language([
-        'value',//'value_ar'
+        'value', //'value_ar'
         'type',
         'key' , 
          ] , [
-            'value'//'value_en'
+            'value' //'value_en'
             ,'type',
             'key' , 
     ]);
@@ -42,14 +101,9 @@ Route::get('/ppp',function(){
 
     $termsCondition = Setting::where($conditions)->first();
     
-    
-
-
-     $privacy_policy = $termsCondition->value;
-      //$privacy_policy = 'sdsssssssssssssss';
-
+    $privacy_policy = $termsCondition->value;
+    // $privacy_policy = 'sdsssssssssssssss';
     return response()->json(['pp'=>$privacy_policy]);
-
 });
 
 
@@ -86,7 +140,7 @@ Route::get('login-office',function(){
   
   
     return view('landing-page.login',compact('sectionData'));
-  });
+  })->name('login.office');
 
 Route::post('/login-office-check', LoginToDashboardAsOfficeController::class )
 ->name('login-office-check');

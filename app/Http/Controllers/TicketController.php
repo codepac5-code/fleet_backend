@@ -158,7 +158,7 @@ class TicketController extends Controller
         $reply = Reply::create([
             'issueId' => $issue->id,
             'sender_id' => Auth::id(),
-            'sender_type' => Employee::class,
+            'sender_type' => get_class(Auth::user()),
             'senderName' => Auth::user()->firstName . ' ' . Auth::user()->lastName,
             'content' => $request->reply,
             'imageUrl' => $imagePath,

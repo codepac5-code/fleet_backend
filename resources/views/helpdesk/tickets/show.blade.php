@@ -186,30 +186,54 @@ body {
         }
     
         .message {
-        display: inline-block;
-        max-width: 70%;             
-        width: fit-content;           
-        padding: 1.2rem 1.6rem;
-        border-radius: 1.7rem;
-        font-size: 1rem;
-        word-wrap: break-word;
-        white-space: pre-wrap;        
-        position: relative;
-        box-shadow: 0 6px 14px rgb(57 57 99 / 0.08);
-        transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        line-height: 1.4;
-        user-select: text;
-        }
+    display: inline-flex;
+    flex-wrap: wrap;
+    max-width: 70%;
+    padding: 1rem 1rem;
+    border-radius: 17rem;
+    font-size: 1rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    position: relative;
+    box-shadow: 0 6px 7px rgb(57 57 99 / 0.08);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    line-height: 0.7;
+    user-select: text;
+    vertical-align: top;
+}
+
+
+.message .timestamp.user {
+    font-size: 0.78rem;
+    color:#3b3f72;
+    margin-top: 0.7rem;
+    user-select: none;
+    /* font-weight: 700; */
+    letter-spacing: 0.07em;
+    align-self: flex-end;
+}
+
+.message .timestamp {
+    font-size: 0.78rem;
+    color: rgba(255, 202, 40, 0.85);
+    margin-top: 0.7rem;
+    user-select: none;
+    /* font-weight: 700; */
+    letter-spacing: 0.07em;
+    align-self: flex-end;
+}
+
 
         .message.user {
-          background: linear-gradient(145deg, #fff9c4, #ffeb3b);
+          background: linear-gradient(145deg, #f0e269, #ffeb3b);
           color: #3b3f72;
           margin-left: auto;
           border-bottom-right-radius: 0.4rem;
           box-shadow: 0 9px 20px rgb(255 202 40 / 0.4);
         }
         .message.user:hover {
-          background: linear-gradient(145deg, #fff59d, #ffca28);
+          background: linear-gradient(145deg, #eede4e, #ffc517);
           box-shadow: 0 12px 26px rgb(255 202 40 / 0.6);
         }
         .message.staff {
@@ -223,14 +247,14 @@ body {
           background: linear-gradient(145deg, #4b5185, #3a3e6a);
           box-shadow: 0 12px 26px rgb(57 57 99 / 0.65);
         }
-        .message .timestamp {
+        /* .message .timestamp {
           font-size: 0.78rem;
           color: rgba(255, 202, 40, 0.85);
           margin-top: 0.45rem;
           user-select: none;
           font-weight: 700;
           letter-spacing: 0.04em;
-        }
+        } */
     
         .message img.file-attachment {
           margin-top: 0.7rem;
@@ -579,6 +603,7 @@ body {
           
           
             $(document).ready(function () {
+              const userType = @json(get_class(auth()->user()));
                 $('#refreshReplies').on('click', function () {
                     $.ajax({
                         url: "{{ route('tickets.replies', $ticket->id) }}",
@@ -587,10 +612,10 @@ body {
                             let container = '';
                             response.replies.forEach(function (reply) {
                                 container += `
-                                    <div class="message ${reply.sender_type.includes('Employee') ? 'staff' : 'user'}">
+                                    <div class="message ${reply.sender_type.includes(userType) ? 'staff' : 'user'}">
                                         ${reply.content.replace(/\n/g, '<br>')}
                                         ${reply.imageUrl ? `<div class="mt-2"><img src="/storage/${reply.imageUrl}" style="max-width: 200px; border-radius: 8px;"></div>` : ''}
-                                        <div class="timestamp"><i class="far fa-clock"></i> ${reply.created_at}</div>
+                                        <div class="timestamp ${reply.sender_type.includes(userType) ? '' : 'user' }"><i class="far fa-clock"></i> ${reply.created_at}</div>
                                     </div>`;
                             });
                             $('#chat-container').html(container);
@@ -612,6 +637,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const attachBtn = document.getElementById('attach-btn');
     const sendBtn = document.getElementById('send-btn');
     const chatContainer = document.getElementById('chat-container');
+
+    const userClass = @json(get_class(auth()->user()));
+
 
     textarea.addEventListener('input', function () {
         sendBtn.disabled = textarea.value.trim() === '';
@@ -640,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 const reply = data.reply;
                 const div = document.createElement('div');
-                div.classList.add('message', reply.sender_type.includes('Employee') ? 'staff' : 'user');
+                div.classList.add('message', reply.sender_type.includes(userClass) ? 'staff' : 'user');
 
                 let html = reply.content;
                 if (reply.imageUrl) {
@@ -776,21 +804,33 @@ document.addEventListener('DOMContentLoaded', function () {
             <div id="chat-box-wrapper" class="chat-box">
                 <div id="replies-wrapper">
                     <div class="chat-container" id="chat-container">
-                        @foreach ($ticket->replies as $reply)
-                            <div class="message {{ $reply->sender_type == 'App\\Models\\Employee' ? 'staff' : 'user' }}">
-                                {!! nl2br(e($reply->content)) !!}
-            
-                                @if($reply->imageUrl)
-                                    <div class="mt-2">
-                                        <img src="{{ asset('storage/' . $reply->imageUrl) }}" style="max-width: 200px; border-radius: 8px;">
-                                    </div>
-                                @endif
-            
-                                <div class="timestamp">
-                                    <i class="far fa-clock"></i> {{ $reply->created_at->format('h:i A - Y/m/d') }}
-                                </div>
-                            </div>
-                        @endforeach
+                  
+
+
+                      @foreach ($ticket->replies as $reply)
+
+                      @php
+                          $currentUser = auth()->user();
+                          $isStaff = !($reply->sender_type == get_class($currentUser)) && ($reply->sender_id == $currentUser->id);
+                      @endphp
+                  
+                      <div class="message {{ $isStaff ? 'staff' : 'user' }}">
+                          <div class="content">
+                              {!! nl2br(e($reply->content)) !!}
+                  
+                              @if($reply->imageUrl)
+                                  <div class="mt-2">
+                                      <img src="{{ asset('storage/' . $reply->imageUrl) }}" style="max-width: 200px; border-radius: 8px;">
+                                  </div>
+                              @endif
+                          </div>
+                  
+                          <div class="timestamp {{ $isStaff ? '' : 'user' }}">
+                              <i class="far fa-clock"></i> {{ $reply->created_at->format('h:i A - Y/m/d') }}
+                          </div>
+                      </div>
+                  @endforeach
+                  
 
                      
                     </div>

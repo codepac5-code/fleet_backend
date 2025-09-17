@@ -15,7 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('firstName',30);
             $table->string('lastName',30);
-            $table->foreignId('officeId')->references('id')->on('offices')->cascadeOnDelete();
+            $table->string('phoneNumber',10)->unique();
+            $table->boolean('car_owner')->default(false);
+            // $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->unsignedBigInteger('officeId')->nullable();
+            $table->foreign('officeId')->references('id')->on('offices')->onDelete('set null');
             $table->foreignId('vehicleId')
             ->nullable()
             ->constrained('vehicles')
@@ -27,10 +32,11 @@ return new class extends Migration
             $table->boolean('isActive')->default(1);
             $table->boolean('isConected')->default(0);
             $table->string('gender',10)->nullable()->enum('male','female');
-            $table->string('phoneNumber',10)->unique();
-            $table->boolean('car_owner')->default(false);
             // $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->decimal('fleetCommissionCustomValue', 10, 2)->default(0);
+            $table->decimal('driverCommissionCustomValue', 10, 2)->default(0);
+            $table->boolean('isOfficeCommissionCustom')->default(false);   
+            $table->boolean('isFleetCommissionCustom')->default(false);                     
             $table->boolean('is_registered')->default(false);
             $table->boolean('free_driver')->default(false);
             $table->double('walletBalance')->default(0);

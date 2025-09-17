@@ -71,14 +71,25 @@ class User extends Authenticatable
     }
 
     public function replies()
-{
+    {
     return $this->morphMany(Reply::class, 'sender');
-}
+    }
+
+    public function officesStats()
+    {
+        return $this->belongsToMany(Office::class, 'office_user_stats', 'userId', 'officeId')
+                    ->withPivot('totalBookings', 'totalAmount', 'totalDistance', 'lastBookingAt', 'averageRating', 'lastPaymentStatus')
+                    ->withTimestamps();
+    }
 
     public function issues()
     {
         return $this->morphMany(Issue::class, 'owner');
     }
+    public function bookings() {
+        return $this->hasMany(Booking::class, 'userId');
+    }
+
 
     /**
      * The attributes that should be hidden for serialization.

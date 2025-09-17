@@ -29,7 +29,7 @@ class UserSendOtpServiceServiceLogic implements Service {
     $user = $userReadRepository->getByValue( 'phoneNumber' , $this->input->getPhoneNumber());
 
     if($user == null){
-        make_exception(ErrorMessages::getKey(ErrorMessages::$notExait));
+        make_exception(__('messages.user_already_exists'));
     }
 
 
@@ -69,7 +69,7 @@ class UserSendOtpServiceServiceLogic implements Service {
         $config = [
             'base_url' => 'https://message.dashboard.technoplus.tech',
             'api_key' => '51|OE7uqfEx7BJzGpzCtFBHC9McoZxJT25oG9jybb5e72747175',
-            'session_id' => '4a501269-dbdf-456d-b1e9-d61e1b424276',
+            'session_id' => '1102d8e0-f7d2-457c-b1db-a1d4287fee37',
             'phone' => $phoneNumber, 
             'otp' => $otpCode
         ];
@@ -80,7 +80,7 @@ class UserSendOtpServiceServiceLogic implements Service {
                 'Accept' => 'application/json',
             ])->post($config['base_url'] . '/whatsapp/api/v1/message/text/send', [
                 'session_id' => $config['session_id'],
-                'receiver' => '+963' . $phoneNumber,
+                'receiver' => $this->input->getDialCode() . $phoneNumber,
                 // 'receiver' => '+963' . substr($config['phone'], 1),
                 'text' => $this->generateOtpMessage($userName, $otpCode)
             ]);

@@ -1,4 +1,5 @@
 
+
 <form action="{{ route('driver.destroy', $driver->id) }}" method="POST" data--submit="driver{{ $driver->id }}">
     @csrf
     @method('DELETE')
@@ -36,6 +37,9 @@
             class="mr-2">
             <i class="fas fa-redo text-secondary"></i>
         </a>
+
+        @if(auth()->user()->can('driver change custom commission'))
+
         <a href="{{ route('driver.action',['id' => $driver->id, 'type' => 'forcedelete']) }}"
             title="{{ __('messages.forcedelete_form_title',['form' => __('messages.driver') ]) }}"
             data--submit="confirm_form"
@@ -47,7 +51,36 @@
             class="mr-2">
             <i class="far fa-trash-alt text-danger"></i>
         </a>
+        @endif
+
     @endif
 
+    
+
+
+    {{-- <a class="edit-commission-btn text-primary" 
+   href="javascript:void(0);" 
+   data-driver-id="{{ $driver->id }}" 
+   data-has-custom-commission="{{ $driver->has_custom_commission ? 'true' : 'false' }}" 
+   title="تعديل العمولة">
+   <i class="fas fa-percentage"></i>
+</a> --}}
+
+
+<a class="edit-commission-btn text-primary d-flex align-items-center" 
+   href="javascript:void(0);" 
+   data-driver-id="{{ $driver->id }}" 
+   data-has-custom-commission="{{$isCustom}}"
+   data-is-office="{{ $isOffice}}" 
+   data-office-commission="{{ $officeCommission}}" 
+   data-driver-commission="{{ $driverCommission}}" 
+
+   title="{{ __('messages.edit_commission') }}"
+   style="margin-{{ app()->getLocale() === 'ar' ? 'left' : 'right' }}:5px;">
+   <i class="fas fa-percentage"></i>
+</a>
+   
 </div>
 </form>
+
+    

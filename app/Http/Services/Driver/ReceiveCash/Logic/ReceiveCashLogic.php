@@ -11,6 +11,7 @@ use App\Http\Core\Const\Options\AppScreenName;
 use PHPUnit\Event\Tracer\Tracer;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\Const\Options\PaymentType;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Models\NotificationModel;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
@@ -80,6 +81,10 @@ class ReceiveCashLogic implements Service {
         $booking_updated = $this->repository->BookingRepository()->updateRepository()->update(
             ['id'=>$this->input->getOrderId()],[
                 'status'    => OrderStatus::$Completed ,
+                'paymentType' => PaymentType::$Cash,
+                'paymentStatus'=> 'paid',
+                'PaymentDatetime'=>now(),
+                'endAt'=>now(),
             ]
         );
     

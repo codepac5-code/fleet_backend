@@ -24,7 +24,7 @@ class BookingDetailsController extends Controller
        $subservice = $bookingdata->subservice;
        $total_price = ($subservice->openPrice+ $subservice->kmPrice * $bookingdata->distance + $subservice->minutePrice *  (int)$bookingdata->time );
        $driver = $bookingdata->driver;
-       $car = $driver->vehicle;
+       $car = $driver->vehicle ?? 'unknow';
        $office = $bookingdata->office;
        $user = $bookingdata->user;
 

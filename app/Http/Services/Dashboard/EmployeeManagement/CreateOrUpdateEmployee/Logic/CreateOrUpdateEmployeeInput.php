@@ -2,6 +2,7 @@
 namespace App\Http\Services\Dashboard\EmployeeManagement\CreateOrUpdateEmployee\Logic;
 
 use App\Http\Core\InternalInterface\InputServiceInterface;
+use Illuminate\Support\Facades\Auth;
 
 class CreateOrUpdateEmployeeInput implements InputServiceInterface
 {
@@ -31,7 +32,12 @@ class CreateOrUpdateEmployeeInput implements InputServiceInterface
     public function __construct(array $input)
     {
         $this->id            = $input['id'] ?? null;
-        $this->officeId      = (int)$input['officeId'] ?? null;
+
+        if(auth()->guard('office')->check()){
+            $this->officeId      = Auth::user()->id;
+        }else{
+            $this->officeId      = null;
+        }
         $this->firstName     = $input['firstName'] ?? null;
         $this->lastName      = $input['lastName'] ?? null;
         $this->gender        = $input['gender'] ?? null;

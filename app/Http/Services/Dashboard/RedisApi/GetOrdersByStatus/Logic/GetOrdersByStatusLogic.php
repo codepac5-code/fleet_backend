@@ -9,6 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
+use App\Models\Booking;
+use Carbon\Carbon;
 
 class GetOrdersByStatusLogic implements Service {
 
@@ -26,36 +28,46 @@ class GetOrdersByStatusLogic implements Service {
     public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
 
         $canceled_order_Ids = [] ;
+        $page   = $this->input->getPage();  
+        $limit  = 7;                      
+        $offset = ($page - 1) * $limit;  
+
         switch($this->input->getStatus()){
             case OrderStatus::$Pending :
                  $status = OrderStatus::$Pending;
                  $canceled_order_Ids  = OrderRedisModel::getCancelOrderIds();
+
+                 $orders = OrderRedisModel::getByStatusPaginated($status , $offset , $limit);
+                 $count  = OrderRedisModel::get_status_count($status);
             break;
 
-            case OrderStatus::$OnGoing :  $status = OrderStatus::$OnGoing;
+            case OrderStatus::$OnGoing :
+                $status = OrderStatus::$OnGoing;
+                $query = Booking::scopeForCurrentUser()
+                  ->where('status', $status);
+              
+                $count  = $query->count();
+                $orders = $query->skip($offset)->take($limit)->get();
             break;
 
-            case OrderStatus::$Completed :  $status = OrderStatus::$Completed;
+            case OrderStatus::$Completed : 
+                $query = Booking::scopeForCurrentUser()
+                ->where('status', OrderStatus::$Completed)
+                ->whereDate('created_at', Carbon::today());
+            
+                $count  = $query->count();
+                $orders = $query->skip($offset)->take($limit)->get();
             break;
 
             default : $status = ' ';
             break;
         }
-        
-        $page = $this->input->getPage();
-        $limit = 7;
-        $offset = ($page - 1) * $limit;
 
-        $orders   = OrderRedisModel::getByStatusPaginated($status , $offset , $limit);
-     
-     
-        $count = OrderRedisModel::get_status_count($status);
+
         // $ongoing_count   = OrderRedisModel::get_ongoing_count();
         // $pending_count   = OrderRedisModel::get_pending_count();
-        
-        
+                
         $total_pages = ceil($count / $limit);
-
 
         
         return response()->json([

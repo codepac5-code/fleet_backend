@@ -626,52 +626,35 @@ function envChanges($type,$value){
 function getPriceFormat($price , $lang = null){
 
 
-    if($lang !=null){
-        if($lang == 'ar'){
-            return "د.إ " .$price;
-        }
-        return $price." AED";
-    }
-    $price = (double)$price;
+    // if($lang !=null){
+    //     if($lang == 'ar'){
+    //         return "د.إ " .$price;
+    //     }
+    //     return $price." AED";
+    // }
+    // $price = number_format((float)$price);
 
-
-
-
-    
-    $symbol= 'SYP';
+    $symbol= 'AED';
     if (app()->getLocale() == 'ar') {
-        $symbol= 'ل.س';
+        $symbol= 'د.إ';
     }
 
-    $price = number_format((float)$price,1,'.','')." ".$symbol;
+    $price = number_format($price )." ".$symbol;
     return $price;
 
-    // $sitesetup = App\Models\Setting::where('type','site-setup')->where('key', 'site-setup')->first();
-    // $sitesetupdata = $sitesetup ? json_decode($sitesetup->value) : null;
-    // $currencyId = optional($sitesetupdata)->default_currency;
-    // $currency_position = optional($sitesetupdata)->currency_position;
-    // $afterdecimalpoint = optional($sitesetupdata)->digitafter_decimal_point;
-    // $country = App\Models\Country::find($currencyId);
-
-    // // $symbol = '$';
-    // $symbol = 'SYP ';
-    // if (!empty($country)) {
-    //     $symbol = $country->symbol;
+    
+    // $symbol= 'SYP';
+    // if (app()->getLocale() == 'ar') {
+    //     $symbol= 'ل.س';
     // }
 
-    // $position = 'left';
-    // if( !empty($currency_position) ){
-    //     $position = $currency_position;
-    // }
-
-    // if ($position == 'left') {
-    //     $price = $symbol."".number_format((float)$price,$afterdecimalpoint,'.','');
-    // } else {
-    //     $price = number_format((float)$price,$afterdecimalpoint,'.','')."".$symbol;
-    // }
-
+    // $price = number_format($price )." ".$symbol;
     // return $price;
 }
+
+
+
+
 
 function currency_data(){
 

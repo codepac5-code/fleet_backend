@@ -25,6 +25,7 @@ class LoginRequest extends BaseRequest
         [
             'phoneNumber'=>['required', 'numeric'],
             'password'=>['required' ,"string","min:8"],
+            'dialCode' =>['required']
         ];
     }
 

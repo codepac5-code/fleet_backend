@@ -12,5 +12,11 @@ class Department extends Model
     {
         return $this->hasMany(Issue::class);
     }
+
+    public function employees()
+    {
+    return $this->belongsToMany(Employee::class);
+    }
+
 }
 

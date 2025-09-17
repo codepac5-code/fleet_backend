@@ -8,6 +8,7 @@ use App\Http\Core\Const\Options\AppScreenName;
 use App\Log;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\Const\Options\PaymentType;
 use App\Http\Core\Const\Structures\TransferStructure;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Models\NotificationModel;
@@ -71,10 +72,10 @@ class FleetWalletPaymentLogic implements Service {
         $fleet_office = $this->repository->FleetOfficeRepository()
         ->readRepository()->getFirstByConditions([]);
         $to = [
-            new TransferStructure($driver , $order->totalAmount ,$this->description_ar($user->id , $driver->id,$order->id,$order->totalAmount ),$this->description_en($user->id , $driver->id,$order->id,$order->totalAmount)),
+            // new TransferStructure($driver , $order->driver_commission ,$this->description_ar($user->id , $driver->id,$order->id,$order->totalAmount ),$this->description_en($user->id , $driver->id,$order->id,$order->totalAmount)),
 
-            // new TransferStructure($driver , $driver_commission ,$this->description_ar($user->id , $driver->id,$order->id,$order->driverCommissionValue ),$this->description_en($user->id , $driver->id,$order->id,$order->driverCommissionValue)),
-            // new TransferStructure($fleet_office , $order->fleetCommissionValue,$this->description_ar($user->id , $driver->id,$order->id,$order->fleetCommissionValue ),$this->description_en($user->id , $driver->id,$order->id,$order->fleetCommissionValue) ),
+            new TransferStructure($driver , $driver_commission ,$this->description_ar($user->id , $driver->id,$order->id,$order->driverCommissionValue ),$this->description_en($user->id , $driver->id,$order->id,$order->driverCommissionValue)),
+            new TransferStructure($fleet_office , $order->fleetCommissionValue,$this->description_ar($user->id , $driver->id,$order->id,$order->fleetCommissionValue ),$this->description_en($user->id , $driver->id,$order->id,$order->fleetCommissionValue) ),
         ];
         // if($order->officeCommissionValue != 0 && $order->officeId !=null){
         //     $office = $order->office;
@@ -90,9 +91,15 @@ class FleetWalletPaymentLogic implements Service {
         $booking_updated = $this->repository->BookingRepository()->updateRepository()->update(
             ['id'=>$this->input->getOrderId()],[
                 'status'    => OrderStatus::$Completed ,
+                'paymentType' => PaymentType::$FleetWallet,
+                'paymentStatus'=> 'paid',
+                'PaymentDatetime'=>now(),
+                'endAt'=>now(),
             ]
         );
 
+        
+    
         $this->updateRedisWalletData($order);
 
         commitTransaction();

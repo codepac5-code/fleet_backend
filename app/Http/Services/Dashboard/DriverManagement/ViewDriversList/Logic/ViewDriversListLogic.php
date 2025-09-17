@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Models\OfficeDriverCustomCommission;
+use Illuminate\Support\Facades\Auth;
 
 class ViewDriversListLogic implements Service {
 
@@ -86,7 +88,7 @@ class ViewDriversListLogic implements Service {
                 if($query->isConected){
                     $status = '<span class="badge badge-active">'.__('messages.connected').'</span>';
                     // $status = '<a class="btn-sm text-white btn-success"  href='.route('handyman.approve',$query->id).'>Accept</a>';
-}
+                }
             else{
                     $status = '<span class="badge badge-inactive">'.__('messages.disconnected').'</span>';
                 }
@@ -121,7 +123,41 @@ class ViewDriversListLogic implements Service {
            
             ->addColumn('action', function($driver){
                 $auth_user= authSession();
-                return view('driver.action',compact('driver','auth_user'))->render();
+                $isOffice = false;
+                $isCustom = $driver->isFleetCommissionCustom;
+                $officeCommission = 0;
+                $driverCommission = 0;
+
+                if( (Auth::guard('office')->check())){
+                    $isOffice = true;
+                    $isCustom = $driver->isOfficeCommissionCustom;
+                    if($isCustom){
+                        $commission = OfficeDriverCustomCommission::where(['officeId'=>Auth::user()->id , 'driverId'=>$driver->id])->first();
+                        $officeCommission = $commission->officeCommission;
+                        $driverCommission = $commission->driverCommission;
+                     }
+                }
+                else if (Auth::guard('employee')->check()) {
+                    $employee = Auth::guard('employee')->user();
+                    if ($employee->officeId) {
+                        $isOffice = true;
+                        $isCustom = $driver->isOfficeCommissionCustom;
+                        if($isCustom){
+                           $commission = OfficeDriverCustomCommission::where(['officeId'=>$employee->officeId , 'driverId'=>$driver->id])->first();
+                           $officeCommission = $commission->officeCommission;
+                           $driverCommission = $commission->driverCommission;
+                        }
+                    } 
+                }
+
+                if($isCustom){
+                    $isCustom = 'yes';
+                }else
+                {
+                    $isCustom = 'no';
+                }
+               
+                return view('driver.action',compact('driver','auth_user' ,'isOffice','isCustom' ,'officeCommission','driverCommission'))->render();
             })
             ->addIndexColumn()
             ->rawColumns(['check','display_name','action','isConected','created_at','contact_number','office','walletBalance' ])

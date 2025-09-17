@@ -151,7 +151,8 @@ class GetPublicDriverAppSettingsLogic implements Service {
 
         $public_settings = [
             'country_settings' => json_decode($settings->value) ,
-            'helpNumber' => '0933817393',
+            'helpNumber' => '+971586000926',
+            'ScheduledOrdersCount'=>3
         ];
         
 
