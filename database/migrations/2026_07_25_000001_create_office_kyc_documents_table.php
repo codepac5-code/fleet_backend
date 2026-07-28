@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Office KYC documents — the office-side mirror of driver_documents (file-path
+ * based, NOT the legacy Spatie-media office_documents table). Per-country shard.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('office_kyc_documents', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('officeId')->index();
+            $table->string('name');
+            $table->string('file');
+            $table->string('status')->default('pending');
+            $table->text('note')->nullable();
+            $table->date('expires_at')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('office_kyc_documents');
+    }
+};

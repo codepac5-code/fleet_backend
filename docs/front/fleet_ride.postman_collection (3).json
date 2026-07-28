@@ -1,0 +1,5212 @@
+{
+  "info": {
+    "_postman_id": "4ef4c097-cdc6-4f0e-bea7-e458bca2fd91",
+    "name": "Fleet Ride API v2.0.0",
+    "description": "Model-backed contract for the Fleet Ride rider app, derived from `docs/API_MODEL_MAPPED.md` (every attribute is a real column verified against `docs/Models/*.php` and `docs/migrations/*.php`).\n\nTransport: REST/HTTPS + a Socket.IO realtime gateway (handshake `auth:{ token, country }`; receive-only + subscribe/unsubscribe, all actions are REST) for the live trip — see `docs/realtime (1).md` and `docs/RIDER_REALTIME_EVENTS.md`. Every REST response uses the `ApiResponse` envelope (Socket.IO frames are raw, not enveloped).\n\nMoney: **integer minor units** (`*_minor`) paired with a sibling `currency_code` (`currencies.code`, e.g. `QAR`, `decimals=2`). Legacy `double` money columns are never used by this API.\n\nLocalization: send `Accept-Language: en | ar`; the resolved language is persisted per user (`rider_profiles.locale`, fallback `users.current_country`) and echoed as `locale` on every response. Bilingual `*_ar`/`*_en` columns are collapsed server-side to the single resolved string.\n\nPayments: Stripe. Raw PAN/CVV never reach Fleet Ride — cards are tokenized client-side. Add-card = SetupIntent; pay/top-up = PaymentIntent (3DS/SCA via `requiresAction`).\n\nSet the `baseUrl` and `accessToken` collection variables. All requests inherit Bearer auth from the collection except the public auth endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://fleetapp.net/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/otp/request — Send an OTP to a phone number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "otp",
+                "request"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dialCode\": \"+974\",\n  \"phone\": \"33001234\",\n  \"country\": \"QA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/otp/request",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "otp",
+                    "request"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"dialCode\": \"+974\",\n  \"phone\": \"33001234\",\n  \"country\": \"QA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"challengeId\": \"chg_9f2a\",\n    \"expiresIn\": 3600,\n    \"isNewUser\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/otp/verify — Verify an OTP and issue a Passport token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "otp",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"chg_9f2a\",\n  \"code\": \"WELCOME10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/otp/verify",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "otp",
+                    "verify"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"challengeId\": \"chg_9f2a\",\n  \"code\": \"WELCOME10\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"accessToken\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"refreshToken\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"tokenType\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"expiresIn\": 3600,\n    \"user\": {\n      \"id\": 1,\n      \"firstName\": \"Ahmed\",\n      \"lastName\": \"Ali\",\n      \"phoneNumber\": \"33001234\",\n      \"dialCode\": \"+974\",\n      \"gender\": \"male\",\n      \"photo\": \"https://cdn.fleetapp.net/img/sample.png\",\n      \"isActive\": true,\n      \"referralCode\": \"referralCode\",\n      \"walletBalance\": 150.0,\n      \"stripeCustomerId\": \"cus_Ff…\",\n      \"current_country\": \"QA\",\n      \"email\": \"rider@example.com\",\n      \"locale\": \"en\"\n    }\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/social — Google/Apple sign-in / sign-up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/social",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "social"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"google\",\n  \"idToken\": \"<provider OIDC id token>\",\n  \"authorizationCode\": null,\n  \"email\": \"sara@gmail.com\",\n  \"fullName\": \"Sara Al-Kuwari\",\n  \"country\": \"QA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/social",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "social"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"provider\": \"google\",\n  \"idToken\": \"<provider OIDC id token>\",\n  \"authorizationCode\": null,\n  \"email\": \"sara@gmail.com\",\n  \"fullName\": \"Sara Al-Kuwari\",\n  \"country\": \"QA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"locale\": \"en\",\n  \"data\": {\n    \"accessToken\": \"eyJ0eXAiOiJKV1Qi\\u2026\",\n    \"refreshToken\": \"eyJ0eXAiOiJKV1Qi\\u2026\",\n    \"tokenType\": \"Bearer\",\n    \"expiresIn\": 3600,\n    \"user\": {\n      \"id\": 1,\n      \"firstName\": \"Sara\",\n      \"lastName\": \"Al-Kuwari\",\n      \"phoneNumber\": \"33001234\",\n      \"dialCode\": \"+974\",\n      \"email\": \"sara@gmail.com\",\n      \"walletBalance\": 0.0,\n      \"current_country\": \"QA\",\n      \"locale\": \"en\"\n    }\n  },\n  \"error\": null,\n  \"meta\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/register — Complete registration after OTP verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"chg_9f2a\",\n  \"fullName\": \"Ahmed Ali\",\n  \"email\": \"rider@example.com\",\n  \"country\": \"QA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"challengeId\": \"chg_9f2a\",\n  \"fullName\": \"Ahmed Ali\",\n  \"email\": \"rider@example.com\",\n  \"country\": \"QA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"accessToken\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"refreshToken\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"tokenType\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"expiresIn\": 3600,\n    \"user\": {\n      \"id\": 1,\n      \"firstName\": \"Ahmed\",\n      \"lastName\": \"Ali\",\n      \"phoneNumber\": \"33001234\",\n      \"dialCode\": \"+974\",\n      \"gender\": \"male\",\n      \"photo\": \"https://cdn.fleetapp.net/img/sample.png\",\n      \"isActive\": true,\n      \"referralCode\": \"referralCode\",\n      \"walletBalance\": 150.0,\n      \"stripeCustomerId\": \"cus_Ff…\",\n      \"current_country\": \"QA\",\n      \"email\": \"rider@example.com\",\n      \"locale\": \"en\"\n    }\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — Exchange a refresh token for a new token pair",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"eyJ0eXAiOiJKV1Qi…\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"eyJ0eXAiOiJKV1Qi…\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"accessToken\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"refreshToken\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"tokenType\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"expiresIn\": 3600\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/phone/change — Request an OTP to change the account phone number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/phone/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "phone",
+                "change"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dialCode\": \"+974\",\n  \"phone\": \"33001234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/phone/change",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "phone",
+                    "change"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"dialCode\": \"+974\",\n  \"phone\": \"33001234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"challengeId\": \"chg_9f2a\",\n    \"expiresIn\": 3600,\n    \"isNewUser\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/logout — Revoke the current access token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "DELETE /account — Soft-delete the account (`users.deleted_at`)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/account",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "account"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/account",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "account"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "GET /me — Get the current user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"firstName\": \"Ahmed\",\n    \"lastName\": \"Ali\",\n    \"phoneNumber\": \"33001234\",\n    \"dialCode\": \"+974\",\n    \"gender\": \"male\",\n    \"photo\": \"https://cdn.fleetapp.net/img/sample.png\",\n    \"isActive\": true,\n    \"referralCode\": \"referralCode\",\n    \"walletBalance\": 150.0,\n    \"stripeCustomerId\": \"cus_Ff…\",\n    \"current_country\": \"QA\",\n    \"email\": \"rider@example.com\",\n    \"locale\": \"en\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /me — Update the current user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ahmed Ali\",\n  \"email\": \"rider@example.com\",\n  \"avatarUrl\": \"https://cdn.fleetapp.net/img/sample.png\",\n  \"language\": \"en\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fullName\": \"Ahmed Ali\",\n  \"email\": \"rider@example.com\",\n  \"avatarUrl\": \"https://cdn.fleetapp.net/img/sample.png\",\n  \"language\": \"en\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"firstName\": \"Ahmed\",\n    \"lastName\": \"Ali\",\n    \"phoneNumber\": \"33001234\",\n    \"dialCode\": \"+974\",\n    \"gender\": \"male\",\n    \"photo\": \"https://cdn.fleetapp.net/img/sample.png\",\n    \"isActive\": true,\n    \"referralCode\": \"referralCode\",\n    \"walletBalance\": 150.0,\n    \"stripeCustomerId\": \"cus_Ff…\",\n    \"current_country\": \"QA\",\n    \"email\": \"rider@example.com\",\n    \"locale\": \"en\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /me/places — List saved places",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "places"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/places",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "places"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"user_id\": 1,\n      \"label\": \"Home\",\n      \"icon\": \"home\",\n      \"title\": \"Home\",\n      \"address\": \"West Bay, Doha\",\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    }\n  ],\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /me/places — Create a saved place",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "places"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"icon\": \"home\",\n  \"address\": \"West Bay, Doha\",\n  \"lat\": 25.2854,\n  \"lng\": 51.531\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/places",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "places"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Home\",\n  \"icon\": \"home\",\n  \"address\": \"West Bay, Doha\",\n  \"lat\": 25.2854,\n  \"lng\": 51.531\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"label\": \"Home\",\n    \"icon\": \"home\",\n    \"title\": \"Home\",\n    \"address\": \"West Bay, Doha\",\n    \"lat\": 25.2854,\n    \"lng\": 51.531\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /me/places/{id} — Update a saved place",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/places/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "places",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"icon\": \"home\",\n  \"address\": \"West Bay, Doha\",\n  \"lat\": 25.2854,\n  \"lng\": 51.531\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/places/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "places",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Home\",\n  \"icon\": \"home\",\n  \"address\": \"West Bay, Doha\",\n  \"lat\": 25.2854,\n  \"lng\": 51.531\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"label\": \"Home\",\n    \"icon\": \"home\",\n    \"title\": \"Home\",\n    \"address\": \"West Bay, Doha\",\n    \"lat\": 25.2854,\n    \"lng\": 51.531\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /me/places/{id} — Delete a saved place",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/places/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "places",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/places/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "places",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "GET /me/safety-contacts — List safety contacts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/safety-contacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "safety-contacts"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/safety-contacts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "safety-contacts"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"contacts\": [\n      {\n        \"id\": 1,\n        \"user_id\": 1,\n        \"name\": \"Ahmed Ali\",\n        \"phone\": \"33001234\",\n        \"relation\": \"spouse\",\n        \"is_primary\": true,\n        \"auto_share\": true\n      }\n    ],\n    \"autoShare\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /me/safety-contacts — Add a safety contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/safety-contacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "safety-contacts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"phone\": \"33001234\",\n  \"relation\": \"spouse\",\n  \"primary\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/safety-contacts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "safety-contacts"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"phone\": \"33001234\",\n  \"relation\": \"spouse\",\n  \"primary\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"name\": \"Ahmed Ali\",\n    \"phone\": \"33001234\",\n    \"relation\": \"spouse\",\n    \"is_primary\": true,\n    \"auto_share\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /me/safety-contacts/{id} — Delete a safety contact",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/safety-contacts/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "safety-contacts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/safety-contacts/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "safety-contacts",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "PATCH /me/safety-contacts/auto-share — Toggle auto-share of live trip with safety contacts",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/safety-contacts/auto-share",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "safety-contacts",
+                "auto-share"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/safety-contacts/auto-share",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "safety-contacts",
+                    "auto-share"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"enabled\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"enabled\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /me/notifications-prefs — Get notification preferences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/notifications-prefs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "notifications-prefs"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/notifications-prefs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "notifications-prefs"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"tripUpdates\": true,\n    \"promotions\": true,\n    \"officeMessages\": true,\n    \"safetyAlerts\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /me/notifications-prefs — Update notification preferences",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/notifications-prefs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "notifications-prefs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tripUpdates\": true,\n  \"promotions\": true,\n  \"officeMessages\": true,\n  \"safetyAlerts\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/notifications-prefs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "notifications-prefs"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tripUpdates\": true,\n  \"promotions\": true,\n  \"officeMessages\": true,\n  \"safetyAlerts\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"tripUpdates\": true,\n    \"promotions\": true,\n    \"officeMessages\": true,\n    \"safetyAlerts\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /me/privacy — Get privacy settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/privacy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "privacy"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/privacy",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "privacy"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"locationDuringTrips\": true,\n    \"shareTripDataWithOffice\": true,\n    \"marketing\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /me/privacy — Update privacy settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/privacy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "privacy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"locationDuringTrips\": true,\n  \"shareTripDataWithOffice\": true,\n  \"marketing\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/privacy",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "privacy"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"locationDuringTrips\": true,\n  \"shareTripDataWithOffice\": true,\n  \"marketing\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"locationDuringTrips\": true,\n    \"shareTripDataWithOffice\": true,\n    \"marketing\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Marketplace",
+      "item": [
+        {
+          "name": "POST /offices/search — Search offices along a route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offices/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "offices",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route\": {\n    \"pickup\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"dropoff\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"service\": \"service\",\n    \"serviceClass\": \"serviceClass\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offices/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "offices",
+                    "search"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"route\": {\n    \"pickup\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"dropoff\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"service\": \"service\",\n    \"serviceClass\": \"serviceClass\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"offices\": [\n      {\n        \"id\": 1,\n        \"officeName\": \"officeName\",\n        \"initials\": \"AL\",\n        \"palette\": \"a\",\n        \"logo\": \"https://cdn.fleetapp.net/img/sample.png\",\n        \"rating\": 4.7,\n        \"ratings_count\": 3,\n        \"is_verified\": true,\n        \"is_monitored\": true,\n        \"on_time_percentage\": 4.7,\n        \"avg_response_minutes\": 4,\n        \"contactNumber\": \"33001234\",\n        \"country\": \"QA\",\n        \"city\": \"Doha\",\n        \"region\": \"Doha\",\n        \"address\": \"West Bay, Doha\",\n        \"lat\": 25.2854,\n        \"lng\": 51.531,\n        \"working_hours\": null,\n        \"ratingExcellent\": 1,\n        \"ratingGood\": 1,\n        \"ratingAverage\": 1,\n        \"ratingPoor\": 1\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /offices/{id} — Get an office profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offices/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "offices",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offices/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "offices",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"officeName\": \"officeName\",\n    \"initials\": \"AL\",\n    \"palette\": \"a\",\n    \"logo\": \"https://cdn.fleetapp.net/img/sample.png\",\n    \"rating\": 4.7,\n    \"ratings_count\": 3,\n    \"is_verified\": true,\n    \"is_monitored\": true,\n    \"on_time_percentage\": 4.7,\n    \"avg_response_minutes\": 4,\n    \"contactNumber\": \"33001234\",\n    \"country\": \"QA\",\n    \"city\": \"Doha\",\n    \"region\": \"Doha\",\n    \"address\": \"West Bay, Doha\",\n    \"lat\": 25.2854,\n    \"lng\": 51.531,\n    \"working_hours\": null,\n    \"ratingExcellent\": 1,\n    \"ratingGood\": 1,\n    \"ratingAverage\": 1,\n    \"ratingPoor\": 1,\n    \"services\": [\n      {\n        \"id\": 1,\n        \"title\": \"Home\",\n        \"description\": \"Sample text\",\n        \"image\": \"https://cdn.fleetapp.net/img/sample.png\",\n        \"icon\": \"home\",\n        \"badge\": \"badge\",\n        \"sort_order\": 1,\n        \"status\": true,\n        \"travel_service\": true\n      }\n    ],\n    \"classes\": [\n      {\n        \"id\": 1,\n        \"serviceId\": 1,\n        \"name\": \"Ahmed Ali\",\n        \"description\": \"Sample text\",\n        \"image\": \"https://cdn.fleetapp.net/img/sample.png\",\n        \"icon\": \"home\",\n        \"badge\": \"badge\",\n        \"sort_order\": 1,\n        \"status\": true,\n        \"is_travel\": true\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /me/favorites — List favorite offices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/favorites",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "favorites"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/favorites",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "favorites"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"officeName\": \"officeName\",\n      \"initials\": \"AL\",\n      \"palette\": \"a\",\n      \"logo\": \"https://cdn.fleetapp.net/img/sample.png\",\n      \"rating\": 4.7,\n      \"ratings_count\": 3,\n      \"is_verified\": true,\n      \"is_monitored\": true,\n      \"on_time_percentage\": 4.7,\n      \"avg_response_minutes\": 4,\n      \"contactNumber\": \"33001234\",\n      \"country\": \"QA\",\n      \"city\": \"Doha\",\n      \"region\": \"Doha\",\n      \"address\": \"West Bay, Doha\",\n      \"lat\": 25.2854,\n      \"lng\": 51.531,\n      \"working_hours\": null,\n      \"ratingExcellent\": 1,\n      \"ratingGood\": 1,\n      \"ratingAverage\": 1,\n      \"ratingPoor\": 1,\n      \"favoritedAt\": \"2026-07-15T10:20:30Z\"\n    }\n  ],\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /me/favorites/{officeId} — Add an office to favorites",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/favorites/:officeId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "favorites",
+                ":officeId"
+              ],
+              "variable": [
+                {
+                  "key": "officeId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/favorites/:officeId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "favorites",
+                    ":officeId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "officeId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "DELETE /me/favorites/{officeId} — Remove an office from favorites",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/favorites/:officeId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "favorites",
+                ":officeId"
+              ],
+              "variable": [
+                {
+                  "key": "officeId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/me/favorites/:officeId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "me",
+                    "favorites",
+                    ":officeId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "officeId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        {
+          "name": "GET /catalog/services — List service definitions (dynamic, admin-driven)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "catalog",
+                "services"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/catalog/services",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "catalog",
+                    "services"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"services\": [\n      {\n        \"id\": 1,\n        \"title\": \"Home\",\n        \"description\": \"Sample text\",\n        \"image\": \"https://cdn.fleetapp.net/img/sample.png\",\n        \"icon\": \"home\",\n        \"badge\": \"badge\",\n        \"sort_order\": 1,\n        \"status\": true,\n        \"travel_service\": true\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /catalog/classes — List service classes for a service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalog/classes?service=service",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "catalog",
+                "classes"
+              ],
+              "query": [
+                {
+                  "key": "service",
+                  "value": "service"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/catalog/classes?service=service",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "catalog",
+                    "classes"
+                  ],
+                  "query": [
+                    {
+                      "key": "service",
+                      "value": "service"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"classes\": [\n      {\n        \"id\": 1,\n        \"serviceId\": 1,\n        \"name\": \"Ahmed Ali\",\n        \"description\": \"Sample text\",\n        \"image\": \"https://cdn.fleetapp.net/img/sample.png\",\n        \"icon\": \"home\",\n        \"badge\": \"badge\",\n        \"sort_order\": 1,\n        \"status\": true,\n        \"is_travel\": true\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /places/suggest — Autocomplete place suggestions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/places/suggest?q=q&lat=25.2854&lng=51.531",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "places",
+                "suggest"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "q"
+                },
+                {
+                  "key": "lat",
+                  "value": "25.2854"
+                },
+                {
+                  "key": "lng",
+                  "value": "51.531"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/places/suggest?q=q&lat=25.2854&lng=51.531",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "places",
+                    "suggest"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "q"
+                    },
+                    {
+                      "key": "lat",
+                      "value": "25.2854"
+                    },
+                    {
+                      "key": "lng",
+                      "value": "51.531"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"results\": [\n      {\n        \"id\": \"id\",\n        \"title\": \"Home\",\n        \"address\": \"West Bay, Doha\",\n        \"lat\": 25.2854,\n        \"lng\": 51.531,\n        \"source\": \"recent\"\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /routes/estimate — Estimate a route and fares",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/routes/estimate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "routes",
+                "estimate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup\": {\n    \"lat\": 25.2854,\n    \"lng\": 51.531\n  },\n  \"dropoff\": {\n    \"lat\": 25.2854,\n    \"lng\": 51.531\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/routes/estimate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "routes",
+                    "estimate"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pickup\": {\n    \"lat\": 25.2854,\n    \"lng\": 51.531\n  },\n  \"dropoff\": {\n    \"lat\": 25.2854,\n    \"lng\": 51.531\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"distance_m\": 5400,\n    \"duration_s\": 720,\n    \"currency_code\": \"QAR\",\n    \"polyline\": \"polyline\",\n    \"classes\": [\n      {\n        \"id\": 1,\n        \"serviceId\": 1,\n        \"name\": \"Ahmed Ali\",\n        \"description\": \"Sample text\",\n        \"image\": \"https://cdn.fleetapp.net/img/sample.png\",\n        \"icon\": \"home\",\n        \"badge\": \"badge\",\n        \"sort_order\": 1,\n        \"status\": true,\n        \"is_travel\": true,\n        \"openPrice\": 150.0,\n        \"kmPrice\": 150.0,\n        \"minutePrice\": 150.0,\n        \"base_fare\": 150.0,\n        \"fare_minor\": 1500,\n        \"currency_code\": \"QAR\"\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /geocode/reverse — Reverse-geocode coordinates to an address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/geocode/reverse",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "geocode",
+                "reverse"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": 25.2854,\n  \"lng\": 51.531\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/geocode/reverse",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "geocode",
+                    "reverse"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"lat\": 25.2854,\n  \"lng\": 51.531\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"address\": \"West Bay, Doha\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /bookings — Create a ride (emits booking.status_changed:matching)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service\": \"ride\",\n  \"service_class\": \"City\",\n  \"pricing_style\": \"meterEstimate\",\n  \"office_id\": 12,\n  \"pickup_lat\": 25.276,\n  \"pickup_lng\": 51.52,\n  \"pickup_title\": \"Al Sadd, Zone 38\",\n  \"pickup_note\": \"North gate, blue door\",\n  \"dropoff_lat\": 25.2731,\n  \"dropoff_lng\": 51.608,\n  \"dropoff_title\": \"Hamad Intl. Airport\",\n  \"scheduled_at\": null,\n  \"idempotency_key\": \"b1f2\\u2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/bookings",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bookings"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"service\": \"ride\",\n  \"service_class\": \"City\",\n  \"pricing_style\": \"meterEstimate\",\n  \"office_id\": 12,\n  \"pickup_lat\": 25.276,\n  \"pickup_lng\": 51.52,\n  \"pickup_title\": \"Al Sadd, Zone 38\",\n  \"pickup_note\": \"North gate, blue door\",\n  \"dropoff_lat\": 25.2731,\n  \"dropoff_lng\": 51.608,\n  \"dropoff_title\": \"Hamad Intl. Airport\",\n  \"scheduled_at\": null,\n  \"idempotency_key\": \"b1f2\\u2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"locale\": \"en\",\n  \"data\": {\n    \"id\": 4100,\n    \"user_id\": 1,\n    \"office_id\": 12,\n    \"driver_id\": null,\n    \"vehicle_id\": null,\n    \"service\": \"ride\",\n    \"service_class\": \"City\",\n    \"pricing_style\": \"meterEstimate\",\n    \"status\": \"matching\",\n    \"pickup_lat\": 25.276,\n    \"pickup_lng\": 51.52,\n    \"pickup_title\": \"Al Sadd, Zone 38\",\n    \"pickup_note\": \"North gate, blue door\",\n    \"dropoff_lat\": 25.2731,\n    \"dropoff_lng\": 51.608,\n    \"dropoff_title\": \"Hamad Intl. Airport\",\n    \"distance_m\": 14800,\n    \"duration_s\": 1320,\n    \"currency_code\": \"QAR\",\n    \"fare_minor\": 2400,\n    \"total_minor\": 2400,\n    \"scheduled_at\": null,\n    \"created_at\": \"2026-07-15T09:12:03Z\"\n  },\n  \"error\": null,\n  \"meta\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /bookings/:id/cancel — Rider cancels the ride",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id",
+                "cancel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Changed my mind\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/bookings/:id/cancel",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bookings",
+                    ":id",
+                    "cancel"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Changed my mind\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"locale\": \"en\",\n  \"data\": {\n    \"id\": 4100,\n    \"user_id\": 1,\n    \"office_id\": 12,\n    \"driver_id\": null,\n    \"vehicle_id\": null,\n    \"service\": \"ride\",\n    \"service_class\": \"City\",\n    \"pricing_style\": \"meterEstimate\",\n    \"status\": \"cancelled\",\n    \"pickup_lat\": 25.276,\n    \"pickup_lng\": 51.52,\n    \"pickup_title\": \"Al Sadd, Zone 38\",\n    \"pickup_note\": \"North gate, blue door\",\n    \"dropoff_lat\": 25.2731,\n    \"dropoff_lng\": 51.608,\n    \"dropoff_title\": \"Hamad Intl. Airport\",\n    \"distance_m\": 14800,\n    \"duration_s\": 1320,\n    \"currency_code\": \"QAR\",\n    \"fare_minor\": 2400,\n    \"total_minor\": 2400,\n    \"scheduled_at\": null,\n    \"created_at\": \"2026-07-15T09:12:03Z\",\n    \"cancel_reason\": \"Changed my mind\"\n  },\n  \"error\": null,\n  \"meta\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "GET /trips — List trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trips?status=active&limit=3&cursor=eyJpZCI6MjB9",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trips"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                },
+                {
+                  "key": "cursor",
+                  "value": "eyJpZCI6MjB9"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/trips?status=active&limit=3&cursor=eyJpZCI6MjB9",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "trips"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "active"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "3"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "eyJpZCI6MjB9"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"items\": [\n      {\n        \"id\": 1,\n        \"user_id\": 1,\n        \"office_id\": 1,\n        \"driver_id\": 1,\n        \"vehicle_id\": 1,\n        \"service\": \"service\",\n        \"service_class\": \"service_class\",\n        \"pricing_style\": \"meterEstimate\",\n        \"status\": \"active\",\n        \"pickup_lat\": 25.2854,\n        \"pickup_lng\": 51.531,\n        \"pickup_title\": \"Home\",\n        \"pickup_note\": \"pickup_note\",\n        \"dropoff_lat\": 25.2854,\n        \"dropoff_lng\": 51.531,\n        \"dropoff_title\": \"Home\",\n        \"distance_m\": 5400,\n        \"duration_s\": 720,\n        \"currency_code\": \"QAR\",\n        \"fare_minor\": 1500,\n        \"discount_minor\": 1500,\n        \"waiting_minor\": 1500,\n        \"tip_minor\": 1500,\n        \"total_minor\": 1500,\n        \"held_minor\": 1500,\n        \"payment_method\": \"payment_method\",\n        \"stripe_payment_intent_id\": \"stripe_payment_intent_id\",\n        \"promo_code\": \"WELCOME10\",\n        \"coupon_id\": 1,\n        \"scheduled_at\": \"2026-07-15T10:20:30Z\",\n        \"passengers\": 2,\n        \"luggage\": 1,\n        \"flight_no\": \"QR1234\",\n        \"assigned_at\": \"2026-07-15T10:20:30Z\",\n        \"completed_at\": \"2026-07-15T10:20:30Z\",\n        \"cancelled_at\": \"2026-07-15T10:20:30Z\",\n        \"rated_at\": \"2026-07-15T10:20:30Z\",\n        \"cancel_reason\": \"cancel_reason\",\n        \"change_revision\": 1,\n        \"source\": \"source\",\n        \"created_by\": \"created_by\"\n      }\n    ],\n    \"nextCursor\": \"eyJpZCI6MjB9\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /trips/{id} — Get a trip receipt",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trips/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trips",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/trips/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "trips",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"office_id\": 1,\n    \"driver_id\": 1,\n    \"vehicle_id\": 1,\n    \"service\": \"service\",\n    \"service_class\": \"service_class\",\n    \"pricing_style\": \"meterEstimate\",\n    \"status\": \"active\",\n    \"pickup_lat\": 25.2854,\n    \"pickup_lng\": 51.531,\n    \"pickup_title\": \"Home\",\n    \"pickup_note\": \"pickup_note\",\n    \"dropoff_lat\": 25.2854,\n    \"dropoff_lng\": 51.531,\n    \"dropoff_title\": \"Home\",\n    \"distance_m\": 5400,\n    \"duration_s\": 720,\n    \"currency_code\": \"QAR\",\n    \"fare_minor\": 1500,\n    \"discount_minor\": 1500,\n    \"waiting_minor\": 1500,\n    \"tip_minor\": 1500,\n    \"total_minor\": 1500,\n    \"held_minor\": 1500,\n    \"payment_method\": \"payment_method\",\n    \"stripe_payment_intent_id\": \"stripe_payment_intent_id\",\n    \"promo_code\": \"WELCOME10\",\n    \"coupon_id\": 1,\n    \"scheduled_at\": \"2026-07-15T10:20:30Z\",\n    \"passengers\": 2,\n    \"luggage\": 1,\n    \"flight_no\": \"QR1234\",\n    \"assigned_at\": \"2026-07-15T10:20:30Z\",\n    \"completed_at\": \"2026-07-15T10:20:30Z\",\n    \"cancelled_at\": \"2026-07-15T10:20:30Z\",\n    \"rated_at\": \"2026-07-15T10:20:30Z\",\n    \"cancel_reason\": \"cancel_reason\",\n    \"change_revision\": 1,\n    \"source\": \"source\",\n    \"created_by\": \"created_by\",\n    \"office\": {\n      \"id\": 1,\n      \"officeName\": \"officeName\",\n      \"initials\": \"AL\",\n      \"palette\": \"a\",\n      \"logo\": \"https://cdn.fleetapp.net/img/sample.png\",\n      \"rating\": 4.7,\n      \"ratings_count\": 3,\n      \"is_verified\": true,\n      \"is_monitored\": true,\n      \"on_time_percentage\": 4.7,\n      \"avg_response_minutes\": 4,\n      \"contactNumber\": \"33001234\",\n      \"country\": \"QA\",\n      \"city\": \"Doha\",\n      \"region\": \"Doha\",\n      \"address\": \"West Bay, Doha\",\n      \"lat\": 25.2854,\n      \"lng\": 51.531,\n      \"working_hours\": null,\n      \"ratingExcellent\": 1,\n      \"ratingGood\": 1,\n      \"ratingAverage\": 1,\n      \"ratingPoor\": 1\n    },\n    \"rating\": {\n      \"id\": 1,\n      \"booking_id\": 1,\n      \"rater_type\": \"rater_type\",\n      \"rater_id\": 1,\n      \"ratee_type\": \"ratee_type\",\n      \"ratee_id\": 1,\n      \"stars\": 5,\n      \"tags\": [\n        \"tags\"\n      ],\n      \"comment\": \"Sample text\",\n      \"book_again\": true,\n      \"favorite\": true\n    }\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /trips/{id}/lost-item — Report a lost item on a trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trips/:id/lost-item",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trips",
+                ":id",
+                "lost-item"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Phone\",\n  \"description\": \"Sample text\",\n  \"shareMaskedNumber\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/trips/:id/lost-item",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "trips",
+                    ":id",
+                    "lost-item"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category\": \"Phone\",\n  \"description\": \"Sample text\",\n  \"shareMaskedNumber\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"ticketId\": 1,\n    \"status\": \"active\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /trips/{id}/rating — Rate a trip (driver + office)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trips/:id/rating",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trips",
+                ":id",
+                "rating"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stars\": 5,\n  \"tags\": [\n    \"tags\"\n  ],\n  \"comment\": \"Sample text\",\n  \"bookAgain\": true,\n  \"favorite\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/trips/:id/rating",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "trips",
+                    ":id",
+                    "rating"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stars\": 5,\n  \"tags\": [\n    \"tags\"\n  ],\n  \"comment\": \"Sample text\",\n  \"bookAgain\": true,\n  \"favorite\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"ok\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /trips/{id}/messages — List in-ride chat messages for a trip",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trips/:id/messages?limit=3&cursor=eyJpZCI6MjB9",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trips",
+                ":id",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "3"
+                },
+                {
+                  "key": "cursor",
+                  "value": "eyJpZCI6MjB9"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/trips/:id/messages?limit=3&cursor=eyJpZCI6MjB9",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "trips",
+                    ":id",
+                    "messages"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "3"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "eyJpZCI6MjB9"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"items\": [\n      {\n        \"id\": 1,\n        \"booking_id\": 1,\n        \"from_type\": \"rider\",\n        \"body\": \"Sample text\",\n        \"read_at\": \"2026-07-15T10:20:30Z\",\n        \"created_at\": \"2026-07-15T10:20:30Z\"\n      }\n    ],\n    \"nextCursor\": \"eyJpZCI6MjB9\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /trips/{id}/messages — Send an in-ride chat message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trips/:id/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trips",
+                ":id",
+                "messages"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Sample text\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/trips/:id/messages",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "trips",
+                    ":id",
+                    "messages"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"body\": \"Sample text\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"booking_id\": 1,\n    \"from_type\": \"rider\",\n    \"body\": \"Sample text\",\n    \"read_at\": \"2026-07-15T10:20:30Z\",\n    \"created_at\": \"2026-07-15T10:20:30Z\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "GET /wallet — Get wallet balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/wallet",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "wallet"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"balance\": 150.0,\n    \"currency\": \"QAR\",\n    \"symbol\": \"﷼\",\n    \"decimals\": 1\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /wallet/topup — Top up the wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "<uuid>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/topup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "topup"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1500,\n  \"paymentMethodId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "<uuid>"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/wallet/topup",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "wallet",
+                    "topup"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 1500,\n  \"paymentMethodId\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"ledgerId\": 1,\n    \"status\": \"active\",\n    \"clientSecret\": \"pi_3Ff…_secret_xyz\",\n    \"requiresAction\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /wallet/transactions — List wallet transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/transactions?limit=3&cursor=eyJpZCI6MjB9",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "3"
+                },
+                {
+                  "key": "cursor",
+                  "value": "eyJpZCI6MjB9"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/wallet/transactions?limit=3&cursor=eyJpZCI6MjB9",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "wallet",
+                    "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "3"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "eyJpZCI6MjB9"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"items\": [\n      {\n        \"id\": 1,\n        \"amount\": 150.0,\n        \"balance_before\": 150.0,\n        \"balance_after\": 150.0,\n        \"status\": \"active\",\n        \"transaction_type\": \"transaction_type\",\n        \"transaction_reference\": \"transaction_reference\",\n        \"description\": \"Sample text\",\n        \"paymentName\": \"paymentName\",\n        \"created_at\": \"2026-07-15T10:20:30Z\"\n      }\n    ],\n    \"nextCursor\": \"eyJpZCI6MjB9\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "GET /payment-methods — List saved payment methods",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payment-methods",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-methods"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payment-methods",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payment-methods"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"user_id\": 1,\n      \"type\": \"card\",\n      \"brand\": \"visa\",\n      \"last4\": \"4242\",\n      \"exp\": \"12/28\",\n      \"is_default\": true,\n      \"stripe_payment_method_id\": \"stripe_payment_method_id\",\n      \"stripe_setup_intent_id\": \"stripe_setup_intent_id\"\n    }\n  ],\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /payment-methods — Save a confirmed Stripe payment method",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "<uuid>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payment-methods",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-methods"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stripePaymentMethodId\": \"pm_1Ff…\",\n  \"setDefault\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "<uuid>"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payment-methods",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payment-methods"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stripePaymentMethodId\": \"pm_1Ff…\",\n  \"setDefault\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"type\": \"card\",\n    \"brand\": \"visa\",\n    \"last4\": \"4242\",\n    \"exp\": \"12/28\",\n    \"is_default\": true,\n    \"stripe_payment_method_id\": \"stripe_payment_method_id\",\n    \"stripe_setup_intent_id\": \"stripe_setup_intent_id\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /payment-methods/{id} — Set a payment method as default",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payment-methods/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-methods",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"default\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payment-methods/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payment-methods",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"default\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"type\": \"card\",\n    \"brand\": \"visa\",\n    \"last4\": \"4242\",\n    \"exp\": \"12/28\",\n    \"is_default\": true,\n    \"stripe_payment_method_id\": \"stripe_payment_method_id\",\n    \"stripe_setup_intent_id\": \"stripe_setup_intent_id\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /payment-methods/{id} — Delete a payment method",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payment-methods/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payment-methods",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payment-methods/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payment-methods",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "GET /promos — List available promos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/promos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "promos"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/promos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "promos"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"promos\": [\n      {\n        \"code\": \"WELCOME10\",\n        \"discountType\": \"percentage\",\n        \"discount\": 150.0,\n        \"isPercentage\": true,\n        \"isActive\": true,\n        \"limit\": 3,\n        \"expireDate\": \"2026-07-15T10:20:30Z\",\n        \"userCount\": 3\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /promos/redeem — Redeem a promo code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/promos/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "promos",
+                "redeem"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/promos/redeem",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "promos",
+                    "redeem"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"WELCOME10\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"code\": \"WELCOME10\",\n    \"applied\": true,\n    \"discount\": 150.0,\n    \"discountType\": \"percentage\",\n    \"message\": \"Sample text\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /payments/stripe/setup-intent — Create a Stripe SetupIntent (add-card flow)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stripe/setup-intent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "stripe",
+                "setup-intent"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payments/stripe/setup-intent",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "stripe",
+                    "setup-intent"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"setupIntentId\": \"seti_1Ff…\",\n    \"clientSecret\": \"pi_3Ff…_secret_xyz\",\n    \"customerId\": \"cus_Ff…\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /payments/stripe/payment-intent — Create a Stripe PaymentIntent (top-up or trip)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "<uuid>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stripe/payment-intent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "stripe",
+                "payment-intent"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1500,\n  \"purpose\": \"topup\",\n  \"tripId\": 1,\n  \"paymentMethodId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "<uuid>"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payments/stripe/payment-intent",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "stripe",
+                    "payment-intent"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 1500,\n  \"purpose\": \"topup\",\n  \"tripId\": 1,\n  \"paymentMethodId\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"paymentIntentId\": \"pi_1Ff…\",\n    \"clientSecret\": \"pi_3Ff…_secret_xyz\",\n    \"requiresAction\": true,\n    \"status\": \"active\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Support",
+      "item": [
+        {
+          "name": "GET /tickets — List support tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tickets",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tickets"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"user_id\": 1,\n      \"tripId\": 1,\n      \"office_id\": 1,\n      \"category\": \"category\",\n      \"topic\": \"topic\",\n      \"layer\": \"layer\",\n      \"subject\": \"Home\",\n      \"status\": \"open\",\n      \"last_message_at\": \"2026-07-15T10:20:30Z\",\n      \"messages\": [\n        {\n          \"id\": 1,\n          \"ticket_id\": 1,\n          \"sender_type\": \"sender_type\",\n          \"sender_id\": 1,\n          \"body\": \"Sample text\",\n          \"created_at\": \"2026-07-15T10:20:30Z\"\n        }\n      ]\n    }\n  ],\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /tickets — Open a support ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"topic\",\n  \"tripId\": 1,\n  \"message\": \"Sample text\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tickets",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tickets"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"topic\": \"topic\",\n  \"tripId\": 1,\n  \"message\": \"Sample text\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"ticketId\": 1,\n    \"status\": \"active\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /tickets/{id} — Get a ticket with its messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tickets/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tickets",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"tripId\": 1,\n    \"office_id\": 1,\n    \"category\": \"category\",\n    \"topic\": \"topic\",\n    \"layer\": \"layer\",\n    \"subject\": \"Home\",\n    \"status\": \"open\",\n    \"last_message_at\": \"2026-07-15T10:20:30Z\",\n    \"messages\": [\n      {\n        \"id\": 1,\n        \"ticket_id\": 1,\n        \"sender_type\": \"sender_type\",\n        \"sender_id\": 1,\n        \"body\": \"Sample text\",\n        \"created_at\": \"2026-07-15T10:20:30Z\"\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /complaints — File a complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/complaints",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "complaints"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"about\": \"driver\",\n  \"tripId\": 1,\n  \"description\": \"Sample text\",\n  \"photoUrl\": \"https://cdn.fleetapp.net/img/sample.png\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/complaints",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "complaints"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"about\": \"driver\",\n  \"tripId\": 1,\n  \"description\": \"Sample text\",\n  \"photoUrl\": \"https://cdn.fleetapp.net/img/sample.png\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"routed_to\": \"office\",\n    \"priority\": \"normal\",\n    \"case_ref\": \"case_ref\",\n    \"status\": \"active\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /help/articles — List help articles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/help/articles?category=category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "help",
+                "articles"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "category"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/help/articles?category=category",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "help",
+                    "articles"
+                  ],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "category"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"category\": \"category\",\n      \"title\": \"Home\",\n      \"readMinutes\": 4\n    }\n  ],\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /help/articles/{id} — Get a help article",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/help/articles/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "help",
+                "articles",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/help/articles/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "help",
+                    "articles",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"category\": \"category\",\n    \"title\": \"Home\",\n    \"description\": \"Sample text\",\n    \"read_minutes\": 4,\n    \"priority\": 1,\n    \"target_user\": \"user\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Scheduled",
+      "item": [
+        {
+          "name": "POST /scheduled — Schedule a ride",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "<uuid>"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scheduled",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scheduled"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route\": {\n    \"pickup\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"dropoff\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"service\": \"service\",\n    \"serviceClass\": \"serviceClass\"\n  },\n  \"scheduledFor\": \"2026-07-15T10:20:30Z\",\n  \"passengers\": 2,\n  \"luggage\": 1,\n  \"flightNo\": \"QR1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "<uuid>"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/scheduled",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "scheduled"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"route\": {\n    \"pickup\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"dropoff\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"service\": \"service\",\n    \"serviceClass\": \"serviceClass\"\n  },\n  \"scheduledFor\": \"2026-07-15T10:20:30Z\",\n  \"passengers\": 2,\n  \"luggage\": 1,\n  \"flightNo\": \"QR1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"office_id\": 1,\n    \"driver_id\": 1,\n    \"vehicle_id\": 1,\n    \"service\": \"service\",\n    \"service_class\": \"service_class\",\n    \"pricing_style\": \"meterEstimate\",\n    \"status\": \"active\",\n    \"pickup_lat\": 25.2854,\n    \"pickup_lng\": 51.531,\n    \"pickup_title\": \"Home\",\n    \"pickup_note\": \"pickup_note\",\n    \"dropoff_lat\": 25.2854,\n    \"dropoff_lng\": 51.531,\n    \"dropoff_title\": \"Home\",\n    \"distance_m\": 5400,\n    \"duration_s\": 720,\n    \"currency_code\": \"QAR\",\n    \"fare_minor\": 1500,\n    \"discount_minor\": 1500,\n    \"waiting_minor\": 1500,\n    \"tip_minor\": 1500,\n    \"total_minor\": 1500,\n    \"held_minor\": 1500,\n    \"payment_method\": \"payment_method\",\n    \"stripe_payment_intent_id\": \"stripe_payment_intent_id\",\n    \"promo_code\": \"WELCOME10\",\n    \"coupon_id\": 1,\n    \"scheduled_at\": \"2026-07-15T10:20:30Z\",\n    \"passengers\": 2,\n    \"luggage\": 1,\n    \"flight_no\": \"QR1234\",\n    \"assigned_at\": \"2026-07-15T10:20:30Z\",\n    \"completed_at\": \"2026-07-15T10:20:30Z\",\n    \"cancelled_at\": \"2026-07-15T10:20:30Z\",\n    \"rated_at\": \"2026-07-15T10:20:30Z\",\n    \"cancel_reason\": \"cancel_reason\",\n    \"change_revision\": 1,\n    \"source\": \"source\",\n    \"created_by\": \"created_by\",\n    \"steps\": [\n      {\n        \"key\": \"key\",\n        \"label\": \"Home\",\n        \"status\": \"active\",\n        \"at\": \"2026-07-15T10:20:30Z\"\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /scheduled/{id} — Get a scheduled trip",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scheduled/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scheduled",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/scheduled/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "scheduled",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"office_id\": 1,\n    \"driver_id\": 1,\n    \"vehicle_id\": 1,\n    \"service\": \"service\",\n    \"service_class\": \"service_class\",\n    \"pricing_style\": \"meterEstimate\",\n    \"status\": \"active\",\n    \"pickup_lat\": 25.2854,\n    \"pickup_lng\": 51.531,\n    \"pickup_title\": \"Home\",\n    \"pickup_note\": \"pickup_note\",\n    \"dropoff_lat\": 25.2854,\n    \"dropoff_lng\": 51.531,\n    \"dropoff_title\": \"Home\",\n    \"distance_m\": 5400,\n    \"duration_s\": 720,\n    \"currency_code\": \"QAR\",\n    \"fare_minor\": 1500,\n    \"discount_minor\": 1500,\n    \"waiting_minor\": 1500,\n    \"tip_minor\": 1500,\n    \"total_minor\": 1500,\n    \"held_minor\": 1500,\n    \"payment_method\": \"payment_method\",\n    \"stripe_payment_intent_id\": \"stripe_payment_intent_id\",\n    \"promo_code\": \"WELCOME10\",\n    \"coupon_id\": 1,\n    \"scheduled_at\": \"2026-07-15T10:20:30Z\",\n    \"passengers\": 2,\n    \"luggage\": 1,\n    \"flight_no\": \"QR1234\",\n    \"assigned_at\": \"2026-07-15T10:20:30Z\",\n    \"completed_at\": \"2026-07-15T10:20:30Z\",\n    \"cancelled_at\": \"2026-07-15T10:20:30Z\",\n    \"rated_at\": \"2026-07-15T10:20:30Z\",\n    \"cancel_reason\": \"cancel_reason\",\n    \"change_revision\": 1,\n    \"source\": \"source\",\n    \"created_by\": \"created_by\",\n    \"steps\": [\n      {\n        \"key\": \"key\",\n        \"label\": \"Home\",\n        \"status\": \"active\",\n        \"at\": \"2026-07-15T10:20:30Z\"\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /scheduled/{id} — Modify a scheduled trip (bumps `change_revision`)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scheduled/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scheduled",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route\": {\n    \"pickup\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"dropoff\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"service\": \"service\",\n    \"serviceClass\": \"serviceClass\"\n  },\n  \"scheduledFor\": \"2026-07-15T10:20:30Z\",\n  \"passengers\": 2,\n  \"luggage\": 1,\n  \"flightNo\": \"QR1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/scheduled/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "scheduled",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"route\": {\n    \"pickup\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"dropoff\": {\n      \"lat\": 25.2854,\n      \"lng\": 51.531\n    },\n    \"service\": \"service\",\n    \"serviceClass\": \"serviceClass\"\n  },\n  \"scheduledFor\": \"2026-07-15T10:20:30Z\",\n  \"passengers\": 2,\n  \"luggage\": 1,\n  \"flightNo\": \"QR1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"office_id\": 1,\n    \"driver_id\": 1,\n    \"vehicle_id\": 1,\n    \"service\": \"service\",\n    \"service_class\": \"service_class\",\n    \"pricing_style\": \"meterEstimate\",\n    \"status\": \"active\",\n    \"pickup_lat\": 25.2854,\n    \"pickup_lng\": 51.531,\n    \"pickup_title\": \"Home\",\n    \"pickup_note\": \"pickup_note\",\n    \"dropoff_lat\": 25.2854,\n    \"dropoff_lng\": 51.531,\n    \"dropoff_title\": \"Home\",\n    \"distance_m\": 5400,\n    \"duration_s\": 720,\n    \"currency_code\": \"QAR\",\n    \"fare_minor\": 1500,\n    \"discount_minor\": 1500,\n    \"waiting_minor\": 1500,\n    \"tip_minor\": 1500,\n    \"total_minor\": 1500,\n    \"held_minor\": 1500,\n    \"payment_method\": \"payment_method\",\n    \"stripe_payment_intent_id\": \"stripe_payment_intent_id\",\n    \"promo_code\": \"WELCOME10\",\n    \"coupon_id\": 1,\n    \"scheduled_at\": \"2026-07-15T10:20:30Z\",\n    \"passengers\": 2,\n    \"luggage\": 1,\n    \"flight_no\": \"QR1234\",\n    \"assigned_at\": \"2026-07-15T10:20:30Z\",\n    \"completed_at\": \"2026-07-15T10:20:30Z\",\n    \"cancelled_at\": \"2026-07-15T10:20:30Z\",\n    \"rated_at\": \"2026-07-15T10:20:30Z\",\n    \"cancel_reason\": \"cancel_reason\",\n    \"change_revision\": 1,\n    \"source\": \"source\",\n    \"created_by\": \"created_by\",\n    \"steps\": [\n      {\n        \"key\": \"key\",\n        \"label\": \"Home\",\n        \"status\": \"active\",\n        \"at\": \"2026-07-15T10:20:30Z\"\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /scheduled/{id} — Cancel a scheduled trip",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/scheduled/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "scheduled",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/scheduled/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "scheduled",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "B2B",
+      "item": [
+        {
+          "name": "GET /corporate/invoices — List corporate invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/corporate/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "corporate",
+                "invoices"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/corporate/invoices",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "corporate",
+                    "invoices"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"invoices\": [\n      {\n        \"id\": 1,\n        \"user_id\": 1,\n        \"month\": \"2026-07\",\n        \"trips\": 3,\n        \"amount_minor\": 1500,\n        \"currency_code\": \"QAR\",\n        \"status\": \"unbilled\"\n      }\n    ]\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /family/members — List family members",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/family/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "family",
+                "members"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/family/members",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "family",
+                    "members"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"user_id\": 1,\n      \"name\": \"Ahmed Ali\",\n      \"phone\": \"33001234\",\n      \"type\": \"minor\",\n      \"approval_required\": true,\n      \"auto_share\": true\n    }\n  ],\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /family/members — Add a family member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/family/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "family",
+                "members"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"phone\": \"33001234\",\n  \"type\": \"minor\",\n  \"approvalRequired\": true,\n  \"autoShare\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/family/members",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "family",
+                    "members"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"phone\": \"33001234\",\n  \"type\": \"minor\",\n  \"approvalRequired\": true,\n  \"autoShare\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"name\": \"Ahmed Ali\",\n    \"phone\": \"33001234\",\n    \"type\": \"minor\",\n    \"approval_required\": true,\n    \"auto_share\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /family/members/{id} — Update a family member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/family/members/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "family",
+                "members",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"phone\": \"33001234\",\n  \"type\": \"minor\",\n  \"approvalRequired\": true,\n  \"autoShare\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/family/members/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "family",
+                    "members",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Ahmed Ali\",\n  \"phone\": \"33001234\",\n  \"type\": \"minor\",\n  \"approvalRequired\": true,\n  \"autoShare\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"name\": \"Ahmed Ali\",\n    \"phone\": \"33001234\",\n    \"type\": \"minor\",\n    \"approval_required\": true,\n    \"auto_share\": true\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /family/members/{id} — Remove a family member",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/family/members/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "family",
+                "members",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/family/members/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "family",
+                    "members",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "GET /notifications — List in-app notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?unread=True&limit=3&cursor=eyJpZCI6MjB9",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "unread",
+                  "value": "True"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                },
+                {
+                  "key": "cursor",
+                  "value": "eyJpZCI6MjB9"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/notifications?unread=True&limit=3&cursor=eyJpZCI6MjB9",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "notifications"
+                  ],
+                  "query": [
+                    {
+                      "key": "unread",
+                      "value": "True"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "3"
+                    },
+                    {
+                      "key": "cursor",
+                      "value": "eyJpZCI6MjB9"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"items\": [\n      {\n        \"id\": 1,\n        \"template_key\": \"template_key\",\n        \"type\": \"type\",\n        \"locale\": \"en\",\n        \"title\": \"Home\",\n        \"body\": \"Sample text\",\n        \"data\": null,\n        \"read_at\": \"2026-07-15T10:20:30Z\",\n        \"created_at\": \"2026-07-15T10:20:30Z\"\n      }\n    ],\n    \"unreadCount\": 3,\n    \"nextCursor\": \"eyJpZCI6MjB9\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /notifications/{id}/read — Mark a notification as read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/notifications/:id/read",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    ":id",
+                    "read"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"template_key\": \"template_key\",\n    \"type\": \"type\",\n    \"locale\": \"en\",\n    \"title\": \"Home\",\n    \"body\": \"Sample text\",\n    \"data\": null,\n    \"read_at\": \"2026-07-15T10:20:30Z\",\n    \"created_at\": \"2026-07-15T10:20:30Z\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /notifications/read-all — Mark all notifications as read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/notifications/read-all",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "read-all"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 200,\n  \"message\": \"OK\",\n  \"data\": {\n    \"updated\": 1\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /devices — Register (upsert) a push device token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/devices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "devices"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"eyJ0eXAiOiJKV1Qi…\",\n  \"platform\": \"ios\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/devices",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "devices"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"eyJ0eXAiOiJKV1Qi…\",\n  \"platform\": \"ios\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"statusCode\": 201,\n  \"message\": \"OK\",\n  \"data\": {\n    \"id\": 1,\n    \"token\": \"eyJ0eXAiOiJKV1Qi…\",\n    \"platform\": \"ios\",\n    \"last_seen_at\": \"2026-07-15T10:20:30Z\"\n  },\n  \"error\": null,\n  \"meta\": null,\n  \"locale\": \"en\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /devices/{token} — Unregister a push device token",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/devices/:token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "devices",
+                ":token"
+              ],
+              "variable": [
+                {
+                  "key": "token",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/devices/:token",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "devices",
+                    ":token"
+                  ],
+                  "variable": [
+                    {
+                      "key": "token",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

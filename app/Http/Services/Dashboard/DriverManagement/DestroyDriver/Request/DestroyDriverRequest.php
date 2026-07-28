@@ -24,7 +24,8 @@ class DestroyDriverRequest extends BaseRequest
     {
         return
         [
-            // write your rules here..
+            'id' => 'required|integer|exists:drivers,id',
+            'type' => 'required|string|in:delete,restore,forcedelete',
         ];
     }
 

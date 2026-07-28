@@ -29,25 +29,26 @@ class CreateOrUpdateVehicleLogic implements Service {
     }
 
 
-    public function execute (): ResponseModel | RedirectResponse{ 
-        
+    public function execute (): ResponseModel | RedirectResponse{
+
         $ImageManager = new ImageManager();
-        
+
         beginTransaction();
-        $data = 
+        $data =
         [
-            'officeId'          =>$this->input->getOffice_id(), 
-            'vehicleBrand'      =>$this->input->getVehicle_brand(), 
-            'plate'             =>$this->input->getPlate(), 
-            'modelYear'         =>$this->input->getModel_year(), 
-            'licenseNumber'     =>$this->input->getLicenseNumber(), 
+            'officeId'          =>$this->input->getOffice_id(),
+            'vehicleBrand'      =>$this->input->getVehicle_brand(),
+            'plate'             =>$this->input->getPlate(),
+            'modelYear'         =>$this->input->getModel_year(),
+            'licenseNumber'     =>$this->input->getLicenseNumber(),
             'model'             =>$this->input->getModel(),
-        //  'lastDriver'        =>$this->input->getLast(), 
-            'color'             =>$this->input->getColor(), 
-        //  'driverId'          =>$this->input->getDriverId(), 
+        //  'lastDriver'        =>$this->input->getLast(),
+            'color'             =>$this->input->getColor(),
+        //  'driverId'          =>$this->input->getDriverId(),
             'city'              =>$this->input->getCity(),
-            'description'       =>$this->input->getDescription(),  
-            'seatsCount'        =>$this->input->getSeatsCount(),   
+            'description'       =>$this->input->getDescription(),
+            'seatsCount'        =>$this->input->getSeatsCount(),
+
         ];
 
         if($this->input->hasImage()){
@@ -55,7 +56,7 @@ class CreateOrUpdateVehicleLogic implements Service {
             $path = $ImageManager->withStorge( $path );
             $data['photo'] = $path;
         }
-        
+
         $vehicle_repo  = $this->repository->VehicleRepository();
 
         if($this->input->getId() != null ){
@@ -89,10 +90,10 @@ class CreateOrUpdateVehicleLogic implements Service {
 
         $this->repository->VehicleRepository()
         ->createRepository()->addVehicleSubServices( $vehicleId , $this->input->getSubServiceIds());
-        
+
 
         commitTransaction();
-		return redirect(route('vehicle.index'))->withSuccess($message);        
+		return redirect(route('vehicle.index'))->withSuccess($message);
 
     }
 

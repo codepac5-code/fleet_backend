@@ -14,20 +14,18 @@
 
 
 <div class="container mt-4">
-    <!-- التبويبات العصرية -->
     <div class="trip-tabs">
         <button class="tab-button active" data-target="#ongoing">
-            <i class="fas fa-car-side animated-icon"></i> الرحلة الحالية
+            <i class="fas fa-car-side animated-icon"></i>
         </button>
         <button class="tab-button" data-target="#pending">
-            <i class="fas fa-hourglass-half animated-icon"></i> الطلبات قيد الانتظار
+            <i class="fas fa-hourglass-half animated-icon"></i>
         </button>
         <button class="tab-button" data-target="#finished">
-            <i class="fas fa-flag-checkered animated-icon"></i> الرحلات المنتهية
+            <i class="fas fa-flag-checkered animated-icon"></i>
         </button>
     </div>
 
-    <!-- محتوى التبويبات -->
     <div class="tab-content">
         <div class="tab-pane active" id="ongoing">
             <div class="trip-list">
@@ -136,12 +134,12 @@
     document.addEventListener("DOMContentLoaded", function () {
         const buttons = document.querySelectorAll(".tab-button");
         const tabs = document.querySelectorAll(".tab-pane");
-    
+
         buttons.forEach((button) => {
             button.addEventListener("click", function () {
                 buttons.forEach((btn) => btn.classList.remove("active"));
                 tabs.forEach((tab) => tab.classList.remove("active"));
-    
+
                 this.classList.add("active");
                 document.querySelector(this.getAttribute("data-target")).classList.add("active");
             });
@@ -161,7 +159,6 @@
 
 
 
-    
 
 
 
@@ -171,7 +168,7 @@
 
 
 
-/* تبويبات عصرية */
+
 .trip-tabs {
     display: flex;
     justify-content: center;
@@ -201,7 +198,6 @@
     transform: scale(1.05);
 }
 
-/* تأثيرات الأيقونات المتحركة */
 .animated-icon {
     font-size: 20px;
     transition: transform 0.3s ease-in-out;
@@ -211,7 +207,6 @@
     transform: rotate(15deg);
 }
 
-/* محتوى التبويبات */
 .tab-content {
     background: rgba(255, 255, 255, 0.05);
     padding: 20px;
@@ -219,7 +214,6 @@
     box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-/* تصميم الكاردات */
 .trip-card {
     background: rgba(255, 255, 255, 0.1);
     padding: 15px;
@@ -252,7 +246,6 @@
     transform: translateY(-5px);
 }
 
-/* الأيقونات داخل الكاردات */
 .trip-icon {
     font-size: 32px;
     padding: 15px;
@@ -265,7 +258,6 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* تأثيرات حركة الأيقونات */
 .trip-card .trip-icon i {
     animation: pulse 1.5s infinite alternate;
 }
@@ -275,7 +267,6 @@
     to { transform: scale(1.2); }
 }
 
-/* تأثيرات الألوان */
 .ongoing {
     border-left: 5px solid #6a57ff;
     background: rgba(106, 87, 255, 0.2);
@@ -291,7 +282,6 @@
     background: rgba(40, 167, 69, 0.2);
 }
 
-/* تحسين نصوص الرحلات */
 .trip-info h5 {
     font-size: 18px;
     margin-bottom: 5px;
@@ -303,7 +293,6 @@
     color: #e0e0e0;
 }
 
-/* إخفاء التبويبات غير النشطة */
 .tab-pane {
     display: none;
 }

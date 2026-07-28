@@ -25,6 +25,9 @@ abstract class DeleteRepository {
      public function forceDelete( $conditions){
         return $this->model->where( $conditions )->forceDelete();
      }
+     public function restore($conditions){
+        return $this->model->withTrashed()->where($conditions)->restore();
+    }
 
      public function delete( $conditions){
       return $this->model->where( $conditions )->delete();

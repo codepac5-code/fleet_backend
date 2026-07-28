@@ -34,7 +34,7 @@ class DriverPositionChangedListener
             
             $driver_model = Driver::where(['id'=>$driverId])->first();
             
-            if( $driver_model->isConected ){
+            if( $driver_model->is_online ){
                 RedisManagerData::makeDriverOnline($driver_model , $latitude, $longitude, $precision);
                 
             } else

@@ -35,6 +35,9 @@ class UpdateOfficeRequest extends BaseRequest
             'address' => 'nullable|string|max:500',
             'id'=>'required|numeric',
             'email' => 'required|email|unique:offices,email,'.$id,
+            'serviceIds' => 'required|array|min:1',
+            'serviceIds.*' => 'exists:services,id',
+
             // 'status' => 'required|in:0,1',
             // 'walletBalance' => 'required|numeric|min:0',
             // 'limitOrders' => 'required|numeric|min:0',

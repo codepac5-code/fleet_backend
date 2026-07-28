@@ -10,6 +10,7 @@ class VehiclesSeeder extends Seeder
     public function run()
     {
         DB::table('vehicles')->delete();
+        $city = 'الدوحة';
         $vehicles = [
             [
                 'vehicleBrand' => 'مرسيدس',
@@ -20,7 +21,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage\\profile-images\\car\\m.jpg',
                 'lastDriver' => null,
                 'color' => 'أسود',
-                'city' => 'دبي',
+                'city' =>$city,// =>$city,// 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 1,
                 'description' => 'سيارة فاخرة مناسبة لخدمة الفخامة.',
@@ -35,7 +36,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/2.png',
                 'lastDriver' => null,
                 'color' => 'أبيض',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 2,
                 'description' => 'سيارة رياضية وفاخرة لخدمة الفخامة.',
@@ -50,7 +51,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/3.png',
                 'lastDriver' => null,
                 'color' => 'فضي',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 3,
                 'description' => 'أفخم السيارات لخدمة الفخامة.',
@@ -65,7 +66,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/4.png',
                 'lastDriver' => null,
                 'color' => 'أزرق',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 4,
                 'description' => 'سيارة بريطانية فاخرة لخدمة الفخامة.',
@@ -80,7 +81,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/5.png',
                 'lastDriver' => null,
                 'color' => 'أحمر',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 5,
                 'description' => 'سيارة كهربائية متطورة لخدمة الرحلات الصديقة للبيئة.',
@@ -95,7 +96,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/1.png',
                 'lastDriver' => null,
                 'color' => 'أبيض',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 6,
                 'description' => 'سيارة اعتمادية واقتصادية مناسبة لخدمة السفر والتاكسي.',
@@ -110,7 +111,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/2.png',
                 'lastDriver' => null,
                 'color' => 'أسود',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 7,
                 'description' => 'سيارة متعددة الاستخدامات لخدمة السفر والتاكسي.',
@@ -125,7 +126,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/3.png',
                 'lastDriver' => null,
                 'color' => 'رمادي',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 8,
                 'description' => 'سيارة اقتصادية مناسبة للتاكسي والأسطول.',
@@ -140,7 +141,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/4.png',
                 'lastDriver' => null,
                 'color' => 'أسود',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 9,
                 'description' => 'سيارة مريحة لخدمة الأسطول والرحلات الطويلة.',
@@ -155,7 +156,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/5.png',
                 'lastDriver' => null,
                 'color' => 'أبيض',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 10,
                 'description' => 'سيارة مريحة وفاخرة لخدمة الأسطول.',
@@ -170,7 +171,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/1.png',
                 'lastDriver' => null,
                 'color' => 'أخضر',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 11,
                 'description' => 'سيارة هجينة لخدمة الرحلات الصديقة للبيئة.',
@@ -185,7 +186,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/2.png',
                 'lastDriver' => null,
                 'color' => 'أخضر',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 12,
                 'description' => 'سيارة كهربائية مناسبة للرحلات الصديقة للبيئة.',
@@ -200,7 +201,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/3.png',
                 'lastDriver' => null,
                 'color' => 'أزرق',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 13,
                 'description' => 'سيارة هجينة للتاكسي والأسطول.',
@@ -215,7 +216,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/4.png',
                 'lastDriver' => null,
                 'color' => 'أبيض',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 14,
                 'description' => 'سيارة مريحة وفاخرة لخدمة السفر.',
@@ -230,7 +231,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/5.png',
                 'lastDriver' => null,
                 'color' => 'أسود',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 15,
                 'description' => 'سيارة مميزة لخدمة السفر والأسطول.',
@@ -245,7 +246,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/1.png',
                 'lastDriver' => null,
                 'color' => 'أسود',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 16,
                 'description' => 'سيارة فاخرة من لكزس لخدمة رجال الأعمال.',
@@ -260,7 +261,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/2.png',
                 'lastDriver' => null,
                 'color' => 'رمادي',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 17,
                 'description' => 'سيارة ألمانية فاخرة وفسيحة.',
@@ -275,7 +276,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/3.png',
                 'lastDriver' => null,
                 'color' => 'أبيض',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => true,
                 'driverId' => null,// => 18,
                 'description' => 'سيارة SUV فاخرة وواسعة.',
@@ -290,7 +291,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/4.png',
                 'lastDriver' => null,
                 'color' => 'أسود',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 19,
                 'description' => 'سيارة SUV قوية مناسبة للرحلات العائلية.',
@@ -305,7 +306,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/5.png',
                 'lastDriver' => null,
                 'color' => 'أزرق',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 20,
                 'description' => 'سيارة SUV عملية للرحلات الطويلة.',
@@ -320,7 +321,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage/images/service/1.png',
                 'lastDriver' => null,
                 'color' => 'فضي',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 21,
                 'description' => 'سيارة SUV مريحة وواسعة.',
@@ -335,7 +336,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage\\profile-images\\car\\mm.jpg',
                 'lastDriver' => null,
                 'color' => 'أبيض',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 22,
                 'description' => 'سيارة دفع رباعي متعددة الاستخدامات.',
@@ -350,7 +351,7 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage\\profile-images\\car\\kia.jpg',
                 'lastDriver' => null,
                 'color' => 'أسود',
-                'city' => 'دبي',
+                'city' =>$city,// => 'دبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 23,
                 'description' => 'ميني فان عائلية واسعة ومريحة.',
@@ -365,15 +366,15 @@ class VehiclesSeeder extends Seeder
                 'photo' => 'storage\\profile-images\\car\\Honda.jpg',
                 'lastDriver' => null,
                 'color' => 'أبيض',
-                'city' => 'أبوظبي',
+                'city' =>$city,// => 'أبوظبي',
                 'fleet_car' => false,
                 'driverId' => null,// => 24,
                 'description' => 'ميني فان مريحة ومناسبة للعائلات.',
                 'seatsCount' => 7,
             ],
         ];
-        
-        $id = 1; 
+
+        $id = 1;
         foreach ($vehicles as &$vehicle) {
             $vehicle['id'] = $id;
             $id++;
@@ -381,7 +382,7 @@ class VehiclesSeeder extends Seeder
 
         unset($vehicle);
         DB::table('vehicles')->insert($vehicles);
-        
+
 
     }
 }

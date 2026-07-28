@@ -31,14 +31,14 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
         $this->status      = isset($input['status']) ? $input['status'] : null;
         $this->description = isset($input['description']) ? $input['description'] : null;
         $this->description_en = isset($input['description_en']) ? $input['description_en'] : null;
-        $this->openPrice   = isset($input['openPrice']) ? $input['openPrice'] : null;
-        $this->kmPrice     = isset($input['kmPrice']) ? $input['kmPrice'] : null;
-        $this->minutePrice = isset($input['minutePrice']) ? $input['minutePrice'] : null;
+        $this->openPrice   = isset($input['openPrice']) ? $input['openPrice'] : 0;
+        $this->kmPrice     = isset($input['kmPrice']) ? $input['kmPrice'] : 0;
+        $this->minutePrice = isset($input['minutePrice']) ? $input['minutePrice'] : 0;
         $this->serviceId   = isset($input['serviceId']) ? $input['serviceId'] : null;
         //$this->serviceId   = isset($input['serviceId']) ? $input['serviceId']: null;
-        $this->image = $input['image'] ?? null;
-        $this->hasImage = $input['has_image'] ?? false ;  
-        $this->current_image = $input['current_image'];    
+        $this->image = $input['image'] ?? null ;
+        $this->hasImage = $input['has_image'] ?? false ;
+        $this->current_image = $input['current_image'];
         $this->routes = $input['routes'] ?? null;
     }
 
@@ -47,11 +47,11 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
             ''=>''
         ];
     }
-    
+
 
     /**
      * Get the value of id
-     */ 
+     */
     public function getId()
     {
         return $this->id;
@@ -61,17 +61,17 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      * Set the value of id
      *
      * @return  self
-     */ 
+     */
     public function setId($id)
     {
         $this->id = $id;
 
         return $this;
     }
- 
+
     /**
      * Get the value of name
-     */ 
+     */
     public function getName()
     {
         return $this->name;
@@ -81,7 +81,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      * Set the value of name
      *
      * @return  self
-     */ 
+     */
     public function setName($name)
     {
         $this->name = $name;
@@ -91,7 +91,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
 
     /**
      * Get the value of kmPrice
-     */ 
+     */
     public function getKmPrice()
     {
         return $this->kmPrice;
@@ -101,7 +101,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      * Set the value of kmPrice
      *
      * @return  self
-     */ 
+     */
     public function setKmPrice($kmPrice)
     {
         $this->kmPrice = $kmPrice;
@@ -111,7 +111,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
 
     /**
      * Get the value of status
-     */ 
+     */
     public function getStatus()
     {
         return $this->status;
@@ -121,7 +121,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      * Set the value of status
      *
      * @return  self
-     */ 
+     */
     public function setStatus($status)
     {
         $this->status = $status;
@@ -131,7 +131,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
 
     /**
      * Get the value of description
-     */ 
+     */
     public function getDescription()
     {
         return $this->description;
@@ -141,7 +141,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      * Set the value of description
      *
      * @return  self
-     */ 
+     */
     public function setDescription($description)
     {
         $this->description = $description;
@@ -151,7 +151,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
 
     /**
      * Get the value of openPrice
-     */ 
+     */
     public function getOpenPrice()
     {
         return $this->openPrice;
@@ -161,7 +161,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      * Set the value of openPrice
      *
      * @return  self
-     */ 
+     */
     public function setOpenPrice($openPrice)
     {
         $this->openPrice = $openPrice;
@@ -171,7 +171,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
 
     /**
      * Get the value of minutePrice
-     */ 
+     */
     public function getMinutePrice()
     {
         return $this->minutePrice;
@@ -181,7 +181,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      * Set the value of minutePrice
      *
      * @return  self
-     */ 
+     */
     public function setMinutePrice($minutePrice)
     {
         $this->minutePrice = $minutePrice;
@@ -191,17 +191,17 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
 
     /**
      * Get the value of serviceId
-     */ 
+     */
     public function getServiceId()
     {
-        return $this->serviceId;
+        return (int)$this->serviceId;
     }
 
     /**
      * Set the value of serviceId
      *
      * @return  self
-     */ 
+     */
     public function setServiceId($serviceId)
     {
         $this->serviceId = $serviceId;
@@ -209,7 +209,7 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
         return $this;
     }
 
- 
+
 
     /**
      * Get the value of hasImage
@@ -244,5 +244,13 @@ class CreateOrUpdateSubServiceInput implements InputServiceInterface
      */
     public function getDescriptionEn() {
         return $this->description_en;
+    }
+
+    /**
+     * Get the value of routes
+     */
+    public function getRoutes()
+    {
+        return $this->routes;
     }
 }

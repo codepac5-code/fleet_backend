@@ -29,7 +29,7 @@ class UserBookingController extends Controller
                 return $row->startAt ? $row->startAt->format('Y-m-d H:i') : '';
             })
             ->editColumn('totalAmount', function($row) {
-                return number_format($row->totalAmount, 2) . ' ر.س';
+                return number_format($row->totalAmount, 2) ;
             })
             ->editColumn('distance', function($row) {
                 return $row->distance . ' كم';

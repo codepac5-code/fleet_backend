@@ -1,0 +1,4515 @@
+openapi: 3.0.3
+info:
+  title: FleetOS DriverX API
+  version: 2.1.0
+  description: |-
+    Backend integration contract for the FleetOS DriverX driver app.
+
+    Transport: REST (JSON) over HTTPS plus a Socket.IO realtime layer (documented under the top-level `x-realtime` extension, since OpenAPI cannot model sockets natively).
+
+    Auth: phone-OTP -> Bearer token on the Laravel 'driver' guard (Sanctum). Send `Authorization: Bearer <token>` on every endpoint except the auth/* onboarding ones and driver self-registration.
+
+    Money: NEW rider-API tables store money as INTEGER MINOR UNITS with a sibling `currency_code` (e.g. total_minor 3800 + QAR == 38.00 QAR); LEGACY tables store DECIMAL MAJOR units. Never mix.
+
+    Units: `distance_m` is METRES (integer), `duration_s` is SECONDS (integer).
+
+    Enums: status/kind/category columns are plain VARCHAR(16/32) agreements in code (NOT DB enums) - the DB will not reject unknown values. The agreed vocabularies are captured under `x-enums`.
+
+    Realtime events (Socket.IO) are documented under `x-realtime`.
+servers:
+- url: https://api.fleetos.example/driver/v1
+security:
+- bearerAuth: []
+tags:
+- name: Auth
+- name: Availability
+- name: Trips
+- name: Chat
+- name: Scheduled
+- name: Earnings/Wallet/Notifications
+- name: Profile/Settings/Places/Support/Safety
+x-realtime:
+  transport: Socket.IO over WSS, fed by the event_outbox table. The app reduces events onto the availability + trip FSMs (lib/core/services/socket_service.dart).
+  connect:
+    url: wss://rt.fleetos.example
+    auth:
+      token: <accessToken>
+      driver_id: 20498
+    rooms:
+    - driver:{driver_id}
+    - trip:{booking_id}
+    status_lifecycle:
+    - disconnected
+    - connecting
+    - connected
+  clientToServer:
+  - event: driver:availability
+    description: Mirror of POST /availability -> driver_presence.
+    payload:
+      driver_id: 20498
+      status: online
+      busy_reason: null
+  - event: driver:presence
+    description: Mirror of POST /presence.
+    payload:
+      driver_id: 20498
+      lat: 25.2867
+      lng: 51.5333
+      heading: 118.5
+      speedKmh: 42.0
+  - event: trip:action
+    description: Driver action in a trip room. action in accept|navigate|arrive|start|complete|cancel.
+    payload:
+      booking_id: 20498
+      action: accept
+  - event: chat:send
+    description: Driver sends a chat message in the trip room. Server persists to booking_chat_messages and broadcasts chat:message. client_msg_id lets the sender reconcile its optimistic bubble.
+    payload:
+      booking_id: 20498
+      body: On my way, 3 min.
+      client_msg_id: c_9f2c1a
+  - event: chat:read
+    description: Driver marks rider messages read up to up_to_id.
+    payload:
+      booking_id: 20498
+      up_to_id: 55201
+  - event: chat:typing
+    description: Ephemeral typing indicator (not persisted).
+    payload:
+      booking_id: 20498
+      from_type: driver
+      typing: true
+  serverToClient:
+  - event: trip:request
+    description: New dispatch_offer -> incoming request (IncomingRequestEvent).
+    payload:
+      booking:
+        id: 20498
+        user_id: 88231
+        office_id: 12
+        driver_id: 20498
+        vehicle_id: 2049
+        source: dispatch
+        service: ride
+        service_class: comfort
+        pricing_style: fixed
+        status: offered
+        pickup_lat: 25.2867
+        pickup_lng: 51.5333
+        pickup_title: Msheireb Downtown Gate 3
+        pickup_note: null
+        dropoff_lat: 25.321
+        dropoff_lng: 51.529
+        dropoff_title: West Bay Tower 18
+        distance_m: 1200
+        duration_s: 540
+        currency_code: QAR
+        fare_minor: 3800
+        discount_minor: 0
+        waiting_minor: 0
+        tip_minor: 0
+        total_minor: 3800
+        held_minor: 0
+        payment_method: wallet
+        scheduled_at: null
+        passengers: 1
+        luggage: 0
+        assigned_at: '2026-07-15T13:02:20Z'
+        created_at: '2026-07-15T13:02:11Z'
+      offer:
+        id: 77123
+        booking_id: 20498
+        driver_id: 20498
+        wave: 1
+        status: offered
+        distance_m: 320
+        expires_at: '2026-07-15T13:02:29Z'
+      countdownSeconds: 18
+  - event: trip:ack
+    description: Backend ack of a driver action (TripAckEvent).
+    payload:
+      booking_id: 20498
+      action: accept
+  - event: location:tick
+    description: Live ETA/distance to pickup (LocationTickEvent).
+    payload:
+      booking_id: 20498
+      etaMinutes: 3
+      distance_m: 900
+  - event: meter:tick
+    description: Running fare while in_progress (MeterTickEvent). Minor units.
+    payload:
+      booking_id: 20498
+      total_minor: 3250
+      distance_m: 5400
+      duration_s: 660
+  - event: trip:status
+    description: Force-sync ride_bookings.status (e.g. office/rider cancel).
+    payload:
+      booking_id: 20498
+      status: cancelled
+  - event: office:message
+    description: Office broadcast -> app_notifications.
+    payload:
+      id: 33911
+      notifiable_type: driver
+      notifiable_id: 20498
+      template_key: office.broadcast
+      type: office
+      locale: en
+      title: Message from Pearl Mobility
+      body: Airport queue priority this weekend.
+      data:
+        route: /support/office
+      read_at: null
+      created_at: '2026-07-15T09:12:00Z'
+  - event: chat:message
+    description: A new trip chat message (from rider or the driver's own echo). Maps to Flutter ChatMessageEvent.
+    payload:
+      message:
+        id: 55201
+        booking_id: 20498
+        from_type: rider
+        body: I'm at gate 3, silver bag.
+        read_at: null
+        created_at: '2026-07-15T13:06:20Z'
+      client_msg_id: c_9f2c1a
+  - event: chat:read
+    description: The rider read the driver's messages up to up_to_id (read receipts).
+    payload:
+      booking_id: 20498
+      reader_type: rider
+      up_to_id: 55187
+      read_at: '2026-07-15T13:06:40Z'
+x-enums:
+  _note: 'IMPORTANT: verified against docs/migrations/*. These columns are plain VARCHAR(16/32) strings — NOT database enums — so the DB will NOT reject an unknown value. The app and backend must AGREE this vocabulary in code. Each entry gives the migration''s column `default` and `maxlen` (values must fit) plus the agreed `values`.'
+  ride_bookings.status:
+    default: matching
+    maxlen: 16
+    values:
+    - matching
+    - offered
+    - assigned
+    - arrived
+    - in_progress
+    - completed
+    - cancelled
+    - no_show
+    - scheduled
+  ride_bookings.service_class:
+    maxlen: 32
+    values:
+    - ride
+    - standard
+    - comfort
+    - premium
+    - luxury
+  ride_bookings.pricing_style:
+    maxlen: 16
+    values:
+    - fixed
+    - meter
+  ride_bookings.payment_method:
+    default: wallet
+    maxlen: 16
+    values:
+    - cash
+    - wallet
+    - card
+  ride_bookings.source:
+    default: app
+    maxlen: 16
+    values:
+    - app
+    - office
+    - dispatch
+    - scheduled
+  driver_presence.status:
+    default: offline
+    maxlen: 16
+    values:
+    - online
+    - busy
+    - offline
+    - on_trip
+  driver_presence.busy_reason:
+    maxlen: 16
+    nullable: true
+    values:
+    - break
+    - fuel
+    - vehicle_check
+    - prayer
+    - personal
+  driver_documents.status:
+    default: pending
+    values:
+    - pending
+    - verified
+    - rejected
+    - expired
+  driver_safety_events.kind:
+    maxlen: 16
+    values:
+    - sos
+    - share_status
+  driver_safety_events.category:
+    maxlen: 32
+    values:
+    - hold
+    - slide
+    - manual
+  driver_safety_events.status:
+    default: open
+    maxlen: 16
+    values:
+    - open
+    - active
+    - closed
+    - cancelled
+  dispatch_offers.status:
+    default: offered
+    maxlen: 16
+    values:
+    - offered
+    - accepted
+    - declined
+    - expired
+  dispatch_jobs.status:
+    values:
+    - open
+    - waving
+    - assigned
+    - cancelled
+    - expired
+  payout_requests.status:
+    default: pending
+    values:
+    - pending
+    - processing
+    - paid
+    - failed
+  lost_items.status:
+    default: open
+    maxlen: 16
+    values:
+    - open
+    - awaiting_reply
+    - resolved
+    note: rider-owned table (user_id)
+  lost_items.category:
+    maxlen: 16
+    values:
+    - phone
+    - wallet
+    - bag
+    - keys
+    - other
+  saved_places.label:
+    default: other
+    maxlen: 16
+    note: free label / kind, e.g. home|work|other
+  saved_places.icon:
+    default: pin
+    maxlen: 16
+    values:
+    - home
+    - work
+    - gem
+    - heart
+    - pin
+  app_device_tokens.platform:
+    values:
+    - apns
+    - fcm
+    - ios
+    - android
+  ride_ratings.rater_type:
+    values:
+    - driver
+    - user
+  booking_chat_messages.from_type:
+    maxlen: 8
+    values:
+    - driver
+    - rider
+    - office
+  driver_applications.kind:
+    values:
+    - self
+    - invited
+  driver_applications.status:
+    values:
+    - pending
+    - approved
+    - rejected
+  drivers.status:
+    default: active
+    maxlen: 16
+    values:
+    - pending
+    - active
+    - suspended
+    note: column added in migration 2026_07_15_000002; registration sets 'pending', approval sets 'active'.
+x-error-codes:
+- code: INVALID_PHONE
+  http_status: 422
+- code: OTP_INCORRECT
+  http_status: 401
+- code: OTP_EXPIRED
+  http_status: 410
+- code: RATE_LIMITED
+  http_status: 429
+- code: UNAUTHORIZED
+  http_status: 401
+- code: TOKEN_EXPIRED
+  http_status: 401
+- code: ACCOUNT_PENDING
+  http_status: 403
+- code: OFFICE_CODE_INVALID
+  http_status: 422
+- code: BOOKING_NOT_FOUND
+  http_status: 404
+- code: OFFER_EXPIRED
+  http_status: 409
+- code: BOOKING_NOT_ASSIGNABLE
+  http_status: 409
+- code: ACTION_NOT_ALLOWED
+  http_status: 409
+- code: CANCEL_NOT_ALLOWED
+  http_status: 409
+- code: INSUFFICIENT_BALANCE
+  http_status: 402
+- code: VALIDATION_FAILED
+  http_status: 422
+- code: SERVER_ERROR
+  http_status: 500
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Driver:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        firstName:
+          type: string
+          description: string(30)
+        lastName:
+          type: string
+          description: string(30)
+        email:
+          type: string
+          description: string|null, unique (added in migration 000002)
+          nullable: true
+        email_verified_at:
+          type: string
+          description: datetime|null (added in migration 000002)
+          format: date-time
+          nullable: true
+        userName:
+          type: string
+          description: string|null (added in migration 000002)
+          nullable: true
+        status:
+          type: string
+          description: string(16), default 'active' — pending|active|suspended (added in migration 000002)
+        phoneNumber:
+          type: string
+          description: string(10), unique
+        dialCode:
+          type: string
+          description: string
+        password:
+          type: string
+          description: string (hidden)
+        officeId:
+          type: integer
+          description: integer|null (fk offices.id)
+          nullable: true
+        vehicleId:
+          type: integer
+          description: integer|null (fk vehicles.id)
+          nullable: true
+        address:
+          type: string
+          description: text
+        country:
+          type: string
+          description: string
+        city:
+          type: string
+          description: string
+        region:
+          type: string
+          description: string
+        gender:
+          type: string
+          description: string(10)|null (male|female)
+          nullable: true
+        photo:
+          type: string
+          description: text|null (url)
+          nullable: true
+        isActive:
+          type: boolean
+          description: boolean (default 1)
+        isConected:
+          type: boolean
+          description: boolean (default 0)
+        is_registered:
+          type: boolean
+          description: boolean (default 0)
+        free_driver:
+          type: boolean
+          description: boolean
+        car_owner:
+          type: boolean
+          description: boolean
+        rating:
+          type: number
+          description: float
+        rideCount:
+          type: integer
+          description: integer
+        kmCount:
+          type: integer
+          description: integer
+        walletBalance:
+          type: number
+          description: double (major units)
+        officeDues:
+          type: number
+          description: double
+        fleetDues:
+          type: number
+          description: double
+        ratingExcellent:
+          type: integer
+          description: integer
+        ratingGood:
+          type: integer
+          description: integer
+        ratingAverage:
+          type: integer
+          description: integer
+        ratingBelowAverage:
+          type: integer
+          description: integer
+        ratingPoor:
+          type: integer
+          description: integer
+        fleetCommissionCustomValue:
+          type: number
+          description: decimal(10,2)
+        driverCommissionCustomValue:
+          type: number
+          description: decimal(10,2)
+        isOfficeCommissionCustom:
+          type: boolean
+          description: boolean
+        isFleetCommissionCustom:
+          type: boolean
+          description: boolean
+        deleted_at:
+          type: string
+          description: datetime|null (soft delete)
+          format: date-time
+          nullable: true
+      example:
+        id: 20498
+        firstName: John
+        lastName: Smith
+        email: john@example.com
+        userName: john.smith
+        status: active
+        phoneNumber: 5500XXXX
+        dialCode: '+974'
+        photo: null
+        gender: male
+        officeId: 12
+        vehicleId: 2049
+        isActive: true
+        isConected: true
+        is_registered: true
+        rating: 4.9
+        rideCount: 1284
+        kmCount: 20431
+        walletBalance: 640.0
+    RideBooking:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        user_id:
+          type: integer
+          description: integer (fk users.id — the rider)
+        office_id:
+          type: integer
+          description: integer (fk offices.id)
+        driver_id:
+          type: integer
+          description: integer|null (fk drivers.id)
+          nullable: true
+        vehicle_id:
+          type: integer
+          description: integer|null (fk vehicles.id)
+          nullable: true
+        source:
+          type: string
+          description: string (see source enum)
+        created_by:
+          type: string
+          description: string|null
+          nullable: true
+        service:
+          type: string
+          description: string(16) (service slug)
+        service_class:
+          type: string
+          description: string(32) (see service_class enum)
+        pricing_style:
+          type: string
+          description: string(16) (fixed|meter)
+        status:
+          type: string
+          description: string(16), DB default 'matching' (see ride_bookings.status enum)
+        pickup_lat:
+          type: number
+          description: decimal(10,7)
+        pickup_lng:
+          type: number
+          description: decimal(10,7)
+        pickup_title:
+          type: string
+          description: string
+        pickup_note:
+          type: string
+          description: string|null
+          nullable: true
+        dropoff_lat:
+          type: number
+          description: float
+        dropoff_lng:
+          type: number
+          description: float
+        dropoff_title:
+          type: string
+          description: string
+        distance_m:
+          type: integer
+          description: integer (meters)
+        duration_s:
+          type: integer
+          description: integer (seconds)
+        currency_code:
+          type: string
+          description: string (ISO 4217, e.g. QAR)
+        fare_minor:
+          type: integer
+          description: integer (base fare, minor units)
+        discount_minor:
+          type: integer
+          description: integer
+        waiting_minor:
+          type: integer
+          description: integer
+        tip_minor:
+          type: integer
+          description: integer
+        total_minor:
+          type: integer
+          description: integer (grand total, minor units)
+        held_minor:
+          type: integer
+          description: integer (pre-auth hold)
+        payment_method:
+          type: string
+          description: string (cash|wallet|card)
+        stripe_payment_intent_id:
+          type: string
+          description: string|null
+          nullable: true
+        promo_code:
+          type: string
+          description: string|null
+          nullable: true
+        coupon_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        idempotency_key:
+          type: string
+          description: string|null
+          nullable: true
+        scheduled_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        passengers:
+          type: integer
+          description: integer|null
+          nullable: true
+        luggage:
+          type: integer
+          description: integer|null
+          nullable: true
+        flight_no:
+          type: string
+          description: string|null
+          nullable: true
+        assigned_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        cancelled_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        rated_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        cancel_reason:
+          type: string
+          description: string|null
+          nullable: true
+        created_at:
+          type: string
+          description: datetime
+          format: date-time
+        updated_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        id: 20498
+        user_id: 88231
+        office_id: 12
+        driver_id: 20498
+        vehicle_id: 2049
+        source: dispatch
+        service: ride
+        service_class: comfort
+        pricing_style: fixed
+        status: assigned
+        pickup_lat: 25.2867
+        pickup_lng: 51.5333
+        pickup_title: Msheireb Downtown Gate 3
+        pickup_note: null
+        dropoff_lat: 25.321
+        dropoff_lng: 51.529
+        dropoff_title: West Bay Tower 18
+        distance_m: 1200
+        duration_s: 540
+        currency_code: QAR
+        fare_minor: 3800
+        discount_minor: 0
+        waiting_minor: 0
+        tip_minor: 0
+        total_minor: 3800
+        held_minor: 0
+        payment_method: wallet
+        scheduled_at: null
+        passengers: 1
+        luggage: 0
+        assigned_at: '2026-07-15T13:02:20Z'
+        created_at: '2026-07-15T13:02:11Z'
+    DriverPresence:
+      type: object
+      properties:
+        driver_id:
+          type: integer
+          description: integer(pk, fk drivers.id)
+        office_id:
+          type: integer
+          description: integer (fk offices.id)
+        status:
+          type: string
+          description: string (online|busy|offline|on_trip)
+        busy_reason:
+          type: string
+          description: string|null (break|fuel|vehicle_check|prayer|personal)
+          nullable: true
+        lat:
+          type: number
+          description: float
+        lng:
+          type: number
+          description: float
+        geohash:
+          type: string
+          description: string|null
+          nullable: true
+        heartbeat_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        driver_id: 20498
+        office_id: 12
+        status: online
+        busy_reason: null
+        lat: 25.2867
+        lng: 51.5333
+        geohash: thq7g
+        heartbeat_at: '2026-07-15T13:05:03Z'
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        officeId:
+          type: integer
+          description: integer (fk offices.id)
+        driverId:
+          type: integer
+          description: integer|null (fk drivers.id)
+          nullable: true
+        vehicle_brand_id:
+          type: integer
+          description: integer|null (fk vehicle_brands.id)
+          nullable: true
+        vehicleBrand:
+          type: string
+          description: string|null
+          nullable: true
+        model:
+          type: string
+          description: string
+        modelYear:
+          type: integer
+          description: integer
+        color:
+          type: string
+          description: string
+        plate:
+          type: string
+          description: string
+        licenseNumber:
+          type: string
+          description: string
+        subServiceId:
+          type: integer
+          description: integer|null
+          nullable: true
+        seatsCount:
+          type: integer
+          description: integer
+        city:
+          type: string
+          description: string|null
+          nullable: true
+        description:
+          type: string
+          description: string|null
+          nullable: true
+        photo:
+          type: string
+          description: string|null (url)
+          nullable: true
+        fleet_car:
+          type: boolean
+          description: boolean
+        last_driver:
+          type: integer
+          description: integer|null (fk drivers.id)
+          nullable: true
+      example:
+        id: 2049
+        officeId: 12
+        driverId: 20498
+        vehicleBrand: Toyota
+        model: Camry
+        modelYear: 2023
+        color: White
+        plate: QTR-2049
+        licenseNumber: QA-LIC-2049
+        seatsCount: 4
+        fleet_car: false
+    Office:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        officeName:
+          type: string
+          description: string
+        displayName:
+          type: string
+          description: string|null
+          nullable: true
+        email:
+          type: string
+          description: string
+        contactNumber:
+          type: string
+          description: string
+        logo:
+          type: string
+          description: string|null
+          nullable: true
+        profileImage:
+          type: string
+          description: string|null
+          nullable: true
+        address:
+          type: string
+          description: string|null
+          nullable: true
+        country:
+          type: string
+          description: string|null
+          nullable: true
+        region:
+          type: string
+          description: string|null
+          nullable: true
+        city:
+          type: string
+          description: string|null
+          nullable: true
+        status:
+          type: string
+          description: string
+        initials:
+          type: string
+          description: string|null
+          nullable: true
+        palette:
+          type: string
+          description: string|null (json/hex)
+          nullable: true
+        is_verified:
+          type: boolean
+          description: boolean
+        is_monitored:
+          type: boolean
+          description: boolean
+        on_time_percentage:
+          type: integer
+          description: integer|null
+          nullable: true
+        avg_response_minutes:
+          type: integer
+          description: integer|null
+          nullable: true
+        ratings_count:
+          type: integer
+          description: integer
+        rating:
+          type: number
+          description: float
+        lat:
+          type: number
+          description: float|null
+          nullable: true
+        lng:
+          type: number
+          description: float|null
+          nullable: true
+        working_hours:
+          type: string
+          description: json|string|null
+          nullable: true
+        walletBalance:
+          type: number
+          description: decimal
+      example:
+        id: 12
+        officeName: Pearl Mobility
+        displayName: Pearl Mobility
+        contactNumber: '+97440001234'
+        status: active
+        initials: PM
+        is_verified: true
+        rating: 4.8
+        ratings_count: 172
+    SavedPlace:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        user_id:
+          type: integer
+          description: integer (owner — authenticated principal)
+        label:
+          type: string
+          description: string (home|work|... free label / kind)
+        icon:
+          type: string
+          description: string|null
+          nullable: true
+        title:
+          type: string
+          description: string (display name)
+        address:
+          type: string
+          description: string
+        lat:
+          type: number
+          description: float
+        lng:
+          type: number
+          description: float
+      example:
+        id: 5521
+        user_id: 20498
+        label: home
+        icon: home
+        title: Home (end of shift)
+        address: Al Sadd, Zone 38
+        lat: 25.276
+        lng: 51.518
+    SafetyContact:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        user_id:
+          type: integer
+          description: integer (owner)
+        name:
+          type: string
+          description: string
+        phone:
+          type: string
+          description: string
+        relation:
+          type: string
+          description: string|null
+          nullable: true
+        is_primary:
+          type: boolean
+          description: boolean
+        auto_share:
+          type: boolean
+          description: boolean
+      example:
+        id: 331
+        user_id: 20498
+        name: Sara S.
+        phone: '+97455001122'
+        relation: spouse
+        is_primary: true
+        auto_share: true
+    DriverDocument:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        driverId:
+          type: integer
+          description: integer (fk drivers.id)
+        document_id:
+          type: integer
+          description: integer (fk documents.id)
+        name:
+          type: string
+          description: string
+        file:
+          type: string
+          description: string (url)
+        status:
+          type: string
+          description: string (pending|verified|rejected|expired)
+        note:
+          type: string
+          description: string|null
+          nullable: true
+        expires_at:
+          type: string
+          description: date|null
+          format: date
+          nullable: true
+      example:
+        id: 88
+        driverId: 20498
+        document_id: 3
+        name: Driving license
+        file: https://cdn.fleetos.example/docs/88.jpg
+        status: verified
+        note: null
+        expires_at: '2027-03-01'
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        name:
+          type: string
+          description: string
+        status:
+          type: integer
+          description: integer
+        is_required:
+          type: integer
+          description: integer(0|1)
+      example:
+        id: 3
+        name: Driving license
+        status: 1
+        is_required: 1
+    DriverSafetyEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        driver_id:
+          type: integer
+          description: integer (fk drivers.id)
+        booking_id:
+          type: integer
+          description: integer|null (fk ride_bookings.id)
+          nullable: true
+        office_id:
+          type: integer
+          description: integer (fk offices.id)
+        kind:
+          type: string
+          description: string(16) (sos|share_status)
+        category:
+          type: string
+          description: string(32)|null (hold|slide|manual)
+          nullable: true
+        status:
+          type: string
+          description: string(16), default 'open' (open|active|closed|cancelled)
+        note:
+          type: string
+          description: text|null
+          nullable: true
+        lat:
+          type: number
+          description: decimal(10,7)|null
+          nullable: true
+        lng:
+          type: number
+          description: decimal(10,7)|null
+          nullable: true
+        hold_ms:
+          type: integer
+          description: integer|null (gesture hold duration)
+          nullable: true
+        created_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+      example:
+        id: 3391
+        driver_id: 20498
+        booking_id: 20498
+        office_id: 12
+        kind: sos
+        category: hold
+        status: open
+        lat: 25.2867
+        lng: 51.5333
+        hold_ms: 1500
+        created_at: '2026-07-15T13:20:00Z'
+    LostItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        user_id:
+          type: integer
+          description: integer (rider — the item's owner)
+        booking_id:
+          type: integer
+          description: integer (fk ride_bookings.id)
+        ticket_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        category:
+          type: string
+          description: string(16) (phone|wallet|bag|keys|other)
+        description:
+          type: string
+          description: text|null
+          nullable: true
+        share_masked_number:
+          type: boolean
+          description: boolean (default false)
+        status:
+          type: string
+          description: string(16), default 'open' (open|awaiting_reply|resolved)
+      example:
+        id: 2210
+        user_id: 88231
+        booking_id: 20498
+        ticket_id: null
+        category: phone
+        description: Black iPhone found on the back seat, right side.
+        share_masked_number: true
+        status: open
+    DispatchOffer:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        booking_id:
+          type: integer
+          description: integer (fk ride_bookings.id)
+        driver_id:
+          type: integer
+          description: integer (fk drivers.id)
+        wave:
+          type: integer
+          description: integer
+        status:
+          type: string
+          description: string (offered|accepted|declined|expired)
+        distance_m:
+          type: integer
+          description: integer (driver->pickup, meters)
+        expires_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        id: 77123
+        booking_id: 20498
+        driver_id: 20498
+        wave: 1
+        status: offered
+        distance_m: 320
+        expires_at: '2026-07-15T13:02:29Z'
+    DispatchJob:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        booking_id:
+          type: integer
+          description: integer (fk ride_bookings.id)
+        office_id:
+          type: integer
+          description: integer
+        service_class:
+          type: string
+          description: string
+        lat:
+          type: number
+          description: float
+        lng:
+          type: number
+          description: float
+        status:
+          type: string
+          description: string (open|waving|assigned|cancelled|expired)
+        assigned_driver_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        wave:
+          type: integer
+          description: integer
+        assigned_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+      example:
+        id: 4471
+        booking_id: 20498
+        office_id: 12
+        service_class: comfort
+        lat: 25.2867
+        lng: 51.5333
+        status: assigned
+        assigned_driver_id: 20498
+        wave: 1
+        assigned_at: '2026-07-15T13:02:20Z'
+    RideRating:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        booking_id:
+          type: integer
+          description: integer (fk ride_bookings.id)
+        rater_type:
+          type: string
+          description: string (driver|user)
+        rater_id:
+          type: integer
+          description: integer
+        ratee_type:
+          type: string
+          description: string (driver|user)
+        ratee_id:
+          type: integer
+          description: integer
+        stars:
+          type: integer
+          description: integer (1-5)
+        tags:
+          type: array
+          description: array<string>
+          items:
+            type: string
+        comment:
+          type: string
+          description: string|null
+          nullable: true
+        book_again:
+          type: boolean
+          description: boolean
+        favorite:
+          type: boolean
+          description: boolean
+        created_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        id: 9931
+        booking_id: 20498
+        rater_type: driver
+        rater_id: 20498
+        ratee_type: user
+        ratee_id: 88231
+        stars: 5
+        tags:
+        - polite
+        - on_time
+        comment: null
+        book_again: true
+        favorite: false
+        created_at: '2026-07-15T13:40:00Z'
+    BookingChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        booking_id:
+          type: integer
+          description: integer, index (fk ride_bookings.id)
+        from_type:
+          type: string
+          description: string(8) (driver|rider|office)
+        body:
+          type: string
+          description: text
+        read_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          description: datetime
+          format: date-time
+        updated_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        id: 55201
+        booking_id: 20498
+        from_type: rider
+        body: I'm at gate 3, silver bag.
+        read_at: null
+        created_at: '2026-07-15T13:06:20Z'
+    AppNotification:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        event_uuid:
+          type: string
+          description: uuid|null
+          nullable: true
+        notifiable_type:
+          type: string
+          description: string (morph — 'driver')
+        notifiable_id:
+          type: integer
+          description: integer
+        template_key:
+          type: string
+          description: string
+        type:
+          type: string
+          description: string (category)
+        locale:
+          type: string
+          description: string (en|ar)
+        title:
+          type: string
+          description: string
+        body:
+          type: string
+          description: string
+        data:
+          type: object
+          description: json (action route/payload)
+        read_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        id: 33911
+        notifiable_type: driver
+        notifiable_id: 20498
+        template_key: office.broadcast
+        type: office
+        locale: en
+        title: Message from Pearl Mobility
+        body: Airport queue priority this weekend.
+        data:
+          route: /support/office
+        read_at: null
+        created_at: '2026-07-15T09:12:00Z'
+    AppDeviceToken:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        owner_type:
+          type: string
+          description: string (morph — 'driver')
+        owner_id:
+          type: integer
+          description: integer
+        token:
+          type: string
+          description: string
+        platform:
+          type: string
+          description: string (apns|fcm|ios|android)
+        last_seen_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        id: 551
+        owner_type: driver
+        owner_id: 20498
+        token: abcd1234apnsdevicetoken
+        platform: apns
+        last_seen_at: '2026-07-15T13:00:00Z'
+    WalletBalance:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        owner_type:
+          type: string
+          description: string
+        owner_id:
+          type: integer
+          description: integer
+        currency_code:
+          type: string
+          description: string
+        balance:
+          type: number
+          description: decimal(major units)
+      example:
+        id: 1
+        owner_type: driver
+        owner_id: 20498
+        currency_code: QAR
+        balance: 640.0
+    WalletTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        from_type:
+          type: string
+          description: string|null
+          nullable: true
+        from_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        to_type:
+          type: string
+          description: string|null
+          nullable: true
+        to_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        amount:
+          type: number
+          description: decimal
+        balance_before:
+          type: number
+          description: decimal
+        balance_after:
+          type: number
+          description: decimal
+        status:
+          type: string
+          description: string (pending|posted|reversed)
+        source_type:
+          type: string
+          description: string|null (e.g. ride_booking)
+          nullable: true
+        source_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        description:
+          type: string
+          description: string
+        description_en:
+          type: string
+          description: string
+        paymentName:
+          type: string
+          description: string|null
+          nullable: true
+        paymentName_en:
+          type: string
+          description: string|null
+          nullable: true
+        transaction_reference:
+          type: string
+          description: string
+        created_at:
+          type: string
+          description: datetime
+          format: date-time
+      example:
+        id: 88213
+        to_type: driver
+        to_id: 20498
+        amount: 58.0
+        balance_before: 582.0
+        balance_after: 640.0
+        status: posted
+        source_type: ride_booking
+        source_id: 20431
+        description_en: Trip earning — Airport T1 → Lusail
+        transaction_reference: TXN-88213
+        created_at: '2026-07-15T10:46:00Z'
+    PayoutRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        owner_type:
+          type: string
+          description: string ('driver')
+        owner_id:
+          type: integer
+          description: integer
+        source_account:
+          type: string
+          description: string (wallet|bank)
+        amount_minor:
+          type: integer
+          description: integer (minor units)
+        currency_code:
+          type: string
+          description: string
+        status:
+          type: string
+          description: string (pending|processing|paid|failed)
+        idempotency_key:
+          type: string
+          description: string
+        ledger_transaction_uuid:
+          type: string
+          description: uuid|null
+          nullable: true
+        note:
+          type: string
+          description: string|null
+          nullable: true
+        processed_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+      example:
+        id: 7781
+        owner_type: driver
+        owner_id: 20498
+        source_account: wallet
+        amount_minor: 64000
+        currency_code: QAR
+        status: processing
+        idempotency_key: 5f3c-...
+        note: null
+        processed_at: null
+    CommissionEarning:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        booking_id:
+          type: integer
+          description: integer (fk ride_bookings.id)
+        driver_id:
+          type: integer
+          description: integer
+        office_id:
+          type: integer
+          description: integer
+        fleet_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        total_fare:
+          type: number
+          description: decimal
+        office_commission:
+          type: number
+          description: decimal
+        driver_commission:
+          type: number
+          description: decimal
+        fleet_commission:
+          type: number
+          description: decimal
+        payment_date:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+        commission_status:
+          type: string
+          description: string
+      example:
+        id: 5521
+        booking_id: 20498
+        driver_id: 20498
+        office_id: 12
+        total_fare: 38.0
+        office_commission: 4.0
+        driver_commission: 32.6
+        fleet_commission: 1.4
+        payment_date: '2026-07-15T13:40:00Z'
+        commission_status: settled
+    DriversIssue:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        subject:
+          type: string
+          description: string
+        description:
+          type: string
+          description: text
+        photo:
+          type: string
+          description: string|null (url)
+          nullable: true
+        driverId:
+          type: integer
+          description: integer (fk drivers.id)
+        isClosed:
+          type: boolean
+          description: boolean
+        closedAt:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+      example:
+        id: 5521
+        subject: Payment dispute
+        description: Rider disputed the fare on DX-20498.
+        photo: null
+        driverId: 20498
+        isClosed: false
+        closedAt: null
+    Reply:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        issueId:
+          type: integer
+          description: integer (fk drivers_issues.id)
+        sender_type:
+          type: string
+          description: string (driver|office|fleetos)
+        sender_id:
+          type: integer
+          description: integer
+        senderName:
+          type: string
+          description: string
+        content:
+          type: string
+          description: text
+        imageUrl:
+          type: string
+          description: string|null
+          nullable: true
+      example:
+        id: 900
+        issueId: 5521
+        sender_type: office
+        sender_id: 12
+        senderName: Pearl Mobility
+        content: We are reviewing the fare.
+        imageUrl: null
+    DriverApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        name:
+          type: string
+          description: string
+        phone:
+          type: string
+          description: string
+        city:
+          type: string
+          description: string
+        vehicle_type:
+          type: string
+          description: string
+        license_number:
+          type: string
+          description: string
+        office_id:
+          type: integer
+          description: integer|null
+          nullable: true
+        invite_code:
+          type: string
+          description: string|null
+          nullable: true
+        kind:
+          type: string
+          description: string (self|invited)
+        status:
+          type: string
+          description: string (pending|approved|rejected)
+      example:
+        id: 1021
+        name: John Smith
+        phone: '+97455001234'
+        city: Doha, Qatar
+        vehicle_type: Standard sedan
+        license_number: QA-DR-10284
+        office_id: 12
+        invite_code: PRL-4098
+        kind: invited
+        status: pending
+    FavoriteOffice:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        user_id:
+          type: integer
+          description: integer
+        office_id:
+          type: integer
+          description: integer
+      example:
+        id: 1
+        user_id: 20498
+        office_id: 12
+    HelpSuggestion:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: integer(pk)
+        title:
+          type: string
+          description: string
+        title_en:
+          type: string
+          description: string
+        description:
+          type: string
+          description: text
+        description_en:
+          type: string
+          description: text
+        category:
+          type: string
+          description: string
+        priority:
+          type: integer
+          description: integer
+        read_minutes:
+          type: integer
+          description: integer
+        isActive:
+          type: boolean
+          description: boolean
+        created_by:
+          type: integer
+          description: integer|null
+          nullable: true
+        target_user:
+          type: string
+          description: string|null
+          nullable: true
+      example:
+        id: 1
+        title_en: How payouts work
+        description_en: Earnings settle to your Fleet Wallet after each trip...
+        category: payouts
+        priority: 1
+        read_minutes: 2
+        isActive: true
+    EventOutbox:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: uuid(pk)
+        type:
+          type: string
+          description: string (event type)
+        channels:
+          type: array
+          description: array<string>
+          items:
+            type: string
+        payload:
+          type: object
+          description: json
+        status:
+          type: string
+          description: string (pending|published|failed)
+        attempts:
+          type: integer
+          description: integer
+        available_at:
+          type: string
+          description: datetime
+          format: date-time
+        published_at:
+          type: string
+          description: datetime|null
+          format: date-time
+          nullable: true
+      example:
+        uuid: 9f2c1a...
+        type: trip.offer
+        channels:
+        - driver:20498
+        payload:
+          booking_id: 20498
+        status: published
+        attempts: 1
+        available_at: '2026-07-15T13:02:11Z'
+        published_at: '2026-07-15T13:02:11Z'
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine error code (see x-error-codes).
+            message:
+              type: string
+              description: Human-readable message.
+            retryable:
+              type: boolean
+              description: Whether the client may retry.
+            request_id:
+              type: string
+              description: Correlation id for support.
+          required:
+          - code
+          - message
+      example:
+        error:
+          code: BOOKING_NOT_ASSIGNABLE
+          message: This booking was already assigned.
+          retryable: false
+          request_id: req_9f2c1a
+paths:
+  /auth/otp/request:
+    post:
+      tags:
+      - Auth
+      summary: Request OTP
+      operationId: postAuthOtpRequest
+      description: 'Error codes: INVALID_PHONE, RATE_LIMITED.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                phone: +9745500XXXX
+                purpose: login
+                dialCode: '+974'
+                channel: sms
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  sent: true
+                  expiresInSec: 120
+                  channel: sms
+        default: &id001
+          description: Error envelope (non-2xx). See x-error-codes for the code list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /auth/otp/verify:
+    post:
+      tags:
+      - Auth
+      summary: Verify OTP
+      operationId: postAuthOtpVerify
+      description: 'Error codes: OTP_INCORRECT, OTP_EXPIRED.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                phone: +9745500XXXX
+                code: '472189'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  accessToken: …
+                  refreshToken: …
+                  expiresInSec: 3600
+                  accountStatus: active
+                  driver:
+                    id: 20498
+                    firstName: John
+                    lastName: Smith
+                    email: john@example.com
+                    userName: john.smith
+                    status: active
+                    phoneNumber: 5500XXXX
+                    dialCode: '+974'
+                    photo: null
+                    gender: male
+                    officeId: 12
+                    vehicleId: 2049
+                    isActive: true
+                    isConected: true
+                    is_registered: true
+                    rating: 4.9
+                    rideCount: 1284
+                    kmCount: 20431
+                    walletBalance: 640.0
+        default: *id001
+  /auth/token/refresh:
+    post:
+      tags:
+      - Auth
+      summary: Refresh token
+      operationId: postAuthTokenRefresh
+      description: 'Error codes: TOKEN_EXPIRED.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                refreshToken: …
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  accessToken: …
+                  expiresInSec: 3600
+        default: *id001
+  /auth/logout:
+    post:
+      tags:
+      - Auth
+      summary: Logout
+      operationId: postAuthLogout
+      description: 'Error codes: UNAUTHORIZED.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                refreshToken: …
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+        default: *id001
+  /drivers/applications:
+    post:
+      tags:
+      - Auth
+      summary: Register as driver (driver_applications)
+      operationId: postDriversApplications
+      description: 'Error codes: VALIDATION_FAILED, OFFICE_CODE_INVALID.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: John Smith
+                phone: '+97455001234'
+                city: Doha, Qatar
+                vehicle_type: Standard sedan
+                license_number: QA-DR-10284
+                office_id: 12
+                invite_code: PRL-4098
+                kind: invited
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverApplication'
+        default: *id001
+  /offices/link-requests:
+    post:
+      tags:
+      - Auth
+      summary: Link to taxi office
+      operationId: postOfficesLinkRequests
+      description: 'Error codes: OFFICE_CODE_INVALID.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                invite_code: PRL-4098
+                office_id: 12
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  linkRequestId: 331
+                  office:
+                    id: 12
+                    officeName: Pearl Mobility
+                    displayName: Pearl Mobility
+                    contactNumber: '+97440001234'
+                    status: active
+                    initials: PM
+                    is_verified: true
+                    rating: 4.8
+                    ratings_count: 172
+                  status: pending
+        default: *id001
+  /drivers/me/onboarding:
+    get:
+      tags:
+      - Auth
+      summary: Onboarding / account status poll
+      operationId: getDriversMeOnboarding
+      description: 'Error codes: UNAUTHORIZED.'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  accountStatus: pending
+                  office:
+                    id: 12
+                    officeName: Pearl Mobility
+                    linkStatus: pending
+                  checklist:
+                  - item: documents
+                    status: verified
+                  - item: office_link
+                    status: pending
+        default: *id001
+  /drivers/me/permissions:
+    patch:
+      tags:
+      - Auth
+      summary: Report permissions granted
+      operationId: patchDriversMePermissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                locationAlways: true
+                notifications: true
+                motion: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+        default: *id001
+  /devices:
+    post:
+      tags:
+      - Auth
+      summary: Register push token (app_device_tokens)
+      operationId: postDevices
+      description: 'Error codes: VALIDATION_FAILED.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                platform: apns
+                token: abcd1234…
+                owner_type: driver
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppDeviceToken'
+        default: *id001
+  /auth/otp/resend:
+    post:
+      tags:
+      - Auth
+      summary: Resend OTP
+      operationId: postAuthOtpResend
+      description: |-
+        Backend note: this is the SAME endpoint as POST /auth/otp/request. The app's 'Resend code' button re-invokes it; documented separately here for spec completeness.
+
+        Same endpoint as Request OTP; the SignIn/OTP screen 'Resend code' button re-invokes it. Backend rate-limits per phone.
+
+        Error codes: RATE_LIMITED.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                phone: +9745500XXXX
+                purpose: login
+                dialCode: '+974'
+                channel: sms
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  sent: true
+                  expiresInSec: 120
+                  channel: sms
+        default: *id001
+  /auth/login:
+    post:
+      tags:
+      - Auth
+      summary: Password login (alternative to OTP) [DECISION]
+      operationId: postAuthLogin
+      description: |-
+        GAP/DECISION: SignInScreen exposes a password field and drivers.password exists, but the wired flow is OTP-only. If password auth is kept, this endpoint mirrors Verify OTP's token response. Confirm whether the driver app keeps password login or is OTP-only.
+
+        Error codes: UNAUTHORIZED, ACCOUNT_PENDING.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                identifier: '+97455001234'
+                password: •••••••
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  accessToken: …
+                  refreshToken: …
+                  expiresInSec: 3600
+                  accountStatus: active
+                  driver:
+                    id: 20498
+                    firstName: John
+                    lastName: Smith
+                    email: john@example.com
+                    userName: john.smith
+                    status: active
+                    phoneNumber: 5500XXXX
+                    dialCode: '+974'
+                    photo: null
+                    gender: male
+                    officeId: 12
+                    vehicleId: 2049
+                    isActive: true
+                    isConected: true
+                    is_registered: true
+                    rating: 4.9
+                    rideCount: 1284
+                    kmCount: 20431
+                    walletBalance: 640.0
+        default: *id001
+  /auth/password/reset:
+    post:
+      tags:
+      - Auth
+      summary: Reset password (complete forgot-password) [DECISION]
+      operationId: postAuthPasswordReset
+      description: |-
+        GAP/DECISION: ForgotPasswordScreen sends a reset code via /auth/otp/request (purpose=reset) then goes to OTP. If password auth is kept, this sets the new password after the code is verified. Omit if the app is OTP-only.
+
+        Error codes: OTP_INCORRECT, OTP_EXPIRED, VALIDATION_FAILED.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                phone: '+97455001234'
+                code: '472189'
+                new_password: •••••••
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+        default: *id001
+  /drivers/me/deletion-requests:
+    post:
+      tags:
+      - Auth
+      summary: Request account deletion [GAP]
+      operationId: postDriversMeDeletionRequests
+      description: |-
+        GAP: AccountActionsScreen 'Delete account' is a snackbar today ('requires office confirmation'). Creates an office-confirmed deletion request; the account stays active until the office approves.
+
+        Error codes: ACTION_NOT_ALLOWED.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                reason: Leaving the platform
+                confirm: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 771
+                  status: pending_office_confirmation
+                  requested_at: '2026-07-15T13:30:00Z'
+        default: *id001
+  /availability/readiness:
+    get:
+      tags:
+      - Availability
+      summary: Readiness check
+      operationId: getAvailabilityReadiness
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  vehicle: true
+                  office: true
+                  wallet: true
+                  ready: true
+                  checks: 2/3
+        default: *id001
+  /availability:
+    post:
+      tags:
+      - Availability
+      summary: Set availability (driver_presence)
+      operationId: postAvailability
+      description: |-
+        Writes driver_presence.status/busy_reason. status 'on_trip' is server-set on assignment — do not send it. Mirrored on socket driver:availability.
+
+        Error codes: ACTION_NOT_ALLOWED, VALIDATION_FAILED.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                status: busy
+                busy_reason: prayer
+                lat: 25.2867
+                lng: 51.5333
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  driver_id: 20498
+                  office_id: 12
+                  status: busy
+                  busy_reason: prayer
+                  lat: 25.2867
+                  lng: 51.5333
+                  geohash: thq7g
+                  heartbeat_at: '2026-07-15T13:05:03Z'
+        default: *id001
+  /presence:
+    post:
+      tags:
+      - Availability
+      summary: Presence heartbeat
+      operationId: postPresence
+      description: Location heartbeat -> driver_presence.lat/lng/heartbeat_at. Also socket driver:presence.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                lat: 25.2867
+                lng: 51.5333
+                geohash: thq7g
+                heading: 118.5
+                speedKmh: 42.0
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  accepted: true
+        default: *id001
+  /zones/demand:
+    get:
+      tags:
+      - Availability
+      summary: Zone demand hints [GAP/optional]
+      operationId: getZonesDemand
+      description: 'GAP (optional): the map ''Airport queue · low wait'' ZonePill is hardcoded. Returns nearby demand/queue hints for the cockpit. May instead be pushed via a socket zone:demand event.'
+      parameters:
+      - name: lat
+        in: query
+        required: false
+        schema:
+          type: number
+        example: 25.2867
+      - name: lng
+        in: query
+        required: false
+        schema:
+          type: number
+        example: 51.5333
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - zone: Airport queue
+                    wait: low
+                    surge: 1.0
+                    lat: 25.2731
+                    lng: 51.6089
+        default: *id001
+  /trips/{booking_id}/accept:
+    post:
+      tags:
+      - Trips
+      summary: Accept offer / assign booking
+      operationId: postTripsBookingIdAccept
+      description: |-
+        Accept the dispatch_offer for this ride_booking. Sets ride_bookings.status='assigned', driver_id, assigned_at; driver_presence.status='on_trip'.
+
+        Error codes: BOOKING_NOT_ASSIGNABLE, OFFER_EXPIRED.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                offer_id: 77123
+                accepted_at: '2026-07-15T13:02:20Z'
+                lat: 25.2867
+                lng: 51.5333
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: assigned
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+                  presence_status: on_trip
+        default: *id001
+  /trips/{booking_id}/reject:
+    post:
+      tags:
+      - Trips
+      summary: Reject / expire offer
+      operationId: postTripsBookingIdReject
+      description: 'Error codes: BOOKING_NOT_FOUND.'
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                offer_id: 77123
+                reason: declined
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+                  booking_id: 20498
+        default: *id001
+  /trips/{booking_id}/navigate:
+    post:
+      tags:
+      - Trips
+      summary: Start navigation to pickup
+      operationId: postTripsBookingIdNavigate
+      description: 'Error codes: ACTION_NOT_ALLOWED.'
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: assigned
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+        default: *id001
+  /trips/{booking_id}/arrive:
+    post:
+      tags:
+      - Trips
+      summary: Arrived at pickup
+      operationId: postTripsBookingIdArrive
+      description: 'Error codes: ACTION_NOT_ALLOWED.'
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                arrived_at: '2026-07-15T13:07:00Z'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: arrived
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+        default: *id001
+  /trips/{booking_id}/start:
+    post:
+      tags:
+      - Trips
+      summary: Start trip
+      operationId: postTripsBookingIdStart
+      description: |-
+        Rider onboard; ride_bookings.status='in_progress'. Server emits meter:tick if pricing_style='meter'.
+
+        Error codes: ACTION_NOT_ALLOWED.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                started_at: '2026-07-15T13:09:00Z'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: in_progress
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+        default: *id001
+  /trips/{booking_id}/reach:
+    post:
+      tags:
+      - Trips
+      summary: Reach destination
+      operationId: postTripsBookingIdReach
+      description: |-
+        Stops the meter, finalises fare_minor/total_minor; status stays in_progress until payment collected.
+
+        Error codes: ACTION_NOT_ALLOWED.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: assigned
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 4150
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+        default: *id001
+  /trips/{booking_id}/complete:
+    post:
+      tags:
+      - Trips
+      summary: Collect payment / complete
+      operationId: postTripsBookingIdComplete
+      description: |-
+        Settles the trip. Sets status='completed', completed_at; writes commission_earnings + wallet_transaction; presence back to 'online'.
+
+        Error codes: ACTION_NOT_ALLOWED, INSUFFICIENT_BALANCE.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                payment_method: wallet
+                total_minor: 4150
+                collected: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: completed
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 4150
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+                  commission:
+                    id: 5521
+                    booking_id: 20498
+                    driver_id: 20498
+                    office_id: 12
+                    total_fare: 38.0
+                    office_commission: 4.0
+                    driver_commission: 32.6
+                    fleet_commission: 1.4
+                    payment_date: '2026-07-15T13:40:00Z'
+                    commission_status: settled
+                  wallet:
+                    id: 1
+                    owner_type: driver
+                    owner_id: 20498
+                    currency_code: QAR
+                    balance: 640.0
+                  presence_status: online
+        default: *id001
+  /trips/{booking_id}/cancel:
+    post:
+      tags:
+      - Trips
+      summary: Cancel (before in_progress)
+      operationId: postTripsBookingIdCancel
+      description: |-
+        Allowed for status in (scheduled, assigned, arrived). Sets status='cancelled'/'no_show', cancelled_at, cancel_reason.
+
+        Error codes: CANCEL_NOT_ALLOWED, BOOKING_NOT_FOUND.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                cancel_reason: Rider not reachable
+                note: Waited 5 min
+                photo: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: no_show
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+                  impact:
+                    acceptanceBefore: 96
+                    acceptanceAfter: 94
+                    protected: true
+                    feeQar: 0
+                  presence_status: online
+        default: *id001
+  /trips/{booking_id}/cancel-impact:
+    get:
+      tags:
+      - Trips
+      summary: Cancel impact preview
+      operationId: getTripsBookingIdCancelImpact
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: reason
+        in: query
+        required: false
+        schema:
+          type: string
+        example: Vehicle issue
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  acceptanceBefore: 96
+                  acceptanceAfter: 94
+                  weeklyRemaining: 1 of 3
+                  protected: true
+                  feeQar: 0
+        default: *id001
+  /trips/history:
+    get:
+      tags:
+      - Trips
+      summary: Ride history
+      operationId: getTripsHistory
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+        example: all
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: assigned
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+                  nextCursor: null
+        default: *id001
+  /trips/{booking_id}:
+    get:
+      tags:
+      - Trips
+      summary: Ride details
+      operationId: getTripsBookingId
+      description: 'Error codes: BOOKING_NOT_FOUND.'
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: assigned
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+                  rider:
+                    firstName: Amina
+                    lastName: M.
+                  rating:
+                    id: 9931
+                    booking_id: 20498
+                    rater_type: driver
+                    rater_id: 20498
+                    ratee_type: user
+                    ratee_id: 88231
+                    stars: 5
+                    tags:
+                    - polite
+                    - on_time
+                    comment: null
+                    book_again: true
+                    favorite: false
+                    created_at: '2026-07-15T13:40:00Z'
+        default: *id001
+  /trips/{booking_id}/found-items:
+    post:
+      tags:
+      - Trips
+      summary: Report found item (lost_items)
+      operationId: postTripsBookingIdFoundItems
+      description: 'Error codes: VALIDATION_FAILED.'
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                category: phone
+                description: Black iPhone…
+                share_masked_number: true
+                photo: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LostItem'
+        default: *id001
+  /trips/{booking_id}/rating:
+    post:
+      tags:
+      - Trips
+      summary: Rate rider (ride_ratings)
+      operationId: postTripsBookingIdRating
+      description: 'Error codes: VALIDATION_FAILED.'
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                stars: 5
+                tags:
+                - polite
+                - on_time
+                comment: null
+                book_again: true
+                favorite: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RideRating'
+        default: *id001
+  /trips/{booking_id}/rider-contact:
+    get:
+      tags:
+      - Trips
+      summary: Rider masked contact (call button) [GAP]
+      operationId: getTripsBookingIdRiderContact
+      description: |-
+        GAP: the active-trip 'Rider' call button (home_screen _callRider) needs a number. Returns an office-masked / proxy number so the driver never sees the rider's real phone. The app then launches tel: via CallService.
+
+        Error codes: BOOKING_NOT_FOUND, ACTION_NOT_ALLOWED.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  masked_phone: +974 55•• ••12
+                  call_via: proxy
+                  proxy_number: '+97440009000'
+                  expires_at: '2026-07-15T14:00:00Z'
+        default: *id001
+  /trips/{booking_id}/messages:
+    get:
+      tags:
+      - Chat
+      summary: Trip chat history
+      operationId: getTripsBookingIdMessages
+      description: Driver<->rider messages for a booking (booking_chat_messages). Loaded when the chat sheet opens + on reconnect. Realtime delivery is the socket chat:message event.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+        example: 50
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 55201
+                    booking_id: 20498
+                    from_type: rider
+                    body: I'm at gate 3, silver bag.
+                    read_at: null
+                    created_at: '2026-07-15T13:06:20Z'
+                  nextCursor: null
+        default: *id001
+    post:
+      tags:
+      - Chat
+      summary: Send message
+      operationId: postTripsBookingIdMessages
+      description: |-
+        REST fallback for chat:send (idempotent via client_msg_id / X-Idempotency-Key). from_type is inferred from the authenticated principal ('driver').
+
+        Error codes: ACTION_NOT_ALLOWED.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                body: On my way, 3 min.
+                client_msg_id: c_9f2c1a
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 55201
+                  booking_id: 20498
+                  from_type: driver
+                  body: On my way, 3 min.
+                  read_at: null
+                  created_at: '2026-07-15T13:06:20Z'
+        default: *id001
+  /trips/{booking_id}/messages/read:
+    post:
+      tags:
+      - Chat
+      summary: Mark messages read
+      operationId: postTripsBookingIdMessagesRead
+      description: Marks rider messages up to up_to_id as read (sets read_at). Mirrors socket chat:read.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                up_to_id: 55201
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+                  read_at: '2026-07-15T13:06:40Z'
+        default: *id001
+  /scheduled/offers:
+    get:
+      tags:
+      - Scheduled
+      summary: Browse offers (marketplace)
+      operationId: getScheduledOffers
+      description: ride_bookings with source='scheduled' offered to this driver. filter maps to service_class / zone.
+      parameters:
+      - name: filter
+        in: query
+        required: false
+        schema:
+          type: string
+        example: available
+      - name: zone
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: scheduled
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: '2026-07-15T13:20:00Z'
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+                  nextCursor: null
+        default: *id001
+  /scheduled/offers/{booking_id}/claim:
+    post:
+      tags:
+      - Scheduled
+      summary: Claim a scheduled trip
+      operationId: postScheduledOffersBookingIdClaim
+      description: |-
+        Commits the scheduled booking to this driver. status stays 'scheduled' (surfaced on map) until /navigate.
+
+        Error codes: BOOKING_NOT_ASSIGNABLE.
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  booking:
+                    id: 4471
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: scheduled
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+        default: *id001
+  /scheduled/committed:
+    get:
+      tags:
+      - Scheduled
+      summary: Upcoming committed
+      operationId: getScheduledCommitted
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 20498
+                    user_id: 88231
+                    office_id: 12
+                    driver_id: 20498
+                    vehicle_id: 2049
+                    source: dispatch
+                    service: ride
+                    service_class: comfort
+                    pricing_style: fixed
+                    status: scheduled
+                    pickup_lat: 25.2867
+                    pickup_lng: 51.5333
+                    pickup_title: Msheireb Downtown Gate 3
+                    pickup_note: null
+                    dropoff_lat: 25.321
+                    dropoff_lng: 51.529
+                    dropoff_title: West Bay Tower 18
+                    distance_m: 1200
+                    duration_s: 540
+                    currency_code: QAR
+                    fare_minor: 3800
+                    discount_minor: 0
+                    waiting_minor: 0
+                    tip_minor: 0
+                    total_minor: 3800
+                    held_minor: 0
+                    payment_method: wallet
+                    scheduled_at: null
+                    passengers: 1
+                    luggage: 0
+                    assigned_at: '2026-07-15T13:02:20Z'
+                    created_at: '2026-07-15T13:02:11Z'
+                  summary:
+                    booked: 3
+                    estEarningsMinor: 16100
+                    currency_code: QAR
+                    missed: 0
+        default: *id001
+  /scheduled/committed/{booking_id}/release:
+    post:
+      tags:
+      - Scheduled
+      summary: Release a committed booking
+      operationId: postScheduledCommittedBookingIdRelease
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                reason: Vehicle issue
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+                  scoreImpact: true
+        default: *id001
+  /scheduled/committed/{booking_id}/reminder:
+    post:
+      tags:
+      - Scheduled
+      summary: Set reminder
+      operationId: postScheduledCommittedBookingIdReminder
+      parameters:
+      - name: booking_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                enabled: true
+                leadMinutes: 15
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+        default: *id001
+  /earnings:
+    get:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Earnings dashboard
+      operationId: getEarnings
+      description: Aggregated from commission_earnings + ride_bookings for the range. Money in minor units + currency_code.
+      parameters:
+      - name: range
+        in: query
+        required: false
+        schema:
+          type: string
+        example: today
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  currency_code: QAR
+                  gross_minor: 22600
+                  fees_minor: 2400
+                  wallet_earned_minor: 10000
+                  cash_collected_minor: 12600
+                  net_minor: 20200
+                  chart_minor:
+                  - 3800
+                  - 6200
+                  - 4400
+                  - 7800
+                  - 5800
+                  - 9000
+                  - 7000
+                  kpis:
+                    acceptanceRate: 92
+                    completionRate: 98
+                    cancellationRate: 2.1
+                    onTimePickup: 94
+                    avgFareMinor: 3220
+                    earningsPerHourMinor: 5800
+                    onlineHours: 3h 54m
+                    tripsPerHour: 1.8
+                    avgRating: 4.91
+        default: *id001
+  /wallet:
+    get:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Wallet (wallet_balances)
+      operationId: getWallet
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  balance:
+                    id: 1
+                    owner_type: driver
+                    owner_id: 20498
+                    currency_code: QAR
+                    balance: 640.0
+                  pending_payout_minor: 64000
+                  nextPayout: Tue
+                  bankMask: •• 8842
+        default: *id001
+  /wallet/transactions:
+    get:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Wallet transactions
+      operationId: getWalletTransactions
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 88213
+                    to_type: driver
+                    to_id: 20498
+                    amount: 58.0
+                    balance_before: 582.0
+                    balance_after: 640.0
+                    status: posted
+                    source_type: ride_booking
+                    source_id: 20431
+                    description_en: Trip earning — Airport T1 → Lusail
+                    transaction_reference: TXN-88213
+                    created_at: '2026-07-15T10:46:00Z'
+                  nextCursor: null
+        default: *id001
+  /wallet/payouts:
+    post:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Cash out (payout_requests)
+      operationId: postWalletPayouts
+      description: 'Error codes: INSUFFICIENT_BALANCE.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                amount_minor: 64000
+                currency_code: QAR
+                source_account: wallet
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutRequest'
+        default: *id001
+  /drivers/me/payment:
+    patch:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Payment settings
+      operationId: patchDriversMePayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                autoWeeklyPayout: true
+                acceptCash: true
+                payoutBankId: bank_123
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+        default: *id001
+  /notifications:
+    get:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Notifications list (app_notifications)
+      operationId: getNotifications
+      parameters:
+      - name: filter
+        in: query
+        required: false
+        schema:
+          type: string
+        example: all
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 33911
+                    notifiable_type: driver
+                    notifiable_id: 20498
+                    template_key: office.broadcast
+                    type: office
+                    locale: en
+                    title: Message from Pearl Mobility
+                    body: Airport queue priority this weekend.
+                    data:
+                      route: /support/office
+                    read_at: null
+                    created_at: '2026-07-15T09:12:00Z'
+                  unread: 2
+                  nextCursor: null
+        default: *id001
+  /notifications/read:
+    post:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Mark read
+      operationId: postNotificationsRead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                all: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+                  unread: 0
+        default: *id001
+  /drivers/me/summary:
+    get:
+      tags:
+      - Earnings/Wallet/Notifications
+      summary: Home dock summary (KPI strip) [GAP]
+      operationId: getDriversMeSummary
+      description: 'GAP: the Home availability dock shows Today earnings / Trips / Online time / Wallet KPIs (hardcoded today). A lightweight summary so the dock doesn''t load the full /earnings dashboard.'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  currency_code: QAR
+                  today_earned_minor: 18500
+                  trips_today: 6
+                  online_seconds: 12300
+                  wallet_balance_minor: 64000
+                  acceptanceRate: 92
+        default: *id001
+  /drivers/me:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Get profile
+      operationId: getDriversMe
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        default: *id001
+    patch:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Update account
+      operationId: patchDriversMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                firstName: John
+                lastName: Smith
+                email: john@example.com
+                phoneNumber: 5500XXXX
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        default: *id001
+  /drivers/me/vehicle:
+    patch:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Update vehicle
+      operationId: patchDriversMeVehicle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                model: Camry
+                plate: QTR-2049
+                color: White
+                modelYear: 2023
+                seatsCount: 4
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        default: *id001
+  /drivers/me/documents:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Documents list (driver_documents)
+      operationId: getDriversMeDocuments
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 88
+                    driverId: 20498
+                    document_id: 3
+                    name: Driving license
+                    file: https://cdn.fleetos.example/docs/88.jpg
+                    status: verified
+                    note: null
+                    expires_at: '2027-03-01'
+        default: *id001
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Upload document
+      operationId: postDriversMeDocuments
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document_id:
+                  type: integer
+                name:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+                expires_at:
+                  type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 88
+                  driverId: 20498
+                  document_id: 3
+                  name: Driving license
+                  file: https://cdn.fleetos.example/docs/88.jpg
+                  status: pending
+                  note: null
+                  expires_at: '2027-03-01'
+        default: *id001
+  /drivers/me/preferences:
+    patch:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Language / preferences
+      operationId: patchDriversMePreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                locale: ar
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+                  locale: ar
+        default: *id001
+  /places:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Saved places list
+      operationId: getPlaces
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 5521
+                    user_id: 20498
+                    label: home
+                    icon: home
+                    title: Home (end of shift)
+                    address: Al Sadd, Zone 38
+                    lat: 25.276
+                    lng: 51.518
+        default: *id001
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Add / edit place
+      operationId: postPlaces
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                label: airport_staging
+                icon: flight
+                title: Airport staging lot
+                address: Hamad Intl · queue zone
+                lat: 25.2731
+                lng: 51.6089
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedPlace'
+        default: *id001
+  /places/{id}:
+    delete:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Delete place
+      operationId: deletePlacesId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+        default: *id001
+    patch:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Edit saved place [GAP]
+      operationId: patchPlacesId
+      description: |-
+        GAP: SavedPlaceEditScreen edits an existing place ('Save place'). Present in API_CONTRACT.md but missing from the JSON collection.
+
+        Error codes: VALIDATION_FAILED.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                label: home
+                icon: home
+                title: Home (end of shift)
+                address: Al Sadd, Zone 38
+                lat: 25.276
+                lng: 51.518
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedPlace'
+        default: *id001
+  /support/trip-issues:
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Report trip issue (drivers_issues)
+      operationId: postSupportTripIssues
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                booking_id: 20498
+                subject: Payment issue
+                description: Rider disputed the fare.
+                photo: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriversIssue'
+        default: *id001
+  /support/tickets:
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Support ticket (office/FleetOS)
+      operationId: postSupportTickets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                channel: fleetos
+                subject: App issue
+                description: Map did not load.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriversIssue'
+        default: *id001
+  /support/issues/{id}/replies:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Issue replies (thread)
+      operationId: getSupportIssuesIdReplies
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 900
+                    issueId: 5521
+                    sender_type: office
+                    sender_id: 12
+                    senderName: Pearl Mobility
+                    content: We are reviewing the fare.
+                    imageUrl: null
+        default: *id001
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Post issue reply [GAP]
+      operationId: postSupportIssuesIdReplies
+      description: |-
+        GAP: the issue thread shows replies (GET) but the driver also needs to add one. Writes a driver reply to the `replies` table.
+
+        Error codes: VALIDATION_FAILED.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                content: Attached the receipt.
+                image: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 900
+                  issueId: 5521
+                  sender_type: driver
+                  sender_id: 12
+                  senderName: Pearl Mobility
+                  content: We are reviewing the fare.
+                  imageUrl: null
+        default: *id001
+  /help/articles:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Help articles (help_suggestions)
+      operationId: getHelpArticles
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+        example: null
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 1
+                    title_en: How payouts work
+                    description_en: Earnings settle to your Fleet Wallet after each trip...
+                    category: payouts
+                    priority: 1
+                    read_minutes: 2
+                    isActive: true
+        default: *id001
+  /safety/contacts:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Safety contacts list
+      operationId: getSafetyContacts
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - id: 331
+                    user_id: 20498
+                    name: Sara S.
+                    phone: '+97455001122'
+                    relation: spouse
+                    is_primary: true
+                    auto_share: true
+        default: *id001
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Add safety contact
+      operationId: postSafetyContacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Sara S.
+                phone: '+97455001122'
+                relation: spouse
+                is_primary: true
+                auto_share: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyContact'
+        default: *id001
+  /safety/sos:
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: SOS trigger (driver_safety_events)
+      operationId: postSafetySos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                booking_id: 20498
+                kind: sos
+                category: hold
+                lat: 25.2867
+                lng: 51.5333
+                hold_ms: 1500
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 3391
+                  driver_id: 20498
+                  booking_id: 20498
+                  office_id: 12
+                  kind: sos
+                  category: hold
+                  status: open
+                  lat: 25.2867
+                  lng: 51.5333
+                  hold_ms: 1500
+                  created_at: '2026-07-15T13:20:00Z'
+                  sharedWith:
+                  - fleetos
+                  - office
+                  - contacts
+        default: *id001
+  /safety/status-links:
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Share live status
+      operationId: postSafetyStatusLinks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                booking_id: 20498
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  url: https://track.fleetos.example/s/9f2c1a
+                  expiresAt: '2026-07-15T14:02:00Z'
+        default: *id001
+  /safety/sos/{id}/end:
+    post:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: End emergency
+      operationId: postSafetySosIdEnd
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                safeConfirmed: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 3391
+                  driver_id: 20498
+                  booking_id: 20498
+                  office_id: 12
+                  kind: sos
+                  category: hold
+                  status: closed
+                  lat: 25.2867
+                  lng: 51.5333
+                  hold_ms: 1500
+                  created_at: '2026-07-15T13:20:00Z'
+        default: *id001
+  /places/search:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Place search / geocode [GAP]
+      operationId: getPlacesSearch
+      description: 'GAP: SavedPlaceEditScreen ''Search or drop a pin'' address field. Geocode/autocomplete; may be backed by a geocoder provider rather than the DB.'
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+        example: Hamad airport
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items:
+                  - title: Hamad International Airport
+                    address: Hamad Intl · queue zone
+                    lat: 25.2731
+                    lng: 51.6089
+        default: *id001
+  /help/articles/{id}:
+    get:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Help article detail [GAP]
+      operationId: getHelpArticlesId
+      description: |-
+        GAP: HelpArticleScreen renders a single article body; the list endpoint returns summaries only.
+
+        Error codes: BOOKING_NOT_FOUND.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HelpSuggestion'
+        default: *id001
+  /safety/contacts/{id}:
+    patch:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Edit safety contact [GAP]
+      operationId: patchSafetyContactsId
+      description: 'Error codes: VALIDATION_FAILED.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Sara S.
+                phone: '+97455001122'
+                relation: spouse
+                is_primary: true
+                auto_share: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyContact'
+        default: *id001
+    delete:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Delete safety contact [GAP]
+      operationId: deleteSafetyContactsId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+        default: *id001
+  /safety/status-links/{id}:
+    delete:
+      tags:
+      - Profile/Settings/Places/Support/Safety
+      summary: Stop sharing live status [GAP]
+      operationId: deleteSafetyStatusLinksId
+      description: 'GAP: ShareStatusScreen ''Stop sharing'' — revokes a status link created by POST /safety/status-links.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ok: true
+                  stopped_at: '2026-07-15T13:45:00Z'
+        default: *id001

@@ -25,7 +25,7 @@ class UpdateCommissionsLogic implements Service {
     public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
 
         $fleet_office_info = $this->repository->FleetOfficeRepository()->updateRepository();
-        
+
         if(demoUserPermission()){
             return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
         }
@@ -33,49 +33,59 @@ class UpdateCommissionsLogic implements Service {
         switch($this->input->getType())
         {
             case 'fleet_driver' :
-                $fleet_commission  = $this->input->getFleetCommissionValueWithDriver();
                 $driver_commission = $this->input->getDriverCommission();
+                $fleet_commission  = 100 - $driver_commission;
 
                 if(($fleet_commission + $driver_commission) != 100){
                     $message = 'مجموع نسب العمولات لا يساي الـ 100 ';
-                    return redirect(route('commissions.free-driver'))->withErrors(['completed_value'=>$message]);
+                     return response()->json([
+                        'success' => false,
+                        'message' =>  $message
+                    ]);
+                    // return redirect(route('commissions.free-driver'))->withErrors(['completed_value'=>$message]);
                 }
 
                 $fleet_office_info->updateFirst([],[
                     'fleet_commission_value_with_driver' => $fleet_commission,
                     'driver_commission_value' => $driver_commission,
                 ]);
-                $message = ' تم تحديث عمولات السائقين بنجاح ';
-                return redirect(route('commissions.fleet'))->withSuccess($message);
+                $message =  'تم تحديث العمولات العامة السائقين  بنجاح';
+
+                // return redirect(route('commissions.fleet'))->withSuccess($message);
                 break;
 
-            case 'fleet_office':
-                $fleet_commission  = $this->input->getFleetCommissionValueWithDriver();
-                $office_commission = $this->input->getOfficeCommission();
 
-                if(($fleet_commission + $office_commission) != 100){
-                    $message = 'مجموع نسب العمولات لا يساي الـ 100 ';
-                    return redirect(route('commissions.fleet.office'))->withErrors(['completed_value'=>$message]);
-                }
+            case 'fleet_office':
+                $office_commission = $this->input->getOfficeCommission();
+                $fleet_commission  = 100 - $office_commission;
 
                 $fleet_office_info->updateFirst([],[
-                    'fleet_commission_value_with_driver' =>$fleet_commission,
+                    'fleet_commission_value_with_office' =>$fleet_commission,
                     'office_commission_value' => $office_commission,
                 ]);
                 $message = ' تم تحديث عمولات المكاتب بنجاح ';
-                return redirect(route('commissions.fleet'))->withSuccess($message);
+                // return redirect(route('commissions.fleet'))->withSuccess($message);
                 break;
-            
-            default :
-            $message = 'نوع العمولات المطلوب غير مدعوم';
-            return redirect()->back()->withErrors($message);
-            break;
+
+                default :
+                $message = 'نوع العمولات المطلوب غير مدعوم';
+                return response()->json([
+                        'success' => false,
+                        'message' =>  $message
+                    ]);
+                // return redirect()->back()->withErrors($message);
+
             // case 'fleet_office_driver':
             //     break;
 
             // case 'fleet_office_driver_owner':
             //     break;
         }
+
+        return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
 
    }
 }

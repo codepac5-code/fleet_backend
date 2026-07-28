@@ -19,6 +19,8 @@ class UpdateOfficeInput implements InputServiceInterface
     private $walletBalance;
     private $limitOrders;
     private bool $has_image;
+    private array $serviceIds = [];
+
 
     public function __construct( array $input)
     {
@@ -36,6 +38,8 @@ class UpdateOfficeInput implements InputServiceInterface
         $this->walletBalance     = isset($input['walletBalance']) ? $input['walletBalance'] : 0.00 ;
         $this->limitOrders       = isset( $input['limitOrders'])? $input['limitOrders'] : 0;
         $this->has_image         = $input['has_image'] ?? false;
+        $this->serviceIds = isset($input['serviceIds']) ? $input['serviceIds'] : [];
+
 
     }
 
@@ -46,6 +50,10 @@ class UpdateOfficeInput implements InputServiceInterface
             ''=>''
         ];
     }
+    public function getServiceIds(): array {
+    return $this->serviceIds;
+    }
+
 
     /**
      * Get the value of email

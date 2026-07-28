@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use App\Http\Core\Const\Options\LanguageOptions;
@@ -14,12 +13,14 @@ class SetLocalization
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
-    {
-        if ($request->hasHeader('localization') && in_array(request()->header('localization') ,LanguageOptions::$language)) {
-            app()->setLocale(request()->header('localization'));
+   public function handle(Request $request, Closure $next)
+{
+        if ($request->hasHeader('localization') && in_array($request->header('localization'), LanguageOptions::$language)) {
+            app()->setLocale($request->header('localization'));
+        } else {
+            app()->setLocale(session('locale', 'en'));
         }
-        
+
         return $next($request);
     }
 }

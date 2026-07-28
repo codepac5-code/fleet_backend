@@ -26,10 +26,10 @@ class CreateOrUpdateBannerRequest extends BaseRequest
         return
         [
             'title'          => 'required|string|max:255|regex:/^[\p{Arabic}\s]+$/u',
-            'title_en'       => 'required|string|max:255|regex:/^[A-Za-z0-9\s]*$/', 
+            'title_en'       => 'required|string|max:255|regex:/^[A-Za-z0-9\s]*$/',
             'description' => 'nullable|string|max:200|regex:/^[\p{Arabic}\s]+$/u',
             'description_en' => 'nullable|string|max:200|regex:/^[A-Za-z0-9\s]*$/',
-            'image'=>['required'],
+            'image'=>['required,image'],
         ];
     }
 
@@ -44,9 +44,9 @@ class CreateOrUpdateBannerRequest extends BaseRequest
     public function messages(){
         return [
             'title_en.regex' => __('messages.regex_name_en'),
-            'title.regex' => __('messages.regex_name_ar'), 
+            'title.regex' => __('messages.regex_name_ar'),
             'description.regex' => __('messages.regex_name_en'),
-            'description_en.regex' => __('messages.regex_name_ar'),  
+            'description_en.regex' => __('messages.regex_name_ar'),
          ];
     }
 

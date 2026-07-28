@@ -11,4 +11,9 @@ class OfficeUpdateRepository extends UpdateRepository
         $this->model = new Office();
     }
 
+    public function updateOfficeServices( $officeId, array $serviceIds): void
+    {
+            $this->model->find($officeId)->services()->sync($serviceIds);
+            return;
+    }
 }

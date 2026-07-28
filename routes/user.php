@@ -1,180 +1,154 @@
 <?php
 
-use App\Http\Services\Api\Send_SMS_Message_Api\Controller\Send_SMS_Message_ApiController;
-use Illuminate\Support\Facades\Redis;
+use App\Http\Services\User\Auth\Controllers\AuthController;
+use App\Http\Services\User\B2B\Controllers\CorporateController;
+use App\Http\Services\User\B2B\Controllers\FamilyController;
+use App\Http\Services\User\Booking\Controllers\BookingController;
+use App\Http\Services\User\Booking\Controllers\CancellationReasonsController;
+use App\Http\Services\User\Marketplace\Controllers\FavoritesController;
+use App\Http\Services\User\Marketplace\Controllers\GeocodeController;
+use App\Http\Services\User\Marketplace\Controllers\MarketplaceController;
+use App\Http\Services\User\Support\Controllers\ComplaintsController;
+use App\Http\Services\User\Support\Controllers\CountryController;
+use App\Http\Services\User\Support\Controllers\HelpController;
+use App\Http\Services\User\Support\Controllers\TicketsController;
+use App\Http\Services\User\Notifications\Controllers\DevicesController;
+use App\Http\Services\User\Notifications\Controllers\NotificationsController;
+use App\Http\Services\User\Payments\Controllers\PaymentMethodsController;
+use App\Http\Services\User\Payments\Controllers\PromosController;
+use App\Http\Services\User\Payments\Controllers\StripePaymentsController;
+use App\Http\Services\User\Payments\Controllers\WalletController;
+use App\Http\Services\User\Profile\Controllers\PlacesController;
+use App\Http\Services\User\Profile\Controllers\ProfileController;
+use App\Http\Services\User\Profile\Controllers\SafetyContactsController;
+use App\Http\Services\User\Scheduled\Controllers\ScheduledController;
+use App\Http\Services\User\Trips\Controllers\MessagesController;
+use App\Http\Services\User\Trips\Controllers\RideEditController;
+use App\Http\Services\User\Trips\Controllers\TripsController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Broadcast;
-use App\Http\Services\User\Auth\Login\Controller\LoginController;
-use App\Http\Services\User\GetCopon\Controller\GetCoponController;
-use App\Http\Services\User\Auth\Logiout\Controller\LogoutController;
-use App\Http\Services\User\GetSlides\Controller\GetSlidesController;
-use App\Http\Services\User\MakeOrder\Controller\MakeOrderController;
-use App\Http\Services\User\CancelOrder\Controller\CancelOrderController;
-use App\Http\Services\User\GetServices\Controller\GetServicesController;
-use App\Http\Services\User\OrderHistory\Controller\OrderHistoryController;
-use App\Http\Services\Apis\MTNPaymentApi\Controller\MTNPaymentApiController;
-use App\Http\Services\User\GetSubService\Controller\GetSubServiceController;
-use App\Http\Services\User\RattingDriver\Controller\RattingDriverController;
-use App\Http\Services\User\CompletedOrder\Controller\CompletedOrderController;
-use App\Http\Services\User\PaymentService\Controller\PaymentServiceController;
-use App\Http\Services\User\Auth\UserRegister\Controller\UserRegisterController;
-use App\Http\Services\User\GetPaymentMethod\Controller\GetPaymentMethodController;
-use App\Http\Services\User\GetWalletHistory\Controller\GetWalletHistoryController;
-use App\Http\Services\User\ResearchOnDriver\Controller\ResearchOnDriverController;
-use App\Http\Services\User\GetUserNotifications\Controller\GetUserNotificationsController;
-use App\Http\Services\User\ProfileManagement\ShowProfile\Controller\ShowProfileController;
-use App\Http\Services\User\ProfileManagement\EditeProfile\Controller\EditeProfileController;
-use App\Http\Services\User\UserAddressManagement\AddAddress\Controller\AddAddressController;
-use App\Http\Services\User\Auth\UserCheckOtpService\Controller\UserCheckOtpServiceController;
-use App\Http\Services\User\UserAddressManagement\ShowAddress\Controller\ShowAddressController;
-use App\Http\Services\Dashboard\ServiceManagement\ViewService\Controller\ViewServiceController;
-use App\Http\Services\User\UserAddressManagement\DeleteAddress\Controller\DeleteAddressController;
-use App\Http\Services\Apis\ConfirmPaymentPhoneNumber\Controller\ConfirmPaymentPhoneNumberController;
-use App\Http\Services\Apis\MTNConfirmPaymentPhoneNumber\Controller\MTNConfirmPaymentPhoneNumberController;
-use App\Http\Services\Apis\SyriatelConfirmPhoneNumber\Controller\SyriatelConfirmPhoneNumberController;
-use App\Http\Services\Apis\SyriatelPaymentApi\Controller\SyriatelPaymentApiController;
-use App\Http\Services\Dashboard\BannersManagement\CreateOrUpdateBanner\Controller\CreateOrUpdateBannerController;
-use App\Http\Services\Driver\GetIssueDetails\Controller\GetIssueDetailsController;
-use App\Http\Services\Driver\SendIssueReply\Controller\SendIssueReplyController;
-use App\Http\Services\Driver\SendJobApplication\Controller\SendJobApplicationController;
-use App\Http\Services\User\ProfileManagement\EdateImageProfile\Controller\EdateImageProfileController;
-use App\Http\Services\User\Auth\UserResetPasswordService\Controller\UserResetPasswordServiceController;
-use App\Http\Services\User\Auth\UserForgetPasswordService\Controller\UserForgetPasswordServiceController;
-use App\Http\Services\User\Auth\UserSendOtpServiceService\Controller\UserSendOtpServiceServiceController;
-use App\Http\Services\PoilceAndPrivceManagement\ShowPoilceAndPrivceService\Controller\ShowPoilceAndPrivceServiceController;
-use App\Http\Services\PoilceAndPrivceManagement\ViewPoilceAndPrivceService\Controller\ViewPoilceAndPrivceServiceController;
-use App\Http\Services\SharedServices\issues\CloeIssue\Controller\CloeIssueController;
-use App\Http\Services\SharedServices\issues\CreateNewIssue\Controller\CreateNewIssueController;
-use App\Http\Services\SharedServices\issues\GetIssuesDetails\Controller\GetIssuesDetailsController;
-use App\Http\Services\SharedServices\issues\GetIssuesWithReplies\Controller\GetIssuesWithRepliesController;
-use App\Http\Services\SharedServices\issues\SendIusseReply\Controller\SendIusseReplyController;
-use App\Http\Services\User\DeleteUserAccount\Controller\DeleteUserAccountController;
-use App\Http\Services\User\FleetWalletPayment\Controller\FleetWalletPaymentController;
-use App\Http\Services\User\GetPublicUserAppSettings\Controller\GetPublicUserAppSettingsController;
-use App\Http\Services\User\GetReferralMessage\Controller\GetReferralMessageController;
-use App\Http\Services\User\GetUserTermAndCondition\Controller\GetUserTermAndConditionController;
-use App\Http\Services\User\InquireUserOrderStatus\Controller\InquireUserOrderStatusController;
-use App\Http\Services\User\SendReport\Controller\SendReportController;
-use App\Http\Services\User\StartApplication\Controller\StartApplicationController;
-use App\Http\Services\User\UserHelpSuggestion\Controller\UserHelpSuggestionController;
-use App\Http\Services\User\WalletManagement\AddBalanceByPaymentMethod\Controller\AddBalanceByPaymentMethodController;
-use App\Http\Services\User\WalletManagement\ConfirmPhone_AddBalance\Controller\ConfirmPhone_AddBalanceController;
 
-Route::post('/send/otp',UserSendOtpServiceServiceController::class);
-
-Route::post('/check/otp',UserCheckOtpServiceController::class);
-Route::post('/change/password',UserForgetPasswordServiceController::class);
-Route::post('/register',UserRegisterController::class);
-Route::post('/login',LoginController::class);
-// Route::get('/policy',ShowPoilceAndPrivceServiceController::class);
-
-
-Route::group(['middleware' => ['set-localization']], function () {
-    Route::group(['prefix' => 'settings'], function () {
-        Route::get('/app-public-settings', GetPublicUserAppSettingsController::class);
-    });
-    Route::get('/policy',GetUserTermAndConditionController::class);
-});
-
-Route::group(['middleware' => ['auth:user','set-localization']], function () {
-    Route::post('start-application', StartApplicationController::class);
-    Route::get('issues/details', GetIssuesDetailsController::class);
-    Route::post('issues/close', CloeIssueController::class);
-    Route::post('send-reply-issue', SendIusseReplyController::class);
-    Route::get( 'get-user-issues-with-replies', GetIssuesWithRepliesController::class);
-
-    // Route::post('issues/details', GetIssueDetailsController::class);
-    // Route::post('send-reply-issue', SendIssueReplyController::class);
-
-    Route::get('get/help-suggestions', UserHelpSuggestionController::class);
-
-    Route::post('send-driver-job-application', SendJobApplicationController::class);
-    Route::post('send-reply-issue', SendIssueReplyController::class);
-
-    Route::get('referral-details', GetReferralMessageController::class);
-
-    Route::post('delete-account',DeleteUserAccountController::class);
-
-    Route::post('rating', RattingDriverController::class);
-    Route::post('make-order', MakeOrderController::class);
-    Route::post('order/cancel',CancelOrderController::class);
-    Route::post('research-on-driver',ResearchOnDriverController::class);
-    Route::get('order/history',OrderHistoryController::class);
-    Route::get('get/notifications', GetUserNotificationsController::class);
-    Route::get('wallet/history',GetWalletHistoryController::class);
-
-    Route::get('coupon/calculation', GetCoponController::class);
-
-
-    Route::group(['prefix' => 'address'], function () {
-
-        Route::post('/add', AddAddressController::class);
-        Route::get('/index', ShowAddressController::class);
-        Route::delete('/delete', DeleteAddressController::class);
+Route::middleware('user-api')->group(function () {
+    Route::prefix('auth')->group(function () {
+        Route::post('otp/request', [AuthController::class, 'requestOtp']);
+        Route::post('otp/verify', [AuthController::class, 'verifyOtp']);
+        Route::post('register', [AuthController::class, 'register']);
+        Route::post('refresh', [AuthController::class, 'refresh']);
+        Route::post('social', [AuthController::class, 'social']);
     });
 
-    Route::group(['prefix' => 'profile'], function () {
-        Route::get('/', ShowProfileController::class);
-        Route::put('/update', EditeProfileController::class);
-        Route::post('/photo', EdateImageProfileController::class);
-        Route::post('/reset/password',UserResetPasswordServiceController::class);
-        Route::get('/logout',LogoutController::class);
+    // Public reference data — the login country picker loads this before auth.
+    Route::get('countries', [CountryController::class, 'index']);
+
+    // See the note in routes/driver.php — `auth:user` accepts a driver's token
+    // whenever the ids collide, so the audience scope is the real boundary.
+    Route::middleware(['auth:user', 'token-audience:user'])->group(function () {
+        Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::post('auth/phone/change', [AuthController::class, 'changePhone']);
+        Route::post('auth/phone/change/verify', [AuthController::class, 'verifyPhoneChange']);
+
+        Route::get('me', [AuthController::class, 'me']);
+        Route::patch('me', [ProfileController::class, 'update']);
+        Route::post('me/photo', [ProfileController::class, 'uploadPhoto']);
+        Route::delete('account', [ProfileController::class, 'destroy']);
+
+        Route::get('me/notifications-prefs', [ProfileController::class, 'notificationPrefs']);
+        Route::patch('me/notifications-prefs', [ProfileController::class, 'updateNotificationPrefs']);
+        Route::get('me/privacy', [ProfileController::class, 'privacy']);
+        Route::patch('me/privacy', [ProfileController::class, 'updatePrivacy']);
+
+        Route::get('me/places', [PlacesController::class, 'index']);
+        Route::post('me/places', [PlacesController::class, 'store']);
+        Route::patch('me/places/{id}', [PlacesController::class, 'update'])->whereNumber('id');
+        Route::delete('me/places/{id}', [PlacesController::class, 'destroy'])->whereNumber('id');
+
+        Route::get('me/safety-contacts', [SafetyContactsController::class, 'index']);
+        Route::post('me/safety-contacts', [SafetyContactsController::class, 'store']);
+        Route::patch('me/safety-contacts/auto-share', [SafetyContactsController::class, 'autoShareToggle']);
+        Route::delete('me/safety-contacts/{id}', [SafetyContactsController::class, 'destroy'])->whereNumber('id');
+
+        Route::get('me/favorites', [FavoritesController::class, 'index']);
+        Route::post('me/favorites/{officeId}', [FavoritesController::class, 'store'])->whereNumber('officeId');
+        Route::delete('me/favorites/{officeId}', [FavoritesController::class, 'destroy'])->whereNumber('officeId');
+
+        Route::get('catalog/services', [MarketplaceController::class, 'catalogServices']);
+        Route::get('catalog/classes', [MarketplaceController::class, 'catalogClasses']);
+        Route::post('offices/search', [MarketplaceController::class, 'officesSearch']);
+        Route::get('offices/{id}', [MarketplaceController::class, 'officeProfile'])->whereNumber('id');
+        Route::post('routes/estimate', [MarketplaceController::class, 'estimate']);
+        Route::get('places/suggest', [MarketplaceController::class, 'placesSuggest']);
+        Route::get('places/details', [MarketplaceController::class, 'placeDetails']);
+
+        Route::get('bookings/cancellation-reasons', [CancellationReasonsController::class, 'index']);
+        Route::post('bookings', [BookingController::class, 'store']);
+        Route::post('bookings/{id}/cancel', [BookingController::class, 'cancel'])->whereNumber('id');
+        Route::post('bookings/{id}/change-office', [BookingController::class, 'changeOffice'])->whereNumber('id');
+        Route::get('bookings/{id}', [BookingController::class, 'show'])->whereNumber('id');
+
+        Route::get('trips/rating-tags', [\App\Http\Services\User\Trips\Controllers\RatingTagsController::class, 'index']);
+        Route::get('trips', [TripsController::class, 'index']);
+        Route::get('trips/{id}', [TripsController::class, 'show'])->whereNumber('id');
+        Route::post('trips/{id}/rating', [TripsController::class, 'rate'])->whereNumber('id');
+        Route::post('trips/{id}/lost-item', [TripsController::class, 'lostItem'])->whereNumber('id');
+        // Governed lost & found — the rider's own reports + withdraw.
+        Route::get('trips/lost-items', [TripsController::class, 'lostItems']);
+        Route::post('trips/lost-items/{item}/cancel', [TripsController::class, 'cancelLostItem'])->whereNumber('item');
+        Route::post('trips/{id}/change-route', [RideEditController::class, 'changeRoute'])->whereNumber('id');
+        Route::post('trips/{id}/add-stop', [RideEditController::class, 'addStop'])->whereNumber('id');
+        Route::get('trips/{id}/messages', [MessagesController::class, 'index'])->whereNumber('id');
+        Route::post('trips/{id}/messages', [MessagesController::class, 'store'])->whereNumber('id');
+
+        Route::get('notifications', [NotificationsController::class, 'index']);
+        Route::post('notifications/read-all', [NotificationsController::class, 'readAll']);
+        Route::post('notifications/{id}/read', [NotificationsController::class, 'read'])->whereNumber('id');
+        Route::post('devices', [DevicesController::class, 'store']);
+        Route::delete('devices/{token}', [DevicesController::class, 'destroy']);
+
+        Route::get('wallet', [WalletController::class, 'balance']);
+        Route::get('wallet/transactions', [WalletController::class, 'transactions']);
+        Route::get('wallet/topup-options', [WalletController::class, 'topUpOptions']);
+        Route::get('wallet/topup-quote', [WalletController::class, 'topUpQuote']);
+        Route::post('wallet/topup', [WalletController::class, 'topUp']);
+        Route::post('wallet/topup/verify', [WalletController::class, 'verifyTopUp']);
+
+        Route::get('payment-methods', [PaymentMethodsController::class, 'index']);
+        Route::post('payment-methods', [PaymentMethodsController::class, 'store']);
+        Route::patch('payment-methods/{id}', [PaymentMethodsController::class, 'setDefault'])->whereNumber('id');
+        Route::delete('payment-methods/{id}', [PaymentMethodsController::class, 'destroy'])->whereNumber('id');
+
+        Route::get('promos', [PromosController::class, 'index']);
+        Route::post('promos/redeem', [PromosController::class, 'redeem']);
+
+        Route::post('payments/stripe/setup-intent', [StripePaymentsController::class, 'setupIntent']);
+        Route::post('payments/stripe/payment-intent', [StripePaymentsController::class, 'paymentIntent']);
+
+        Route::post('scheduled', [ScheduledController::class, 'store']);
+        Route::get('scheduled/{id}', [ScheduledController::class, 'show'])->whereNumber('id');
+        Route::patch('scheduled/{id}', [ScheduledController::class, 'update'])->whereNumber('id');
+        Route::delete('scheduled/{id}', [ScheduledController::class, 'destroy'])->whereNumber('id');
+
+        // Office-mediated fixed A-to-Z: compare offers → pick an office → cancel.
+        Route::get('fixed/cities', [\App\Http\Services\User\Fixed\Controllers\FixedTripController::class, 'cities']);
+        Route::get('fixed/sub-services', [\App\Http\Services\User\Fixed\Controllers\FixedTripController::class, 'subServices']);
+        Route::post('fixed/offers', [\App\Http\Services\User\Fixed\Controllers\FixedTripController::class, 'offers']);
+        Route::post('fixed/select', [\App\Http\Services\User\Fixed\Controllers\FixedTripController::class, 'select']);
+        Route::get('fixed/{id}', [\App\Http\Services\User\Fixed\Controllers\FixedTripController::class, 'show'])->whereNumber('id');
+        Route::post('fixed/{id}/cancel', [\App\Http\Services\User\Fixed\Controllers\FixedTripController::class, 'cancel'])->whereNumber('id');
+
+        Route::post('geocode/reverse', [GeocodeController::class, 'reverse']);
+
+        Route::get('tickets', [TicketsController::class, 'index']);
+        Route::post('tickets', [TicketsController::class, 'store']);
+        Route::get('tickets/{id}', [TicketsController::class, 'show'])->whereNumber('id');
+        Route::post('complaints', [ComplaintsController::class, 'store']);
+        Route::post('complaints/photo', [ComplaintsController::class, 'uploadPhoto']);
+        Route::get('help/articles', [HelpController::class, 'index']);
+        Route::get('help/articles/{id}', [HelpController::class, 'show'])->whereNumber('id');
+        Route::get('help/contact', [HelpController::class, 'contact']);
+
+        Route::get('corporate/invoices', [CorporateController::class, 'index']);
+        Route::get('family/members', [FamilyController::class, 'index']);
+        Route::post('family/members', [FamilyController::class, 'store']);
+        Route::patch('family/members/{id}', [FamilyController::class, 'update'])->whereNumber('id');
+        Route::delete('family/members/{id}', [FamilyController::class, 'destroy'])->whereNumber('id');
     });
-
-
-Route::group(['prefix' => 'get'],function(){
-    Route::get('slides',GetSlidesController::class);
-    Route::get('services',GetServicesController::class);
-    Route::get('payment/method',GetPaymentMethodController::class);
-    Route::post('sub/services',GetSubServiceController::class);
 });
-
-
-Route::group(['prefix' => 'wallet'], function () {
-    Route::Post('/add-balance/by/paymentMethods' , AddBalanceByPaymentMethodController::class);
-    Route::Post('/confirm-phoneNumber/add-balance-to-wallet' , ConfirmPhone_AddBalanceController::class);
-    // Route::Post('/add-balance/by/paymentMethods' , SyriatelPaymentApiController::class);
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Route::group(['prefix' => 'payment'], function () {
-    Route::post('/fleet-wallet',FleetWalletPaymentController::class);
-    Route::Post('/order' , PaymentServiceController::class);
-    Route::Post('/confirm-phoneNumber/completed-order' , MTNConfirmPaymentPhoneNumberController::class);
-    // Route::Post('/confirm-syriatel-phoneNumber/completed-order' , SyriatelConfirmPhoneNumberController::class);
-});
-
-
-
-Route::group(['prefix' => 'order'], function () {
-    Route::post('/make',MakeOrderController::class);
-    Route::post('/inquire-about-the-status-of-the-order' , InquireUserOrderStatusController::class);
-    Route::post('/completed' ,CompletedOrderController::class);
-});
-
-
-//Broadcast::routes(['middleware' => ['auth:user']]);
-Route::post('banner/add', CreateOrUpdateBannerController::class)->name('banner.store');
-});
-
-
-
-Route::get('services',GetServicesController::class);

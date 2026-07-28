@@ -9,6 +9,7 @@ use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Session;
 
 
 class CreateOrUpdateUserLogic implements Service {
@@ -30,13 +31,14 @@ class CreateOrUpdateUserLogic implements Service {
         //     return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
         // }
         $ImageManager = new ImageManager();
-        
+
         $data = [
             'firstName' => $this->input->getFirstName(),
             'lastName' => $this->input->getLastName(),
             'gender' => $this->input->getGender(),
-            'phoneNumber' => $this->input->getPhoneNumber(),
-            'photo' => $ImageManager->default_profile_photo()
+            'phoneNumber' =>$this->removeOneLeadingZero( $this->input->getPhoneNumber()),
+            'photo' => $ImageManager->default_profile_photo(),
+            'dialCode'=>Session::get('dialCode'),
         ];
 
         if($this->input->hasImage()){
@@ -44,12 +46,12 @@ class CreateOrUpdateUserLogic implements Service {
             $path = $ImageManager->withStorge( $path );
             $data['photo'] = $path;
         }
-                
+
         if($this->input->getId() != null ){
 
             $user = $this->repository->UserRepository()->updateRepository()->update(
                 ['id'=> $this->input->getId()],
-                $data 
+                $data
             );
 
             if( $user > 0 ){
@@ -77,10 +79,16 @@ class CreateOrUpdateUserLogic implements Service {
                 $message = __( 'messages.save_form',[ 'form' => __('messages.user') ] );
                 StatisticsEvent::Users->send_event_to_admin(1);
             }
-         
+
         }
 
 		return redirect(route('user.index'))->withSuccess($message);
 
    }
+    function removeOneLeadingZero($number){
+        if (str_starts_with($number, '0')) {
+            return substr($number, 1);
+        }
+        return $number;
+    }
 }

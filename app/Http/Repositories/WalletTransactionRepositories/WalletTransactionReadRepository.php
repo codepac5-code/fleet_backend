@@ -14,14 +14,17 @@ class WalletTransactionReadRepository extends ReadRepository
 
     public function getUserWalletTransactions_paginate ( $user , $paginate = 10){
 
+
         $languageSelect = select_by_language([
             'description',
             'paymentName',
+            // 'name',
         ], [
             'description_en as description',
             'paymentName_en as paymentName',
+            // 'name_en as name',
         ]);
-        
+
         $commonSelect = [
             'id',
             'from_type',
@@ -36,7 +39,7 @@ class WalletTransactionReadRepository extends ReadRepository
             DB::raw("IF(from_type = '" . addslashes(get_class($user)) . "' AND from_id = {$user->id}, true, false) as isWithdraw"),
             DB::raw("'transaction' as record_type")
         ];
-        
+
 
         $transactionQuery = DB::table('wallet_transactions')
             ->select(array_merge(
@@ -57,7 +60,7 @@ class WalletTransactionReadRepository extends ReadRepository
                 $sub->select('transaction_reference')
                     ->from('wallet_transaction_groups');
             });
-        
+
 
             $groupedQuery = DB::table('wallet_transaction_groups')
             ->select(array_merge([
@@ -82,15 +85,15 @@ class WalletTransactionReadRepository extends ReadRepository
                 $query->where('to_type', get_class($user))
                       ->where('to_id', $user->id);
             });
-        
+
         $unionQuery = $transactionQuery->unionAll($groupedQuery);
-        
+
         return DB::table(DB::raw("({$unionQuery->toSql()}) as all_transactions"))
             ->mergeBindings($unionQuery)
             ->orderBy('created_at', 'desc')
             ->paginate($paginate);
-        
-        
+
+
         // $select = select_by_language([
         //     'id',
         //     'from_type',
@@ -126,14 +129,14 @@ class WalletTransactionReadRepository extends ReadRepository
         //     ->where(function ($query) use ($user) {
         //         $query->where(function ($q) use ($user) {
         //             $q->where('from_type', get_class($user))
-        //                 ->where('from_id', $user->id); 
+        //                 ->where('from_id', $user->id);
         //         })
         //         ->orWhere(function ($q) use ($user) {
         //             $q->where('to_type', get_class($user))
-        //                 ->where('to_id', $user->id); 
+        //                 ->where('to_id', $user->id);
         //         });
         //     })
-        //     ->orderBy('created_at', 'desc') 
+        //     ->orderBy('created_at', 'desc')
         //     ->paginate($paginate);
     }
 

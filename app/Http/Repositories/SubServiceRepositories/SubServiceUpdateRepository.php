@@ -11,6 +11,10 @@ class SubServiceUpdateRepository extends UpdateRepository
         $this->model = new SubService();
     }
 
+    public function updateWithRoutes(){
+        
+    }
+
 
     public function change_status($id , $status) : bool{
         $service = $this->model->find($id);

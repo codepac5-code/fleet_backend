@@ -3,17 +3,12 @@ $sitesetup = App\Models\Setting::where('type','site-setup')->where('key', 'site-
 $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
 @endphp
 <x-master-layout>
-
-
        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
             <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-          
 
-        
-       
             <script>
               document.addEventListener('DOMContentLoaded', () => {
                 const sampleData = {
@@ -23,7 +18,7 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                   officesOutstanding: [800, 900, 750, 700, 650, 600, 620],
                   driversOutstanding: [600, 650, 700, 720, 680, 630, 700]
                 };
-          
+
                 function createChart(ctx, data, color) {
                   return new Chart(ctx, {
                     type: 'line',
@@ -55,13 +50,13 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                     }
                   });
                 }
-          
+
                 createChart(document.getElementById('revenueChart').getContext('2d'), sampleData.revenue, '#28a745');
                 createChart(document.getElementById('withdrawalChart').getContext('2d'), sampleData.withdrawalAvailable, '#007bff');
                 createChart(document.getElementById('withdrawnChart').getContext('2d'), sampleData.withdrawn, '#ffc107');
                 createChart(document.getElementById('officesChart').getContext('2d'), sampleData.officesOutstanding, '#dc3545');
                 createChart(document.getElementById('driversChart').getContext('2d'), sampleData.driversOutstanding, '#e83e8c');
-          
+
                 document.getElementById('totalRevenue').textContent = '8,450.00 ر.س';
                 document.getElementById('availableWithdrawal').textContent = '5,200.00 ر.س';
                 document.getElementById('withdrawnAmount').textContent = '3,250.00 ر.س';
@@ -71,23 +66,18 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                 document.getElementById('valEPayments').textContent = '12,500.00 ر.س';
                 document.getElementById('numCashPayments').textContent = '120';
                 document.getElementById('valCashPayments').textContent = '7,800.00 ر.س';
-          
+
                 document.querySelectorAll('.btn[data-range]').forEach(btn => {
                   btn.addEventListener('click', () => {
                   });
                 });
               });
             </script>
-          
 
 
-  
+
+
     <div class="container-fluid p-4">
-  
-       
-        
-
-        
         <style>
             .NewCard {
                 padding: 28px 20px;
@@ -101,17 +91,17 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                 background: linear-gradient(135deg, #312873, #3e3499);
                 cursor: pointer;
             }
-            
+
             .NewCard .icon-badge {
                 font-size: 36px;
                 margin-bottom: 15px;
                 transition: transform 0.3s ease, color 0.3s ease;
             }
-            
+
             .NewCard:hover .icon-badge {
                 transform: scale(1.15) rotate(3deg);
             }
-            
+
             .NewCard .text-number {
                 font-size: 28px;
                 font-weight: 700;
@@ -119,19 +109,19 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                 text-shadow: 0 1px 3px rgba(0,0,0,0.25);
                 transition: color 0.3s ease;
             }
-            
+
             .NewCard .text-title {
                 font-size: 17px;
                 font-weight: 600;
                 opacity: 0.9;
                 transition: color 0.3s ease;
             }
-            
+
             .NewCard:hover .text-title,
             .NewCard:hover .text-number {
                 color: #ffd75e;
             }
-            
+
             .NewCard.electronic {
                 background: linear-gradient(135deg, #312873, #4e3da6);
                 color: #fff;
@@ -143,19 +133,19 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
             .NewCard.electronic .text-title {
                 color: #F8A609;
             }
-            
+
             .NewCard.cash {
                 background: linear-gradient(135deg, #F8A609, #f3b94d);
                 color: #312873;
             }
             .NewCard.cash .icon-badge,
             .NewCard.cash .text-number {
-                color: #312873; 
+                color: #312873;
             }
             .NewCard.cash .text-title {
                 color: #312873;
             }
-            
+
             .NewCard.wallet {
                 background: linear-gradient(135deg, #312873, #5c4bb0);
                 color: #fff;
@@ -167,7 +157,7 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
             .NewCard.wallet .text-title {
                 color: #F8A609;
             }
-            
+
             .NewCard.travel {
                 background: linear-gradient(135deg, #F8A609, #e0a400);
                 color: #312873;
@@ -179,11 +169,11 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
             .NewCard.travel .text-title {
                 color: #312873;
             }
-            
-   
+
+
             </style>
-            
-            
+
+
 
             <style>
                 .filter-section {
@@ -262,7 +252,7 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                     color: #fff;
                     box-shadow: 0 5px 14px rgba(49,40,115,0.4);
                 }
-                
+
                 /* 🌙 الوضع الليلي */
                 body.dark .filter-section label,
                 body.dark .filter-section input[type="date"],
@@ -272,39 +262,39 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                     color: #F8A609;
                     border-color: #F8A609;
                 }
-                
+
                 body.dark .filter-section input[type="date"] {
                     background-color: #1e163e;
                     color: #F8A609;
                 }
-                
+
                 body.dark .filter-section button {
                     background-color: #F8A609;
                     color: #1e163e;
                     box-shadow: 0 5px 12px rgba(248,166,9,0.3);
                 }
-                
+
                 body.dark .filter-section button:hover {
                     background-color: #ffd75e;
                     color: #312873;
                 }
-                
+
                 body.dark .reset-filter {
                     background-color: #1e163e;
                     color: #F8A609;
                 }
-                
+
                 body.dark .reset-filter:hover {
                     background-color: #312873;
                     color: #fff;
                 }
-                
+
                 body.dark .quick-filters button {
                     background: transparent;
                     border: 2px solid #F8A609;
                     color: #F8A609;
                 }
-                
+
                 body.dark .quick-filters button:hover,
                 body.dark .quick-filters button.active {
                     background-color: #F8A609;
@@ -312,7 +302,7 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                     box-shadow: 0 5px 14px rgba(248,166,9,0.4);
                 }
                 </style>
-                
+
 
 <style>
 .new-stat-card:hover {
@@ -533,19 +523,19 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
 /* .stat-card.revenue {
       background: linear-gradient(135deg, #312873, #4640a1);
     } */
-    
+
     .stat-card.withdrawal-available {
         background: linear-gradient(135deg, #312873, #F8A609);
     }
-    
+
     .stat-card.cash-payments {
       background: linear-gradient(135deg, #312873, #F8A609);
     }
-    
+
     /* .stat-card.offices-outstanding {
       background: linear-gradient(135deg, #F8A609, #312873);
     } */
-    
+
                             .stat-card.revenue {
                                 background: linear-gradient(135deg, #312873, #3f348fc7);
                                 /* color:forestgreen */
@@ -560,8 +550,8 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                             .stat-card.offices-outstanding {
                               background: linear-gradient(135deg, #F8A609, #f3b94dbe);
                             }
-                        
-                          
+
+
                             canvas {
     position: absolute;
     bottom: 0;
@@ -578,11 +568,11 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
 
                           </style>
 
-                          
+
                         </head>
                         <body>
-                         
-                        
+
+
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -623,12 +613,12 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
 
 
 
-                    
+
                     <div class="col-lg-3 col-md-6">
                         <a  href="{{ route('service.index') }}">
                                 <div class="taxi-card">
                                     <div class="taxi-icon">
-                                        <i class="fas fa-handshake"></i> 
+                                        <i class="fas fa-handshake"></i>
                                     </div>
                                     <div class="taxi-info">
                                         <h3>{{__('messages.services')}}</h3>
@@ -642,7 +632,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                     </div>
 
                     <div class="col-lg-3 col-md-6">
-                        <a  href="{{ route('driver.index') }}"> 
+                        <a  href="{{ route('driver.index') }}">
                             <div class="taxi-card">
                                 <div class="taxi-icon">
                                     <i class="fas fa-taxi"></i>
@@ -650,19 +640,19 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                 <div class="taxi-info">
                                     <h3>{{__('messages.drivers')}}</h3>
                                     <div class="d-flex gap-2">
-                                    <p id="drivers">{{$data['dashboard']['count_total_driver']}}</p> 
+                                    <p id="drivers">{{$data['dashboard']['count_total_driver']}}</p>
                                     <p>{{' '.__('messages.driver')}}</p>
                                    </div>
                                 </div>
                             </div>
                         </a>
                     </div>
-                </div>    
+                </div>
             </div>
         </div>
     </div>
 
- 
+
 
 
 
@@ -683,21 +673,21 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
             <div class="col-md-12 mt-3">
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-start align-items-center"> 
+                        <div class="d-flex justify-content-start align-items-center">
                             <div class="event-icon-wrapper">
                                 <i class="fas fa-chart-line" style="font-size: 24px; color: white; animation: bounceUp 2s infinite;"></i>
                             </div>
-                            <div class="col-md-6"> 
+                            <div class="col-md-6">
                                 <h4> {{ __('messages.wallet_status_and_dues') }}</h4>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="dashboard-section">
                 <div class="dashboard-title">{{ __('messages.wallet') }}</div>
-            
+
                 <div class="row">
                     <div class="col-md-6">
                         <article class="stat-card withdrawal-available">
@@ -711,7 +701,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                             <canvas id="withdrawalChart"></canvas>
                         </article>
                     </div>
-            
+
                     <div class="col-md-6">
                         <article class="stat-card cash-payments">
                             <div class="stat-icon">
@@ -726,14 +716,14 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-12">
                 <div class="horizontal-separator"></div>
             </div>
-            
+
             <div class="dashboard-section">
                 <div class="dashboard-title">{{ __('messages.dues') }}</div>
-            
+
                 <div class="row g-4">
                     <div class="col-md-6">
                         <div class="new-stat-card driver-card">
@@ -746,9 +736,9 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                             <div class="value" id="driverDues">{{ getPriceFormat($driverDues) }}</div>
                         </div>
                     </div>
-            
 
-                    
+
+
                     <div class="col-md-6">
                         <div class="new-stat-card office-card">
                             <span class="top-line"></span>
@@ -761,20 +751,20 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         </div>
                     </div>
 
-                    
+
 
 
                 </div>
             </div>
-            
-              
+
+
               <script>
                 function fetchWalletStats() {
                   fetch('/api/wallet-stats')
                     .then(res => res.json())
                     .then(data => {
                     //   const formatCurrency = value => value;
-              
+
                       document.getElementById("availableWithdrawal").textContent = data.walletBalance;
                       document.getElementById("withdrawnAmount").textContent = data.pendingAmount;
                       document.getElementById("driverDues").textContent = data.driverDues;
@@ -784,13 +774,13 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                       console.error("error :", error);
                     });
                 }
-              
+
                 document.addEventListener("DOMContentLoaded", () => {
                   fetchWalletStats();
                   setInterval(fetchWalletStats, 30000);
                 });
               </script>
-              
+
               <div class="col-12">
                 <div class="horizontal-separator"></div>
             </div>
@@ -803,7 +793,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                     <button onclick="setDateRange('month')" id="btn-month">{{ __('messages.this_month') }}</button>
                     <button onclick="setDateRange('year')" id="btn-year">{{ __('messages.this_year') }}</button>
                 </div>
-                  
+
                 <div class="filter-section">
                     <label for="startDate">{{ __('messages.from_date') }}</label>
                     <input type="date" id="startDate" />
@@ -812,12 +802,12 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                     <button onclick="applyCustomFilter()">{{ __('messages.apply_filter') }}</button>
                     <button class="reset-filter" onclick="resetFilter()">{{ __('messages.reset_filter') }}</button>
                 </div>
-            
+
                 <div id="filterMessage" style="display:none; position: relative; color: #571515; background-color: #edd4d4; border: 1px solid #e6c3c3; padding: 10px 40px 10px 10px; border-radius: 5px; margin-top: 10px; font-weight: bold;">
                     <span id="filterMessageText"></span>
                     <button id="closeFilterMessage" style="padding-bottom: 80px; position: absolute; top: 5px; right: 5px; background: transparent; border: none; font-size: 17px; font-weight: bold; color: #571515; cursor: pointer;">×</button>
                 </div>
-            
+
                 <div class="dashboard-section">
                     <div class="dashboard-title mb-4 fs-4 fw-bold">{{ __('messages.overview') }}</div>
                     <div class="row g-4">
@@ -859,14 +849,14 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="col-12">
                     <div class="horizontal-separator"></div>
                 </div>
-            
+
                 <div class="dashboard-section">
                     <div class="dashboard-title">{{ __('messages.financial_data') }}</div>
-            
+
                     <div class="row">
                         <div class="col-md-6">
                             <article class="stat-card revenue">
@@ -880,7 +870,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                 <canvas id="revenueChart"></canvas>
                             </article>
                         </div>
-            
+
                         <div class="col-md-6">
                             <article class="stat-card offices-outstanding">
                                 <div class="stat-icon">
@@ -895,9 +885,9 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         </div>
                     </div>
                 </div>
-            
+
             </div>
-            
+
 
 <div class="col-12">
     <div class="horizontal-separator"></div>
@@ -905,7 +895,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
 
 <script>
 
-    
+
 function applyCustomFilter() {
     const start = document.getElementById("startDate").value;
     const end = document.getElementById("endDate").value;
@@ -981,10 +971,10 @@ function fetchDashboardStats(startDate, endDate) {
     headers: {
         'Accept': 'application/json'
     }
-}) 
+})
         .then(res => res.json())
         .then(data => {
-            
+
             document.querySelector(".electronic .text-number").textContent = data.electronicPayments;
             document.querySelector(".cash .text-number").textContent = data.cashPayments;
             document.querySelector(".wallet .text-number").textContent = data.walletPayments;
@@ -1002,19 +992,19 @@ function resetFilter() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    setDateRange('today'); 
-    applyCustomFilter();  
+    setDateRange('today');
+    applyCustomFilter();
 });
 </script>
 
-    
+
 
 
 <script>
     function filterBy(period) {
         const today = new Date();
         let startDate, endDate;
-    
+
         switch (period) {
             case 'today':
                 startDate = endDate = today.toISOString().split('T')[0];
@@ -1035,11 +1025,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 endDate = new Date().toISOString().split('T')[0];
                 break;
         }
-    
+
         fetchDashboardStats(startDate, endDate);
     }
     </script>
-    
+
 
 
 
@@ -1052,32 +1042,32 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="col-md-12 mt-3">
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-start align-items-center"> 
+                        <div class="d-flex justify-content-start align-items-center">
                             <div class="event-icon-wrapper">
                                 <svg width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="12" cy="12" r="11" stroke="white" stroke-width="2" fill="none"/>
                                     <circle cx="12" cy="12" r="7" stroke="white" stroke-width="2" fill="none" stroke-dasharray="56,56" stroke-dashoffset="0">
                                         <animate attributeName="stroke-dashoffset" from="0" to="112" dur="1.5s" repeatCount="indefinite"/>
                                     </circle>
-                                </svg>   
-                                
-                                
-                                
+                                </svg>
+
+
+
                             </div>
-                            <div class=" col-md-6 "> 
+                            <div class=" col-md-6 ">
                                 <h4 > {{__('messages.live_events')}}</h4>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-    
 
 
 
 
-                    
+
+
+
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDEutBE5WTbVYGM4uw58MrkdsfX1othIoQ&callback=initMap" async defer></script>
 
@@ -1104,7 +1094,7 @@ document.addEventListener("DOMContentLoaded", () => {
         margin: 20px auto;
         border-radius: 12px;
         overflow: hidden;
-        background: linear-gradient(135deg, #dda50b, #ff9966); 
+        background: linear-gradient(135deg, #dda50b, #ff9966);
         box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
         border: 2px solid #dda50b;
     }
@@ -1126,10 +1116,10 @@ document.addEventListener("DOMContentLoaded", () => {
         margin: 0;
         font-size: 20px;
         color: #333;
-        font-family: 'Poppins', sans-serif; 
+        font-family: 'Poppins', sans-serif;
     }
 
-    
+
     .refresh-container {
         width: 40px;
         height: 40px;
@@ -1172,7 +1162,7 @@ document.addEventListener("DOMContentLoaded", () => {
         padding: 8px;
         font-size: 17px;
         color: #fff;
-        background: #ff9966; 
+        background: #ff9966;
         border-radius: 0 3 10px 10px;
     }
 
@@ -1192,15 +1182,23 @@ document.addEventListener("DOMContentLoaded", () => {
     var map;
     var markers = {};
 
-    function initMap() {
-        map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: 33.51389 , lng: 36.27639 },
-            zoom: 10
-        });
+function initMap() {
+    fetch('/get-map-center')
+        .then(response => response.json())
+        .then(data => {
+            // data.lat و data.lng
+            const centerCoords = { lat: parseFloat(data.lat), lng: parseFloat(data.lng) };
 
-        fetchDriverLocations(); 
-        setInterval(fetchDriverLocations, 300000); 
-    }
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: centerCoords,
+                zoom: 10
+            });
+
+            fetchDriverLocations();
+            setInterval(fetchDriverLocations, 300000);
+        })
+        .catch(error => console.error('Error fetching map center:', error));
+}
 
     function fetchDriverLocations() {
     fetch("{{ route('live-drivers-locations') }}")
@@ -1243,8 +1241,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             for (let id in markers) {
                 if (!updatedDriverIds.has(id)) {
-                    markers[id].setMap(null); 
-                    delete markers[id];       
+                    markers[id].setMap(null);
+                    delete markers[id];
                 }
             }
 
@@ -1277,8 +1275,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p id="pending-ride">{{ $data['system_pending_rides'] }} {{ __('messages.order') }}</p>
                         </div>
                     </div>
-    
-            
+
+
                     <div class="trip-card ongoing">
                         <div class="trip-icon">
                             <i class="fas fa-car-side"></i>
@@ -1288,8 +1286,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p id="ongoing-ride">{{ $data['system_ongoing_rides'] }} {{ __('messages.ride') }}</p>
                         </div>
                     </div>
-            
-    
+
+
                     <div class="trip-card finished">
                         <div class="trip-icon">
                             <i class="fas fa-flag-checkered"></i>
@@ -1301,16 +1299,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             </div>
-            
 
 
 
 
-       
+
+
             <div class="col-12">
                 <div class="horizontal-separator"></div>
                     </div>
-            
 
 
 
@@ -1326,7 +1323,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-            
+
+
 
 
 
@@ -1371,7 +1369,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="col-md-4 col-sm-6">
                     <div class="card top-providers">
                         <div class="card-header d-flex justify-content-between gap-10">
@@ -1380,7 +1378,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="card-body p-0">
                             <ul class="common-list list-unstyled">
-                                @foreach($users as $customer) 
+                                @foreach($users as $customer)
                                 <li style="pointer-events:none;">
                                     <div class="media gap-3">
                                         <div class="h-avatar is-medium h-5">
@@ -1396,12 +1394,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                         </div>
                                     </div>
                                 </li>
-                                @endforeach 
+                                @endforeach
                             </ul>
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="col-md-4 col-sm-6">
                     <div class="card recent-activities">
                         <div class="card-header d-flex justify-content-between gap-10">
@@ -1422,7 +1420,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                                 optional($datetime)->date_format && optional($datetime)->time_format
                                                 ? date(optional($datetime)->date_format, strtotime($booking->date)) . ' / ' . date(optional($datetime)->time_format, strtotime($booking->start))
                                                 : ''
-                                            }}</span>    
+                                            }}</span>
                                         </div>
                                     </div>
                                     <span class="badge rounded-pill py-2 px-3 badge-pending text-capitalize">{{$booking->status}}</span>
@@ -1434,71 +1432,81 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
 
-            
-   
+
+
 <div id="data-container" data-revenue='<?php echo json_encode($data['revenueData']); ?>'></div>
 
 <div id="monthly-revenue"></div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var container = document.getElementById('data-container');
-        var revenueData = JSON.parse(container.getAttribute('data-revenue'));
-        
-        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+document.addEventListener("DOMContentLoaded", function() {
+    var container = document.getElementById('data-container');
 
-        if (document.querySelector('#monthly-revenue')) {
-            var options = {
-                series: [{
-                    name: "{{ __('messages.revenue') }}",
-                    data: revenueData
-                }],
-                chart: {
-                    height: 300,
-                    type: 'line',
-                    toolbar: { show: true },
-                    animations: {
-                        enabled: true,
-                        easing: 'easeinout',
-                        speed: 800,
-                        animateGradually: { enabled: true, delay: 150 },
-                        dynamicAnimation: { enabled: true, speed: 350 }
-                    }
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3,
-                    colors: ['#f5b041'] 
-                },
-                markers: {
-                    size: 5,
-                    colors: ['#f39c12'],
-                    strokeWidth: 2,
-                    hover: { size: 7 }
-                },
-                xaxis: {
-                    categories: months,
-                    labels: { style: { fontSize: '13px', fontWeight: 'bold', colors: '#aaa' } }
-                },
-                yaxis: {
-                    labels: { style: { fontSize: '12px', fontWeight: 'bold', colors: '#aaa' } },
-                    title: { text: '', style: { fontSize: '14px', fontWeight: 'bold', color: '#666' } }
-                },
-                tooltip: {
-                    theme: 'dark',
-                    y: { formatter: function(val) { return 'AED' + val.toLocaleString(); } }
-                },
-                grid: { borderColor: '#ddd', strokeDashArray: 5 }
-            };
-
-            var chart = new ApexCharts(document.querySelector("#monthly-revenue"), options);
-            chart.render();
-        }
+    var revenueData = JSON.parse(container.getAttribute('data-revenue')).map(function(val) {
+        return Number.isInteger(val) ? val : Math.floor(val * 10) / 10;
     });
+
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if (document.querySelector('#monthly-revenue')) {
+        var options = {
+            series: [{
+                name: "{{ __('messages.revenue') }}",
+                data: revenueData
+            }],
+            chart: {
+                height: 300,
+                type: 'line',
+                toolbar: { show: true },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    animateGradually: { enabled: true, delay: 150 },
+                    dynamicAnimation: { enabled: true, speed: 350 }
+                }
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 3,
+                colors: ['#f5b041']
+            },
+            markers: {
+                size: 5,
+                colors: ['#f39c12'],
+                strokeWidth: 2,
+                hover: { size: 7 }
+            },
+            xaxis: {
+                categories: months,
+                labels: { style: { fontSize: '13px', fontWeight: 'bold', colors: '#aaa' } }
+            },
+            yaxis: {
+                labels: { style: { fontSize: '12px', fontWeight: 'bold', colors: '#aaa' } },
+                title: { text: '', style: { fontSize: '14px', fontWeight: 'bold', color: '#666' } }
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function(val) {
+                        @if(app()->getLocale() == 'ar')
+                            return val.toLocaleString() + ' {{ getPriceSymbol() }}';
+                        @else
+                            return '{{ getPriceSymbol() }} ' + val.toLocaleString();
+                        @endif
+                    }
+                }
+            },
+            grid: { borderColor: '#ddd', strokeDashArray: 5 }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#monthly-revenue"), options);
+        chart.render();
+    }
+});
 </script>
 
 
-    
 {{-- <script>
     document.addEventListener("DOMContentLoaded", function () {
         function fetchStatistics() {
@@ -1510,30 +1518,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById("users").textContent    = data.count_total_user;
                     document.getElementById("services").textContent = data.count_total_service;
                     document.getElementById("drivers").textContent  = data.count_total_driver;
-    
+
                     document.getElementById("withdrawn-amount").textContent = data["withdrawn-amount"];
                     document.getElementById("available-amount").textContent = data["available-amount"];
                     document.getElementById("pending-amount").textContent   = data["pending-amount"] ?? "0.00";
                     document.getElementById("total-amount").textContent     = data["total-amount"];
-    
+
                     document.getElementById("office-due-amount").textContent = data["offices-due-amount"];
                     document.getElementById("driver-due-amount").textContent = data["drivers-due-amount"];
-    
+
                     document.getElementById("completed-ride").textContent = `${data.system_completed_rides} {{ __('messages.ride') }}`;
                     document.getElementById("ongoing-ride").textContent   = `${data.system_ongoing_rides} {{ __('messages.ride') }}`;
                     document.getElementById("pending-ride").textContent   = `${data.system_pending_rides} {{ __('messages.order') }}`;
                 })
                 .catch(error => console.error("Error fetching statistics:", error));
         }
-    
+
         // fetchStatistics();
-    
+
         // setInterval(fetchStatistics, 5 * 60 * 1000);
         setInterval(fetchStatistics, 6* 1000);
 
     });
     </script> --}}
-    
+
 
 
 <style>
@@ -1566,7 +1574,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentAmount = currentAmountElement.textContent.replace('$', '').replace(',', '');
    currentAmount = parseFloat(currentAmount);
 
-    
+
     const newAmount = parseFloat(data.value);
 
     const updatedAmount = newAmount;

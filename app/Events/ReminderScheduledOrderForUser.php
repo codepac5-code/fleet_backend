@@ -14,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 class ReminderScheduledOrderForUser implements ShouldBroadcast , ShouldQueue
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-    public $queue = 'events';
+    public $queue = 'reminders';
     /**
      * Create a new event instance.
      */

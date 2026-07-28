@@ -14,8 +14,13 @@ class DriversSeeder extends Seeder
 
         DB::table('drivers')->delete();
 
+        $country = 'قطر';
+        $city = 'الدوحة';
+        $dialCode = '974';
+
         $specialDrivers = [
             [
+                "dialCode"=> $dialCode,
                 "id" => 2,
                 "firstName" => "Bassam",
                 "lastName" => "Nakkez",
@@ -23,11 +28,11 @@ class DriversSeeder extends Seeder
                 'password' => Hash::make('Aa123456**'),
                 "vehicleId" => 1,
                 "address" => " ",
-                "country" => "سوريا",
-                "city" => "دمشق",
+                "country" => $country,
+                "city" => $city,
                 "region" => "maza",
                 "isActive" => 1,
-                "isConected" => false,
+                "is_online" => false,
                 "gender" => "male",
                 "phoneNumber" => "933817392",
                 "car_owner" => 0,
@@ -49,6 +54,7 @@ class DriversSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                "dialCode"=> $dialCode,
                 "id" => 5,
                 "firstName" => "0933444222",
                 "lastName" => "Driver1",
@@ -56,11 +62,11 @@ class DriversSeeder extends Seeder
                 "officeId" => 1,
                 "vehicleId" => 1,
                 "address" => " ",
-                "country" => "سوريا",
-                "city" => "دمشق",
+                "country" => $country,
+                "city" => $city,
                 "region" => "maza",
                 "isActive" => 1,
-                "isConected" => true,
+                "is_online" => true,
                 "gender" => "male",
                 "phoneNumber" => "933444222",
                 "car_owner" => 0,
@@ -82,6 +88,7 @@ class DriversSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                "dialCode"=> $dialCode,
                 "id" => 6,
                 "firstName" => "Driver2",
                 "lastName" => "Driver2",
@@ -89,11 +96,11 @@ class DriversSeeder extends Seeder
                 "officeId" => 1,
                 "vehicleId" => 1,
                 "address" => " ",
-                "country" => "سوريا",
-                "city" => "دمشق",
+                "country" => $country,
+                "city" => $city,
                 "region" => "maza",
                 "isActive" => 1,
-                "isConected" => false,
+                "is_online" => false,
                 "gender" => "male",
                 "phoneNumber" => "933111333",
                 "car_owner" => 0,
@@ -115,6 +122,7 @@ class DriversSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                "dialCode"=> $dialCode,
                 "id" => 7,
                 "firstName" => "mo",
                 "lastName" => "waga",
@@ -122,11 +130,11 @@ class DriversSeeder extends Seeder
                 "officeId" => 1,
                 "vehicleId" => 1,
                 "address" => " ",
-                "country" => "سوريا",
-                "city" => "دمشق",
+                "country" => $country,
+                "city" => $city,
                 "region" => "damascus",
                 "isActive" => 1,
-                "isConected" => false,
+                "is_online" => false,
                 "gender" => "male",
                 "phoneNumber" => "933884491",
                 "car_owner" => 0,
@@ -148,6 +156,7 @@ class DriversSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                "dialCode"=> $dialCode,
                 "id" => 8,
                 "firstName" => "abdullah",
                 "lastName" => "ramo",
@@ -155,11 +164,11 @@ class DriversSeeder extends Seeder
                 "officeId" => 1,
                 "vehicleId" => 1,
                 "address" => " ",
-                "country" => "سوريا",
-                "city" => "دمشق",
+                "country" => $country,
+                "city" => $city,
                 "region" => "KafarSousah",
                 "isActive" => 1,
-                "isConected" => true,
+                "is_online" => true,
                 "gender" => "male",
                 "phoneNumber" => "586000926",
                 "car_owner" => 0,
@@ -181,6 +190,7 @@ class DriversSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                "dialCode"=> $dialCode,
                 "id" => 9,
                 "firstName" => "Mousab",
                 "lastName" => "Alsyoufi",
@@ -188,11 +198,11 @@ class DriversSeeder extends Seeder
                 "officeId" => 1,
                 "vehicleId" => 1,
                 "address" => " ",
-                "country" => "سوريا",
-                "city" => "دمشق",
+                "country" => $country,
+                "city" => $city,
                 "region" => "KafarSousah",
                 "isActive" => 1,
-                "isConected" => false,
+                "is_online" => false,
                 "gender" => "male",
                 "phoneNumber" => "933111396",
                 "car_owner" => 0,
@@ -214,24 +224,24 @@ class DriversSeeder extends Seeder
                 'updated_at' => now(),
             ]
         ];
-        
+
         DB::table('drivers')->insert($specialDrivers);
-        
+
         $names = [
-            ['Ahmed', 'Ali'], 
-            ['Mohammed', 'Saleh'], 
+            ['Ahmed', 'Ali'],
+            ['Mohammed', 'Saleh'],
             ['Hassan', 'Omar'],
-            ['Abdullah', 'Yousef'], 
-            ['Khalid', 'Nasser'], 
+            ['Abdullah', 'Yousef'],
+            ['Khalid', 'Nasser'],
             ['Bilal', 'Ibrahim'],
-            ['Sami', 'Hamad'], 
-            ['Majed', 'Adel'], 
+            ['Sami', 'Hamad'],
+            ['Majed', 'Adel'],
             ['Tariq', 'Hatem'],
-            ['Rami', 'Fadi'], 
-            ['Said', 'Mustafa'], 
+            ['Rami', 'Fadi'],
+            ['Said', 'Mustafa'],
             ['Imran', 'Farid'],
-            ['Yasin', 'Wael'], 
-            ['Nabil', 'Mansour'], 
+            ['Yasin', 'Wael'],
+            ['Nabil', 'Mansour'],
             ['Anwar', 'Kareem'],
             ['Fahad', 'Saad'],
             ['Othman', 'Rashid'],
@@ -243,7 +253,7 @@ class DriversSeeder extends Seeder
             ['Ayman', 'Raed'],
             ['Sherif', 'Khalil'],
         ];
-        
+
         $drivers = [];
         $i= 0;
         $id = 10;
@@ -262,7 +272,7 @@ class DriversSeeder extends Seeder
                 'city' => 'دمشق',
                 'region' => 'maza',
                 'isActive' => 1,
-                'isConected' => rand(0, 1),
+                'is_online' => rand(0, 1),
                 'gender' => 'male',
                 'phoneNumber' => '9' . rand(10000000, 99999999),
                 'car_owner' => rand(0, 1),

@@ -1,9 +1,12 @@
 <?php
-
-namespace App\Services;
-
+namespace App\Http\Core\Classes\Integration\Stripe;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Stripe\EphemeralKey;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
+use Stripe\Customer;
+use Laravel\Cashier\Cashier;
 
 class StripeService
 {
@@ -16,21 +19,47 @@ class StripeService
      * Create a PaymentIntent and reserve the amount
      */
 
-    public function createPaymentIntent($price , $currency = 'usd', $payment_method_types =['card'] )
+    public function createPaymentIntent($price , $currency = 'aed', $payment_method_types =['card'] )
     {
-        $intent = PaymentIntent::create([
-            'amount' => $price * 100, 
-            'currency' => 'usd',
+        $user = Auth::user();
+
+        if( $user->stripe_customer_id == null) {
+            $customer = Customer::create([
+                    'phone' => $user->phoneNumber,
+                    'name'  => $user->firstName,
+            ]);
+
+            $user->stripe_customer_id = $customer->id;
+            $user->save();
+        }
+
+
+        $intent = PaymentIntent::create(params: [
+            'amount' => $this->convertToCents($price ),
+            'currency' => $currency,
             'payment_method_types' => ['card'],
-            'capture_method' => 'manual', 
+            'capture_method' => 'manual',
+            'customer' => $user->stripe_customer_id,
+        //  'automatic_payment_methods' => ['enabled' => true],
+            'setup_future_usage' => 'off_session',
         ]);
+
+
+        $ephemeralKey = EphemeralKey::create(
+            ['customer' => $user->stripe_customer_id] ,
+            ['stripe_version' =>'2023-10-16']
+        );
 
         // $booking->stripe_payment_intent_id = $intent->id;
         // $booking->paymentStatus = 'pending';
-        // $booking->save();
+        // $booking->save()
 
+        //$intent ->ephemeralKey = $ephemeralKey->secret;
+         $intent['ephemeralKey']= $ephemeralKey;//y//->secret;
         return $intent;
     }
+
+
 
     /**
      * Check the payment status
@@ -79,13 +108,13 @@ class StripeService
         $intent = PaymentIntent::update(
             $booking->stripe_payment_intent_id,
             [
-                'amount' => $newAmount * 100
+                'amount' => $this->convertToCents($newAmount)
             ]
         );
-    
+
         $booking->totalAmount = $newAmount;
         $booking->save();
-    
+
         return $intent;
     }
 
@@ -109,10 +138,16 @@ class StripeService
     }
 
 
-    
-    public function getPaymentMessage($booking)
+    private function convertToCents($amount)
     {
-        switch ($booking->paymentStatus) {
+        return (int) round($amount * 100);
+    }
+
+    public function getPaymentStatusMessage($booking)
+    {
+
+        $paymentStatus = $this->getPaymentStatus($booking);
+        switch ($paymentStatus) {
             case 'pending':
                 return 'تم حجز المبلغ على بطاقتك، سيتم السحب بعد انتهاء الرحلة.';
             case 'paid':

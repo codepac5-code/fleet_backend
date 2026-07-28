@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>النظام الماليّ المقترح — Fleet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root{
+    --ink:#1f2333; --muted:#5b6178; --primary:#312873; --primary2:#4a3da0; --accent:#F8A609;
+    --line:#d9dcee; --bg:#f4f5fb;
+    --c-user:#0e7490; --c-escrow:#b45309; --c-driver:#16a34a; --c-office:#4f46e5; --c-fleet:#6d28d9; --c-dues:#dc2626; --c-ledger:#312873;
+  }
+  @page { size: A4; margin: 14mm 12mm; }
+  body{ font-family:'Segoe UI','Tahoma',sans-serif; color:var(--ink); font-size:12px; line-height:1.6; }
+  .page{ page-break-after: always; padding-bottom:6px; }
+  .page:last-child{ page-break-after:auto; }
+
+  .brandbar{ display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:14px; }
+  .brand{ font-family:'Poppins','Segoe UI',sans-serif; font-weight:800; font-size:22px; color:var(--primary); letter-spacing:-.5px; direction:ltr; }
+  .brand i{ color:var(--accent); font-style:normal; }
+  .brandbar small{ color:var(--muted); font-size:11px; }
+
+  .cover{ height:255mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;
+    background:linear-gradient(135deg,#241c52,#322878 60%,#46389a); color:#fff; border-radius:18px; padding:40px; }
+  .cover .logo{ font-family:'Poppins',sans-serif; font-weight:800; font-size:54px; letter-spacing:-1px; direction:ltr; }
+  .cover .logo i{ color:var(--accent); font-style:normal; }
+  .cover h1{ font-size:30px; margin:22px 0 10px; font-weight:800; }
+  .cover p{ font-size:15px; opacity:.85; max-width:520px; }
+  .cover .tag{ margin-top:26px; display:inline-flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .cover .tag span{ background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25); padding:7px 14px; border-radius:999px; font-size:12px; font-weight:700; }
+  .cover .chip-gold{ background:var(--accent); color:#241a52; border:0; }
+
+  h2{ color:var(--primary); font-size:17px; margin:4px 0 12px; display:flex; align-items:center; gap:9px; }
+  h2::before{ content:""; width:6px; height:20px; border-radius:3px; background:linear-gradient(180deg,var(--accent),var(--primary)); }
+  h3{ color:var(--primary2); font-size:13.5px; margin:14px 0 8px; font-weight:800; }
+  p.lead{ color:var(--muted); margin-bottom:12px; }
+
+  .grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .pill{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; box-shadow:0 3px 10px rgba(49,40,115,.05); }
+  .pill h4{ font-size:12.5px; color:var(--primary); margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+  .pill .ic{ width:24px; height:24px; border-radius:7px; display:inline-grid; place-items:center; color:#fff; font-weight:800; font-size:12px; }
+  .pill p{ font-size:11px; color:var(--muted); }
+
+  /* flow */
+  .flow{ display:flex; flex-direction:column; align-items:center; gap:0; background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .node{ border-radius:11px; padding:9px 14px; font-weight:800; font-size:12px; color:#fff; text-align:center; min-width:120px; box-shadow:0 4px 10px rgba(0,0,0,.12); }
+  .node small{ display:block; font-weight:600; font-size:10px; opacity:.9; }
+  .n-user{background:var(--c-user)} .n-escrow{background:var(--c-escrow)} .n-driver{background:var(--c-driver)}
+  .n-office{background:var(--c-office)} .n-fleet{background:var(--c-fleet)} .n-dues{background:var(--c-dues)} .n-ledger{background:var(--c-ledger)}
+  .n-ext{background:#475569} .n-psp{background:#0f766e}
+  .arrow{ display:flex; flex-direction:column; align-items:center; color:var(--primary); padding:3px 0; }
+  .arrow b{ font-size:10px; font-weight:700; color:var(--muted); }
+  .arrow .v{ font-size:16px; line-height:1; color:var(--accent); }
+  .branch{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .split{ font-size:11px; color:var(--muted); margin:4px 0 2px; font-weight:700; }
+
+  table{ width:100%; border-collapse:collapse; font-size:11px; }
+  th,td{ border:1px solid var(--line); padding:7px 9px; text-align:right; }
+  th{ background:rgba(49,40,115,.07); color:var(--primary); font-weight:800; }
+  td b{ color:var(--primary); }
+  .note{ background:#fff8ec; border:1px solid #f3d9a3; border-radius:10px; padding:10px 12px; font-size:11px; color:#7a5a12; margin-top:10px; }
+  .ok{ color:var(--c-driver); font-weight:800; }
+  .bad{ color:var(--c-dues); font-weight:800; }
+  .eq{ font-family:'Consolas',monospace; background:#0f1424; color:#e6e8f2; padding:10px 12px; border-radius:8px; font-size:11.5px; direction:ltr; text-align:left; margin:8px 0; }
+  .eq .g{ color:#ffd98a; } .eq .gr{ color:#6ee7a8; }
+  ul.clean{ list-style:none; }
+  ul.clean li{ position:relative; padding-inline-start:18px; margin-bottom:5px; font-size:11.5px; }
+  ul.clean li::before{ content:"◆"; position:absolute; inset-inline-start:0; color:var(--accent); font-size:9px; top:3px; }
+  .foot{ margin-top:10px; text-align:center; color:var(--muted); font-size:10px; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="page">
+  <div class="cover">
+    <div class="logo">fleet<i>.</i></div>
+    <h1>النظام الماليّ المقترَح</h1>
+    <p>دفتر قيد مزدوج · محفظة متعدّدة الأرصدة لكلّ عملة · حجز escrow للدفع الإلكترونيّ · مستحقّات وخصم تلقائيّ · سحب فعليّ — مخطّطات تدفّق موجزة</p>
+    <div class="tag">
+      <span class="chip-gold">Double-Entry Ledger</span>
+      <span>Multi-Currency Wallet</span>
+      <span>Escrow</span>
+      <span>Idempotent &amp; Atomic</span>
+    </div>
+    <div style="margin-top:34px;font-size:12px;opacity:.7">وثيقة معماريّة — منصّة Fleet لإدارة الأسطول والنقل</div>
+  </div>
+</div>
+
+<!-- OVERVIEW + PRINCIPLES -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>١ · نظرة عامة والمبادئ</small></div>
+  <h2>المبادئ الأربعة للنظام</h2>
+  <div class="grid4">
+    <div class="pill"><h4><span class="ic" style="background:var(--c-ledger)">L</span> دفتر قيد مزدوج</h4><p>كلّ حركة = قيدان متوازنان (مدين/دائن) غير قابلين للتعديل، بوحدات صغرى صحيحة. الرصيد = مجموع القيود → تدقيق ومطابقة كاملان.</p></div>
+    <div class="pill"><h4><span class="ic" style="background:var(--c-escrow)">E</span> حجز Escrow</h4><p>أموال العميل في الدفع الإلكترونيّ تُحتجز في حساب وسيط، وتُحرَّر للأطراف فقط عند إكمال الرحلة.</p></div>
+    <div class="pill"><h4><span class="ic" style="background:var(--c-driver)">A</span> ذرّيّة + منع تكرار</h4><p>كلّ عمليّة معاملة واحدة ذرّيّة بمفتاح <b>idempotency</b> (من مرجع الطلب/الدفعة) → لا خصم ولا توزيع مزدوج.</p></div>
+    <div class="pill"><h4><span class="ic" style="background:var(--c-user)">¤</span> أرصدة متعدّدة العملات</h4><p>لكلّ مالك رصيد منفصل لكلّ عملة. لا اختلاط ولا تحويل — كلّ رحلة بعملتها.</p></div>
+  </div>
+
+  <h2 style="margin-top:20px">أنواع الحسابات في الدفتر</h2>
+  <p class="lead">كلّ حساب = (المالك × العملة × النوع). الأرصدة مُشتقّة من القيود.</p>
+  <div class="grid4">
+    <div class="pill"><h4><span class="ic n-user">U</span> محفظة العميل</h4><p>رصيد مشحون مسبقاً لكلّ عملة.</p></div>
+    <div class="pill"><h4><span class="ic n-escrow">E</span> الحجز (Escrow)</h4><p>أموال محجوزة أثناء الرحلة.</p></div>
+    <div class="pill"><h4><span class="ic n-driver">D</span> مستحقّ للسائق</h4><p>أرباح قابلة للسحب.</p></div>
+    <div class="pill"><h4><span class="ic n-dues">!</span> دَين السائق/المكتب</h4><p>عمولات نقديّة غير مدفوعة.</p></div>
+    <div class="pill"><h4><span class="ic n-office">O</span> إيراد المكتب</h4><p>حصّة المكتب.</p></div>
+    <div class="pill"><h4><span class="ic n-fleet">F</span> إيراد الفليت</h4><p>حصّة المنصّة.</p></div>
+    <div class="pill"><h4><span class="ic n-psp">P</span> مقاصّة المزوّد</h4><p>الشحن والسحب الخارجيّ.</p></div>
+    <div class="pill"><h4><span class="ic n-ledger">L</span> الدفتر</h4><p>سجلّ القيود غير القابل للتعديل.</p></div>
+  </div>
+
+  <div class="note"><b>ثابت أساسيّ:</b> في كلّ معاملة وكلّ عملة: <span style="font-family:Consolas">Σ المدين = Σ الدائن</span> — وإلا تُرفض العمليّة (لا أخطاء صامتة).</div>
+</div>
+
+<!-- TOP-UP + ELECTRONIC -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٢ · الشحن والرحلة الإلكترونيّة</small></div>
+
+  <div class="grid2">
+    <div>
+      <h2>الشحن (Top-up)</h2>
+      <div class="flow">
+        <div class="node n-psp">مزوّد الدفع<small>Stripe / سيريّاتيل / MTN</small></div>
+        <div class="arrow"><b>دفعة + مرجع المزوّد (idempotency)</b><span class="v">▼</span></div>
+        <div class="node n-ledger">قيد دفتر<small>مدين: مقاصّة المزوّد · دائن: محفظة العميل[عملة]</small></div>
+        <div class="arrow"><span class="v">▼</span></div>
+        <div class="node n-user">رصيد محفظة العميل ⬆</div>
+      </div>
+      <div class="note">كلّ شحنة لها <b>سجلّ معاملة</b> — لا مزيد من «أموال بلا أثر».</div>
+    </div>
+
+    <div>
+      <h2>رحلة إلكترونيّة (Escrow)</h2>
+      <div class="flow">
+        <div class="node n-user">محفظة العميل</div>
+        <div class="arrow"><b>عند بدء الدفع: حجز الإجماليّ</b><span class="v">▼</span></div>
+        <div class="node n-escrow">حساب الحجز Escrow<small>المال محجوز أثناء الرحلة</small></div>
+        <div class="split">عند إكمال الرحلة → تحرير وتوزيع (ذرّيّ + idempotent)</div>
+        <div class="arrow"><span class="v">▼</span></div>
+        <div class="branch">
+          <div class="node n-driver">السائق<small>أرباحه</small></div>
+          <div class="node n-fleet">الفليت<small>عمولته</small></div>
+          <div class="node n-office">المكتب<small>عمولته</small></div>
+        </div>
+      </div>
+      <div class="note"><b>إصلاح:</b> حصّة المكتب تُحرَّر فعليّاً (كانت مُعطّلة في الكود الحاليّ). لو أُلغيت الرحلة → يُعاد الحجز للعميل.</div>
+    </div>
+  </div>
+
+  <h3>لماذا Escrow؟</h3>
+  <ul class="clean">
+    <li>يُحلّ تدفّق «معلّق → متاح» بشكل سليم بدل التحديث المباشر للأرصدة.</li>
+    <li>الإلغاء/الفشل = عكس نظيف (المال ما زال محجوزاً، لم يُوزَّع).</li>
+    <li>توزيع واحد ذرّيّ عند الإكمال — لا توزيع جزئيّ ولا ازدواج.</li>
+  </ul>
+</div>
+
+<!-- CASH + DUES + AUTO DEDUCT -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٣ · النقديّ والمستحقّات والخصم التلقائيّ</small></div>
+
+  <div class="grid2">
+    <div>
+      <h2>رحلة نقديّة (Cash)</h2>
+      <div class="flow">
+        <div class="node n-user">العميل يدفع نقداً للسائق<small>خارج النظام</small></div>
+        <div class="arrow"><b>عند الإكمال: السائق يدين بعمولة الفليت+المكتب</b><span class="v">▼</span></div>
+        <div class="node n-ledger">قيد دفتر<small>دائن: إيراد الفليت/المكتب · مدين: دَين السائق</small></div>
+        <div class="arrow"><span class="v">▼</span></div>
+        <div class="branch">
+          <div class="node n-dues">دَين السائق ⬆</div>
+          <div class="node n-fleet">إيراد الفليت</div>
+          <div class="node n-office">إيراد المكتب</div>
+        </div>
+      </div>
+      <div class="note">السائق حصّل كامل الأجرة نقداً، فيُسجَّل عليه دَيْن بقيمة عمولات المنصّة والمكتب.</div>
+    </div>
+
+    <div>
+      <h2>الخصم التلقائيّ للديون</h2>
+      <div class="flow">
+        <div class="node n-escrow">أرباح إلكترونيّة جديدة للسائق</div>
+        <div class="arrow"><b>تُسدَّد الديون أوّلاً</b><span class="v">▼</span></div>
+        <div class="node n-dues">تصفية دَين السائق ⬇<small>قيد: مستحقّ → دَين</small></div>
+        <div class="arrow"><b>المتبقّي فقط</b><span class="v">▼</span></div>
+        <div class="node n-driver">رصيد قابل للسحب</div>
+      </div>
+      <div class="note">يُعالَج النقص المزمن في الكود الحاليّ: <b>ديون السائق تُسوّى تلقائيّاً</b> من أرباحه القادمة (بدل تراكمها بلا نهاية).</div>
+    </div>
+  </div>
+
+  <h3>حالة الرصيد غير الكافي</h3>
+  <ul class="clean">
+    <li>عند النقديّ ورصيد السائق لا يكفي → الفرق يُسجَّل دَيْناً (لا فشل صامت).</li>
+    <li>سقف دَيْن قابل للتهيئة لكلّ عملة (بدل الأرقام الثابتة 5000/1000/500) — فوقه يُمنع الاتّصال/القبول.</li>
+  </ul>
+</div>
+
+<!-- PAYOUT + COMMISSION -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٤ · السحب وحساب العمولة</small></div>
+
+  <div class="grid2">
+    <div>
+      <h2>السحب الفعليّ (Payout)</h2>
+      <div class="flow">
+        <div class="node n-driver">طلب سحب<small>سائق / مكتب — عملة محدّدة</small></div>
+        <div class="arrow"><b>قيد: مستحقّ → مقاصّة السحب</b><span class="v">▼</span></div>
+        <div class="node n-psp">دفع المزوّد<small>بنك / محفظة — requested→processing</small></div>
+        <div class="arrow"><b>نجاح / فشل</b><span class="v">▼</span></div>
+        <div class="branch">
+          <div class="node n-driver">paid ✔<small>إنهاء + مطابقة</small></div>
+          <div class="node n-dues">failed ✖<small>عكس القيد</small></div>
+        </div>
+      </div>
+      <div class="note">جدول <b>payouts</b> بمراجع المزوّد + <b>مطابقة</b> دوريّة مع كشوف المزوّد.</div>
+    </div>
+
+    <div>
+      <h2>حساب العمولة — الطريقة النظيفة</h2>
+      <ul class="clean">
+        <li><b>تجميد (Snapshot):</b> النِّسب تُخزَّن وقت الإنشاء في سطر الطلب — لا تتأثّر بتغيير الإعدادات.</li>
+        <li><b>الباقي (Residual):</b> أرباح السائق = المتبقّي بعد الفليت والمكتب → الجمع دائماً صحيح.</li>
+        <li><b>وحدات صغرى صحيحة</b> + توزيع الباقي على طرف محدَّد (لا بتر عشوائيّ).</li>
+        <li><b>دالّة نقيّة</b> تغطّي كلّ الأنواع (عامّ/مكتب/مالك سيّارة/مخصّص) بحارس default.</li>
+      </ul>
+      <div class="eq">
+totalAmount = <span class="g">FARE</span> − discount
+fleet   = round(<span class="g">FARE</span> × rate_fleet)
+office  = round(<span class="g">FARE</span> × rate_office)
+<span class="gr">driver = totalAmount − fleet − office</span>   // الباقي
+assert(fleet + office + driver == totalAmount)
+      </div>
+      <div class="note"><b>قاعدة:</b> التقسيم واحد مهما كانت طريقة الدفع؛ النقديّ/الإلكترونيّ يغيّران <b>التحصيل</b> فقط.</div>
+    </div>
+  </div>
+
+  <h3>أخطاء النظام الحاليّ التي يعالجها التصميم</h3>
+  <table>
+    <tr><th>الخلل الحاليّ</th><th>المعالجة</th></tr>
+    <tr><td>العمولات <b>integer</b> → بتر على كلّ رحلة</td><td class="ok">وحدات صغرى + باقي مضبوط</td></tr>
+    <tr><td>الحصص لا تجمع للإجماليّ</td><td class="ok">ثابت محقَّق (assert)</td></tr>
+    <tr><td>حصّة المكتب مُعطّلة في الإلكترونيّ</td><td class="ok">تُحرَّر من Escrow</td></tr>
+    <tr><td>كوبون النسبة بلا ÷100</td><td class="ok">صيغة موحّدة مختبَرة</td></tr>
+    <tr><td>إكمال/دفع مزدوج يخصم مرّتين</td><td class="ok">idempotency + حالة شرطيّة</td></tr>
+    <tr><td>شحن Stripe بلا سجلّ</td><td class="ok">قيد لكلّ شحنة</td></tr>
+    <tr><td>ديون السائق لا تُصفّى</td><td class="ok">خصم تلقائيّ</td></tr>
+  </table>
+</div>
+
+<!-- SCHEMA + GUARANTEES -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٥ · الجداول وضمانات السلامة</small></div>
+
+  <h2>الجداول الجديدة في القاعدة</h2>
+  <table>
+    <tr><th>الجدول</th><th>الغرض</th><th>أعمدة مفتاحيّة</th></tr>
+    <tr><td><b>ledger_accounts</b></td><td>حساب لكلّ مالك×عملة×نوع</td><td>owner, currency_code, type, balance_minor</td></tr>
+    <tr><td><b>ledger_transactions</b></td><td>مجموعة لكلّ عمليّة + منع تكرار</td><td>idempotency_key (فريد), reference, currency_code</td></tr>
+    <tr><td><b>ledger_entries</b></td><td>قيود مدين/دائن غير قابلة للتعديل</td><td>transaction_id, account_id, direction, amount_minor</td></tr>
+    <tr><td><b>commission_snapshots</b></td><td>النِّسب والتقسيم المجمّد للطلب</td><td>booking_id, currency, fleet/office/driver_minor, rates</td></tr>
+    <tr><td><b>payouts</b></td><td>السحوبات + المطابقة</td><td>owner, currency, amount, psp_ref, status</td></tr>
+  </table>
+  <div class="note"><b>تعديلات:</b> أعمدة المال → وحدات صغرى صحيحة (لا double) · إضافة <b>currency_code</b> إلى bookings وكلّ سجلّات الأرصدة · ديون السائق تصبح <b>حساباً</b> في الدفتر · Redis = إسقاط عرض يُعاد بناؤه من الدفتر.</div>
+
+  <h2 style="margin-top:18px">ضمانات السلامة</h2>
+  <div class="grid3">
+    <div class="pill"><h4>ذرّيّة</h4><p>معاملة DB واحدة تغلّف كلّ التحريك + قيوده — لا transactions متداخلة، لا فشل جزئيّ.</p></div>
+    <div class="pill"><h4>منع التكرار</h4><p>idempotency_key من مرجع الطلب/الدفعة — إعادة المحاولة آمنة.</p></div>
+    <div class="pill"><h4>توازن</h4><p>Σ مدين = Σ دائن لكلّ عملة، وإلا تُرفض.</p></div>
+    <div class="pill"><h4>آلة حالة</h4><p>الانتقالات بتحديث شرطيّ (WHERE status=…) → لا ازدواج.</p></div>
+    <div class="pill"><h4>قابليّة المطابقة</h4><p>مجموع القيود = الأرصدة دائماً + تقرير يوميّ.</p></div>
+    <div class="pill"><h4>عملة لكلّ قيد</h4><p>لا اختلاط عملات في معاملة واحدة.</p></div>
+  </div>
+
+  <h2 style="margin-top:18px">خطّة الهجرة التدريجيّة</h2>
+  <ul class="clean">
+    <li><b>١.</b> بناء جداول الدفتر + خدمة LedgerService مرجعيّة في طبقة Core (دون لمس خدمات الموبايل).</li>
+    <li><b>٢.</b> كتابة دالّة العمولة النقيّة + اختباراتها لكلّ الحالات.</li>
+    <li><b>٣.</b> تشغيل الدفتر <b>بالتوازي</b> (shadow) مع النظام الحاليّ والمطابقة قبل التبديل.</li>
+    <li><b>٤.</b> تحويل نقاط المال (شحن/إكمال/سحب) لتكتب عبر الدفتر، ثمّ جعل Redis إسقاطاً.</li>
+  </ul>
+
+  <div class="foot">منصّة Fleet — وثيقة معماريّة للنظام الماليّ المقترَح · إصدار مسوّدة</div>
+</div>
+
+</body>
+</html>

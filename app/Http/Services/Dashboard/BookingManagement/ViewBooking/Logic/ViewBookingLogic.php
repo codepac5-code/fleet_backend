@@ -28,17 +28,17 @@ class ViewBookingLogic implements Service {
       switch($this->input->getPageType()){
 
             case 'completed':
+
                 $query = $this->repository->BookingRepository()
                 ->readRepository()->getCompletedOrders($this->input->getOfficeId());
                 return $this->completed_dataTable($query);
                 break;
-
             case 'ongoing':
                 $query = $this->repository->BookingRepository()
                 ->readRepository()->getOngoingOrders($this->input->getOfficeId());
                 return $this->ongoing_dataTable($query);
                 break;
-        
+
         // case'pending':
             default:
                 $query = $this->repository->BookingRepository()
@@ -48,9 +48,9 @@ class ViewBookingLogic implements Service {
         }
 
 
-        
 
-        
+
+
         // $query = Booking::query();
 
         // if ($this->input->getFilter() != null) {
@@ -110,7 +110,7 @@ class ViewBookingLogic implements Service {
     //     return "<a class='btn-link btn-link-hover' href=" .route('booking.show', $query->id).">#".$query->id ."</a>";
     // })
     ->editColumn('details' , function ($query){
-        
+
         return "<a class='btn-link btn-link-hover' href=" .route('booking.show', ['id'=>$query->id]).">".__('messages.details') ."</a>";
     })
     ->editColumn('status' , function ($query){
@@ -127,11 +127,11 @@ class ViewBookingLogic implements Service {
       ->editColumn('end_at' , function ($query){
         $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
         $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
-       
+
         $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
         ? date(optional($datetime)->date_format, strtotime($query->endAt)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->endAt))
         : $query->endAt;
-        return $formattedDate;     
+        return $formattedDate;
      })
 
       ->editColumn('paymentStatus' , function ($query){
@@ -141,7 +141,7 @@ class ViewBookingLogic implements Service {
       ->editColumn('PaymentDatetime' , function ($query){
         $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
         $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
-       
+
         $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
         ? date(optional($datetime)->date_format, strtotime($query->PaymentDatetime)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->PaymentDatetime))
         : $query->PaymentDatetime;
@@ -166,7 +166,7 @@ class ViewBookingLogic implements Service {
       ->editColumn('start_at', function($query) {
           $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
           $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
-         
+
           $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
           ? date(optional($datetime)->date_format, strtotime($query->startAt)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->startAt))
           : $query->startAt;
@@ -301,7 +301,7 @@ class ViewBookingLogic implements Service {
     ->editColumn('created_at', function($query) {
         $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
         $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
-       
+
         $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
         ? date(optional($datetime)->date_format, strtotime($query->created_at)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->created_at))
         : $query->created_at;
@@ -380,7 +380,7 @@ class ViewBookingLogic implements Service {
       ->editColumn('start_at', function($query) {
           $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
           $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
-         
+
           $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
           ? date(optional($datetime)->date_format, strtotime($query->startAt)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->startAt))
           : $query->startAt;

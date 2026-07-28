@@ -9,7 +9,7 @@ use App\Jobs\ProcessFlutterEvent;
 use Illuminate\Support\Facades\Redis;
 use App\Listeners\BaseRedisListener\ListenToRedisEvents;
 
-class ListenToAllRedisChannels extends Command
+class ListenToRedisChannel extends Command
 {
     protected $signature = 'redis:listen';
 

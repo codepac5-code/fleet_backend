@@ -35,7 +35,7 @@
                                 <input type="hidden" name="id" value="{{$employee->id}}">
                             @endif
 
-                            
+
 
                             <div class="card card-block card-stretch mb-4">
                                 <div class="card-body p-1">
@@ -43,7 +43,7 @@
                                         <div class="border p-2" style="height: 150px; width: 150px; border-radius: 50%; overflow: hidden; display: flex; justify-content: center; align-items: center;">
                                             <img id="imagePreview" src="{{ isset($employee) && $employee->photo ? $employee->photo : get_default_image('employee') }}" alt="Preview" style="height: 100%; width: 100%; object-fit: cover; border-radius: 50%;">
                                         </div>
-                                        <div class="form-group mt-3" style="width: 25%;"> 
+                                        <div class="form-group mt-3" style="width: 25%;">
                                             <div class="custom-file">
                                                 <input type="file" name="image" id="banner_image" class="custom-file-input" accept="image/*" onchange="previewImage(event)">
                                                 <label class="custom-file-label upload-label text-center">{{ __('messages.choose_file', ['file' => __('messages.image')]) }}</label>
@@ -128,12 +128,12 @@
 
                                     <div class="form-group col-md-4">
                                         <label>{{ __('messages.roles') }} <span class="text-danger">*</span></label>
-                                    
+
                                         @php
-                                        
+
                                             $selectedRoleNames = old('role', $employee->getRoleNames()->toArray());
                                         @endphp
-                                    
+
                                         <select name="role[]" class="select2js form-control" multiple required>
                                             @foreach($roles as $role)
                                                 <option value="{{ $role->name }}" {{ in_array($role->name, (array)$selectedRoleNames) ? 'selected' : '' }}>
@@ -142,7 +142,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    
+
                                 </div>
                             </div>
 
@@ -163,7 +163,7 @@
                                         @error('employeeJobName_ar')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
-                                   
+
                                     </div>
 
                                     <div class="form-group col-md-6">

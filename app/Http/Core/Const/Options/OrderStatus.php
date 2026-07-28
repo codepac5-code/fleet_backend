@@ -4,13 +4,15 @@ namespace App\Http\Core\Const\Options;
 
 class OrderStatus {
     static public $InProgress = 'In Progress';
-    static public $OnGoing    = 'ongoing';
+    static public $OnGoing    = 'Ongoing';
     static public $Completed  = 'Completed';
     static public $Hold       = 'Hold';
     static public $Cancelled  = 'Cancelled';
     static public $SearchOnDriver = 'Search on driver';
     static public $Pending    = 'Pending';
     static public $OnGoing_logic    = 'ongoing';
+    static public $Scheduled    = 'scheduled';
+
 
 }
 

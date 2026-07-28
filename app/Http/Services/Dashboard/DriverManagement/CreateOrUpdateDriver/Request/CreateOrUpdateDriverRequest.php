@@ -29,14 +29,14 @@ class CreateOrUpdateDriverRequest extends BaseRequest
         [
             'phoneNumber'=>'required|min:10|unique:drivers,phoneNumber,'.$id,
             'password' => [
-                ($id != 0) ? 'sometimes' : 'required', 
+                ($id != 0) ? 'sometimes' : 'required',
                 'string',
                 'min:8',
                 'confirmed',
                 'regex:/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).+$/',
-            ],   
-            'image' => 'nullable',
-            'officeId'=>'required|numeric',
+            ],
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'officeId'=>'somtimes|numeric',
             'city'=>'required|string',
             'country'=>'required|string',
             'region'=>'required|string',
@@ -57,7 +57,7 @@ class CreateOrUpdateDriverRequest extends BaseRequest
         ->withInput());
     }
 
-    
+
     public function messages(){
         return [
           'officeName.required' => __('messages.required', ['attribute' => __('messages.officeName')]),

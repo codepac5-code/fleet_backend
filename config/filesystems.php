@@ -33,7 +33,11 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // serve:false — Laravel's auto `storage.local` route otherwise hijacks
+            // `/storage/{path}` and serves the PRIVATE root (storage/app/private),
+            // returning 403 for public uploads (avatars/images live under the
+            // PUBLIC disk). The route in bootstrap/app.php serves those instead.
+            'serve' => false,
             'throw' => false,
         ],
 

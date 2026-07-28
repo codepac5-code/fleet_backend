@@ -13,7 +13,8 @@ class CreateOrUpdateDriverController extends Controller
 {
     public function __invoke(CreateOrUpdateDriverRequest $request)
     {
-        
+
+
         $input_data = $request->validated();
         $input_data['has_image'] = $request->hasFile('image');
 
@@ -24,6 +25,6 @@ class CreateOrUpdateDriverController extends Controller
 
         // execute service and get result..
         return  $service->execute(); // send response..
-        
+
     }
 }

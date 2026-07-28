@@ -7,8 +7,8 @@
     </head>
 
                 <div class="trip-card-modern">
-              
-                    
+
+
                         <div class="modern-trip-card">
                             <!-- العنوان والحالة -->
                             <div class="trip-top">
@@ -19,7 +19,7 @@
                                     <i class="fas fa-spinner fa-spin"></i> قيد الانتظار
                                 </div>
                             </div>
-                    
+
                             <!-- العنوان -->
                             <div class="trip-route">
                                 <i class="fas fa-map-marker-alt text-success"></i>
@@ -28,21 +28,21 @@
                                 <i class="fas fa-map-marker-alt text-danger"></i>
                                 <span>حي النرجس</span>
                             </div>
-                    
+
                             <!-- المستخدم والخدمة والمكتب -->
                             <div class="trip-section">
                                 <div><i class="fas fa-user"></i> المستخدم: <strong>أحمد محمد</strong></div>
                                 <div><i class="fas fa-car"></i> الخدمة: <strong>خدمة فاخرة</strong></div>
                                 <div><i class="fas fa-building"></i> المكتب: <strong>مكتب الرياض</strong></div>
                             </div>
-                    
+
                             <!-- بيانات الرحلة -->
                             <div class="trip-section">
                                 <div><i class="fas fa-clock"></i> الوقت: <strong>02:15 م</strong></div>
                                 <div><i class="fas fa-road"></i> المسافة: <strong>12 كم</strong></div>
                                 <div><i class="fas fa-credit-card"></i> الدفع: <strong>إلكتروني</strong></div>
                             </div>
-                    
+
                             <!-- المبالغ -->
                             <div class="trip-finance">
                                 <div class="finance-box">
@@ -53,7 +53,7 @@
                                 <div class="finance-box">
                                     <i class="fas fa-percentage"></i>
                                     <div class="label">الخصم</div>
-                                    <div class="value">10 ر.س</div>
+                                    <div class="value">1ر.س</div>
                                 </div>
                                 <div class="finance-box">
                                     <i class="fas fa-wallet"></i>
@@ -61,13 +61,13 @@
                                     <div class="value">90 ر.س</div>
                                 </div>
                             </div>
-                    
+
                             <!-- العمولات -->
                             <div class="trip-section">
                                 <div><i class="fas fa-user-tie"></i> عمولة السائق: <strong>20 ر.س</strong></div>
                                 <div><i class="fas fa-shield-alt"></i> عمولة الأسطول: <strong>5 ر.س</strong></div>
                             </div>
-                    
+
                             <!-- وجهات متعددة -->
                             <div class="trip-section">
                                 <div><i class="fas fa-route"></i> وجهات متعددة:</div>
@@ -82,7 +82,7 @@
     <style>
 
 
-      
+
 
 
 
@@ -112,7 +112,7 @@
 
 /* تأثير تكبير الكارد عند المرور بالماوس */
 .card:hover {
-    transform: scale(1.05); 
+    transform: scale(1.05);
 }
 
 /* تصميم العناوين داخل الأقسام */

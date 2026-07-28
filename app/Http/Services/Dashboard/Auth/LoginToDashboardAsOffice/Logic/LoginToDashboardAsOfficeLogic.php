@@ -1,34 +1,45 @@
 <?php
+
 namespace App\Http\Services\Dashboard\Auth\LoginToDashboardAsOffice\Logic;
 
 use App\Http\Core\Const\Options\Guard;
-use App\Http\Core\Const\Options\Redirect;
-use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
+use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Http\Core\GeoServices\ShardContext;
+use App\Models\InfrastructureNode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 
-class LoginToDashboardAsOfficeLogic implements Service {
+class LoginToDashboardAsOfficeLogic implements Service
+{
+    private LoginToDashboardAsOfficeInput $input;
 
-    private RepositoryCaller $repository; // access to all model's repositories
-    private LoginToDashboardAsOfficeInput $input; // added property to hold input
-
-    public function __construct(
-        LoginToDashboardAsOfficeInput $input /*| Pass Request To Service*/
-    ){
+    public function __construct(LoginToDashboardAsOfficeInput $input)
+    {
         $this->input = $input;
-        $this->repository = new RepositoryCaller(); // init repository object
     }
 
-
-    public function execute(): ResponseModel | JsonResponse | View | RedirectResponse
+    public function execute(): ResponseModel|JsonResponse|View|RedirectResponse
     {
         $credentials = [
-            'email'    => $this->input->getEmail(),
+            'email' => $this->input->getEmail(),
             'password' => $this->input->getPassword(),
         ];
+
+        $node = InfrastructureNode::where('type', 'country')
+            ->where('id', $this->input->getRegion())
+            ->first();
+
+        if (!$node) {
+            return redirect()->back()
+                ->withErrors(['region' => 'المنطقة المختارة غير مدعومة']);
+        }
+
+        ShardContext::set($node);
+        session([
+            'active_shard_id' => $node->id
+        ]);
 
         logoutAuthUser();
 
@@ -41,23 +52,18 @@ class LoginToDashboardAsOfficeLogic implements Service {
 
         if (!authenticate($credentials, $this->input->getRemember(), $guard)) {
             return redirect()->back()
-                ->withErrors(['password' => 'كلمة المرور غير صحيحة']);
+                ->withErrors(['password' => 'الرجاء التأكد من صحة المعلومات المدخلة و المحاولة مجدداً']);
         }
 
         session()->regenerate();
 
         $message = 'welcome to fleet';
 
-        if(checkGuard(Guard::$Employee)){
-            
-            // $roles = MainRoles();
-            // if(!authUserHashRoles(['roles']))
+        if (checkGuard(Guard::$Employee)) {
             $message = 'مرحباً بك في فلييت';
             return redirect(route('booking.index'))->withSuccess($message);
         }
 
         return redirect(route('home'))->withSuccess($message);
-
-
     }
 }

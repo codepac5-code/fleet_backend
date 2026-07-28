@@ -23,9 +23,9 @@
 
             </p>
         </div>
-        
+
         <div class="d-flex flex-wrap flex-xxl-nowrap gap-3" data-select2-id="select2-data-8-5c7s">
-            
+
             <div class="w3-third">
                 @if($bookingdata->count() == 0)
                     @hasanyrole('admin|demo_admin|provider')
@@ -42,7 +42,7 @@
                 {{__('messages.invoice')}}
             </a>
             @endif
-        </div> 
+        </div>
     </div>
 
     <div class="pay-box">
@@ -55,15 +55,15 @@
             </p>
 
         </div>
-   
 
-        
+
+
 
         <div class="pay-booking-details">
             <div class="row mb-2">
                 <div class="col-sm-6"><span>{{__('messages.order_status')}} :</span></div>
                 <div class="col-sm-6 align-text">
-                    <span class="c1" id="booking_status__span">{{ $bookingdata->status}}</span>      
+                    <span class="c1" id="booking_status__span">{{ $bookingdata->status}}</span>
                 </div>
                 @if($bookingdata->status === "cancelled")
                     <div class="col-sm-6"><span>{{__('messages.reason')}} :</span></div>
@@ -71,7 +71,7 @@
                         <span class="c1" id="booking_status__span">{{ $bookingdata->reason }}</span>
                     </div>
                 @endif
-                
+
             </div>
             <div class="row mb-2">
                 <div class="col-sm-6"> <span>{{__('messages.payment_status')}} : </span></div>
@@ -95,13 +95,13 @@
                 </div>
             </div>
 
-        
 
- 
+
+
         </div>
         </div>
     </div>
-    
+
     <div class="col-12">
         <div class="horizontal-separator"></div>
     </div>
@@ -112,8 +112,8 @@
     </div>
     <div class="pay-box">
 
-  
-   
+
+
         <div class="pay-method-details">
             <h4 class="mb-2">{{__('messages.pick_up_point')}}</h4>
             {{-- <h5 class="c1 mb-2">{{__('messages.cash_after')}}</h5> --}}
@@ -160,7 +160,7 @@
         @if ($bookingdata->officeCommission != 0)
         <p><span>{{__('messages.office_commission')}} :
         </span><strong>{{ $bookingdata->officeCommissionValue ?  $bookingdata->officeCommissionValue : '--'}}</strong>
-        </p> 
+        </p>
         @endif
 
             <p><span>{{__('messages.driver_commission')}} :
@@ -169,27 +169,27 @@
 
         </div>
 
-    
+
 
         </div>
 
-        
+
     </div>
-    
+
 
     <div class="py-3 d-flex gap-3 flex-wrap customer-info-detail mb-2">
-        
+
 
 
         @if($bookingdata->driverId != null)
         <div class="c1-light-bg radius-10 py-3 px-4 flex-grow-1">
 
-            
+
             {{-- @foreach($bookingdata->handymanAdded as $booking) --}}
             <h4 class="mb-2">{{__('messages.Driver_information')}}</h4>
             <h5 class="c1 mb-3">{{optional($driver)->firstName.' '.optional($driver)->lastName ?? '-'}}</h5>
             <ul class="list-info">
-                
+
                 <li>
                     <span class="material-icons  customer-info-text">{{__('messages.phone_information')}}</span>
                     <a href="" class=" customer-info-value">
@@ -287,36 +287,36 @@
         function initMap() {
             var startPoint = { lat: {{ $bookingdata->startLatitude }}, lng: {{ $bookingdata->startLongitude }} };
             var endPoint = { lat: {{ $bookingdata->endLatitude }}, lng: {{ $bookingdata->endLongitude }} };
-    
+
             var map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 12,
                 center: startPoint
             });
-    
+
             var directionsService = new google.maps.DirectionsService();
             var directionsRenderer = new google.maps.DirectionsRenderer({
                 map: map
             });
-    
+
             var request = {
                 origin: startPoint,
                 destination: endPoint,
-                travelMode: google.maps.TravelMode.DRIVING 
+                travelMode: google.maps.TravelMode.DRIVING
             };
-    
+
             directionsService.route(request, function (result, status) {
                 if (status == google.maps.DirectionsStatus.OK) {
                     directionsRenderer.setDirections(result);
-                } 
+                }
                 else {
                     console.error("google maps error", status);
                 }
             });
         }
-    
+
         window.onload = initMap;
     </script>
-    
+
 
 
 
@@ -410,7 +410,7 @@ body.dark table {
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-body.dark th, 
+body.dark th,
 body.dark td {
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     color: #f0e68c; /* أصفر باهت ليتماشى مع #F8A609 */
@@ -462,7 +462,7 @@ body.dark th {
                         <tr>
                             <td>{{__('messages.price')}}</td>
 
-                            <td class="bk-value">{{$subservice->openPrice }} +  {{'( '.$subservice->kmPrice }}  * {{$bookingdata->distance .' )' }} + {{ '( '.$subservice->minutePrice }} * {{$bookingdata->time .' )' }}  = 
+                            <td class="bk-value">{{$subservice->openPrice }} +  {{'( '.$subservice->kmPrice }}  * {{$bookingdata->distance .' )' }} + {{ '( '.$subservice->minutePrice }} * {{$bookingdata->time .' )' }}  =
                                 {{$total_price}}</td>
                         </tr>
                         {{-- @if($bookingdata->discount != null)
@@ -477,7 +477,7 @@ body.dark th {
                             <td class="bk-value text-success">-{{getPriceFormat($bookingdata->discount * $total_price )}}</td>
                         </tr>
                         @endif
-                      
+
                         <tr class="grand-total">
                             <td><strong>{{__('messages.grand_total')}}</strong></td>
                             <td class="bk-value">

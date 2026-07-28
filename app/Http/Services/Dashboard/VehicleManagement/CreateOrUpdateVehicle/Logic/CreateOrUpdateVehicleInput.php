@@ -7,7 +7,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
 {
     private $id;
     private $office_id;
-    private $vehicle_brand ; 
+    private $vehicle_brand ;
     private $plate;
     private $model_year;
     private $color;
@@ -24,8 +24,8 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
     public function __construct( array $input)
     {
         $this->id = $input['id'] ??  null;
-        $this->office_id = $input['office_id'];
-        $this->vehicle_brand = $input['vehicle_brand']; 
+        $this->office_id = $input['office_id']??null;
+        $this->vehicle_brand = $input['vehicle_brand'];
         $this->plate           = $input['plate'];
         $this->model_year     =  $input['model_year'];
         $this->color          =  $input['color'];
@@ -34,8 +34,8 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
         $this->sub_service_ids = $input['serviceIds'];
         $this->city        = $input['city'];
         $this->image = $input['image']?? null;
-        $this->hasImage = $input['has_image'] ?? false ; 
-        $this->licenseNumber = $input['license_number'] ?? null; 
+        $this->hasImage = $input['has_image'] ?? false ;
+        $this->licenseNumber = $input['license_number'] ?? null;
         $this->model =$input['model'] ;
         // $this->driverId = $input['driverId'];
     }
@@ -53,7 +53,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
 
     /**
      * Get the value of id
-     */ 
+     */
     public function getId()
     {
         return $this->id;
@@ -63,7 +63,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
      * Set the value of id
      *
      * @return  self
-     */ 
+     */
     public function setId($id)
     {
         $this->id = $id;
@@ -73,17 +73,17 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
 
     /**
      * Get the value of office_id
-     */ 
+     */
     public function getOffice_id()
     {
-        return $this->office_id;
+        return is_null($this->office_id) ? getOfficeIdByAuthUser() :$this->office_id;
     }
 
     /**
      * Set the value of office_id
      *
      * @return  self
-     */ 
+     */
     public function setOffice_id($office_id)
     {
         $this->office_id = $office_id;
@@ -93,7 +93,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
 
     /**
      * Get the value of vehicle_brand_id
-     */ 
+     */
     public function getVehicle_brand()
     {
         return $this->vehicle_brand;
@@ -103,7 +103,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
      * Set the value of vehicle_brand_id
      *
      * @return  self
-     */ 
+     */
     public function setVehicle_brand($vehicle_brand)
     {
         $this->vehicle_brand = $vehicle_brand;
@@ -113,7 +113,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
 
     /**
      * Get the value of model_year
-     */ 
+     */
     public function getModel_year()
     {
         return $this->model_year;
@@ -123,7 +123,7 @@ class CreateOrUpdateVehicleInput implements InputServiceInterface
      * Set the value of model_year
      *
      * @return  self
-     */ 
+     */
     public function setModel_year($model_year)
     {
         $this->model_year = $model_year;

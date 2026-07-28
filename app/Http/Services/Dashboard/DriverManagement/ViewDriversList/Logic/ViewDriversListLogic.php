@@ -30,8 +30,8 @@ class ViewDriversListLogic implements Service {
 
         // if(auth()->user)
         $query = $this->repository->DriverRepository()->readRepository()
-        ->dataTableDriver( $this->input->getFilter()); 
-        
+        ->dataTableDriver( $this->input->getFilter());
+
 
 
         // $query = $query->where('user_type','handyman');
@@ -41,7 +41,7 @@ class ViewDriversListLogic implements Service {
         // if(auth()->user()->hasRole('office')) {
         //     $query->where('officeId', auth()->user()->id);
         // }
-        
+
         // if($request->list_status == null){
         //     $query = $query->where('status',1)->whereNotNull('provider_id');
         // }
@@ -73,19 +73,19 @@ class ViewDriversListLogic implements Service {
                 return 'adddd ';//($query->address != null && isset($query->address)) ? $query->address : '-';
             })
 
-            
+
             ->editColumn('created_at', function($query) {
                 $sitesetup = Setting::where('type','site-setup')->where('key', 'site-setup')->first();
                 $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
-               
+
                 $formattedDate =  optional($datetime)->date_format && optional($datetime)->time_format
                 ? date(optional($datetime)->date_format, strtotime($query->created_at)) . ' / ' . date(optional($datetime)->time_format, strtotime($query->created_at))
                 : $query->created_at;
                 return $formattedDate;
             })
 
-            ->editColumn('isConected', function($query) {
-                if($query->isConected){
+            ->editColumn('is_online', function($query) {
+                if($query->is_online){
                     $status = '<span class="badge badge-active">'.__('messages.connected').'</span>';
                     // $status = '<a class="btn-sm text-white btn-success"  href='.route('handyman.approve',$query->id).'>Accept</a>';
                 }
@@ -111,7 +111,7 @@ class ViewDriversListLogic implements Service {
             ->addColumn('phoneNumber',function($qry){
                    return  $qry->phoneNumber;
             })
-            
+
             ->editColumn('walletBalance', function ($qry){
                 $walletBalance = $qry->walletBalance;
                 return view('customer.walletBalance', compact('walletBalance'));
@@ -120,18 +120,18 @@ class ViewDriversListLogic implements Service {
                 $dues = $qry->fleetDues + $qry->officeDues;
                 return view('driver.dues', compact('dues'));
             })
-           
+
             ->addColumn('action', function($driver){
                 $auth_user= authSession();
                 $isOffice = false;
-                $isCustom = $driver->isFleetCommissionCustom;
+                $driver->isFleetCommissionCustom ? $isCustom= 'yes':$isCustom = 'no';
                 $officeCommission = 0;
                 $driverCommission = 0;
 
                 if( (Auth::guard('office')->check())){
                     $isOffice = true;
-                    $isCustom = $driver->isOfficeCommissionCustom;
-                    if($isCustom){
+                    $driver->isOfficeCommissionCustom  ? $isCustom= 'yes':$isCustom = 'no';
+                    if($isCustom == 'yes'){
                         $commission = OfficeDriverCustomCommission::where(['officeId'=>Auth::user()->id , 'driverId'=>$driver->id])->first();
                         $officeCommission = $commission->officeCommission;
                         $driverCommission = $commission->driverCommission;
@@ -141,26 +141,18 @@ class ViewDriversListLogic implements Service {
                     $employee = Auth::guard('employee')->user();
                     if ($employee->officeId) {
                         $isOffice = true;
-                        $isCustom = $driver->isOfficeCommissionCustom;
-                        if($isCustom){
+                        $driver->isOfficeCommissionCustom? $isCustom= 'yes':$isCustom = 'no';
+                        if($isCustom == 'yes'){
                            $commission = OfficeDriverCustomCommission::where(['officeId'=>$employee->officeId , 'driverId'=>$driver->id])->first();
                            $officeCommission = $commission->officeCommission;
                            $driverCommission = $commission->driverCommission;
                         }
-                    } 
+                    }
                 }
-
-                if($isCustom){
-                    $isCustom = 'yes';
-                }else
-                {
-                    $isCustom = 'no';
-                }
-               
                 return view('driver.action',compact('driver','auth_user' ,'isOffice','isCustom' ,'officeCommission','driverCommission'))->render();
             })
             ->addIndexColumn()
-            ->rawColumns(['check','display_name','action','isConected','created_at','contact_number','office','walletBalance' ])
-            ->make(true); 
+            ->rawColumns(['check','display_name','action','is_online','created_at','contact_number','office','walletBalance' ])
+            ->make(true);
         }
 }

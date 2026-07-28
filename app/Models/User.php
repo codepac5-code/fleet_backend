@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\BelongsToOffice;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
@@ -15,8 +16,11 @@ use Illuminate\Support\Facades\Auth;
 class User extends Authenticatable
 {
 
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable , HasApiTokens , HasRoles , SoftDeletes ;
+    // use BelongsToOffice;
+
 
     protected $table = 'users';
     /**
@@ -35,8 +39,12 @@ class User extends Authenticatable
         'walletBalance',
         'password',
         'isActive',
+        'block_reason',
+        'blocked_at',
         'referralCode',
         'dialCode',
+        'stripe_customer_id',
+        'locale',
     ];
 
     public function assignedIssues()
@@ -118,13 +126,13 @@ class User extends Authenticatable
     /**
      * The channels the user receives notification broadcasts on.
      */
-    
+
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'private-notification-user.'.$this->id;
     }
 
-    
+
 
     public function ratingsReceived()
     {
@@ -136,13 +144,13 @@ class User extends Authenticatable
     return $this->morphMany(Rating::class, 'rater');
     }
 
-    
+
     public function booking(){
         return $this->hasMany(Booking::class, 'userId','id');
     }
 
     public function officeDocument(){
         return $this->hasMany(OfficeDocument::class, 'officeId','id');
-    }    
+    }
 
 }

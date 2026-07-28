@@ -31,7 +31,7 @@ class RolePermissionSeeder extends Seeder
 
         Schema::enableForeignKeyConstraints();
 
-    
+
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -217,16 +217,16 @@ class RolePermissionSeeder extends Seeder
 
 
         $this->assignPermissionsToRoleManually( Roles::Super_Admin->value , Guard::$Admin,  $super_admin_permissions);
-     
+
         $admins = Admin::all();
 
         foreach($admins as $admin){
-        $admin->assignRole(Roles::Super_Admin->value);    
+        $admin->assignRole(Roles::Super_Admin->value);
         }
 
         // $role->syncPermissions($super_admin_permissions);
 
-        
+
         // 🟡 Office Manager
         $office_permissions = [
             // Dashboard
@@ -258,7 +258,13 @@ class RolePermissionSeeder extends Seeder
             'assign permissions',
             'view drivers new style',
 
-            
+            // Sub-Service
+            'view sub-service list',
+            'add sub-service',
+            'edit sub-service',
+            'delete sub-service',
+
+
             // System
             'view commission',
             'edit commission',
@@ -271,7 +277,6 @@ class RolePermissionSeeder extends Seeder
             'issues add',
 
             'driver change custom commission',
-
         ];
 
 

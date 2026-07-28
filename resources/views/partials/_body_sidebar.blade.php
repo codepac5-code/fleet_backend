@@ -5,7 +5,7 @@ $MyNavBar = \Menu::make('MenuList', function ($menu) use($url){
     $auth_user = auth()->user();
     $menu->add('<span>'.__('messages.main').'</span>', ['class' => 'category-main yellow-bg']);
 
-  
+
 
 
 
@@ -20,12 +20,17 @@ $MyNavBar = \Menu::make('MenuList', function ($menu) use($url){
     ->nickname('order')
     ->data('permission', 'booking list');
 
+    $menu->add('<span>'.__('messages.scheduled_rides').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.scheduled_rides').'</span></span>', ['route' => 'scheduled.rides.view'])
+    ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2 12C2 8.22876 2 6.34315 3.17157 5.17157C4.34315 4 6.22876 4 10 4H14C17.7712 4 19.6569 4 20.8284 5.17157C22 6.34315 22 8.22876 22 12V14C22 17.7712 22 19.6569 20.8284 20.8284C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.8284C2 19.6569 2 17.7712 2 14V12Z" stroke="currentColor" stroke-width="1.5"/> <path d="M18 16L16 16M16 16L14 16M16 16L16 14M16 16L16 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <path d="M7 4V2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <path d="M17 4V2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <path d="M2.5 9H21.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>')
+    ->nickname('scheduled_rides')
+    ->data('permission', 'booking list');
+
     $menu->add('<span>'.__('messages.order_history').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.bookings').'</span></span>', ['route' => 'booking.history'])
     ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2 12C2 8.22876 2 6.34315 3.17157 5.17157C4.34315 4 6.22876 4 10 4H14C17.7712 4 19.6569 4 20.8284 5.17157C22 6.34315 22 8.22876 22 12V14C22 17.7712 22 19.6569 20.8284 20.8284C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.8284C2 19.6569 2 17.7712 2 14V12Z" stroke="currentColor" stroke-width="1.5"/> <path d="M18 16L16 16M16 16L14 16M16 16L16 14M16 16L16 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <path d="M7 4V2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <path d="M17 4V2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <path d="M2.5 9H21.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>')
     ->nickname('booking')
     ->data('permission', 'booking list');
 
-// if( auth()->user()->hasAnyRole(['super-admin']) ){ 
+// if( auth()->user()->hasAnyRole(['super-admin']) ){
 
 if(auth()->user()->can('view service list') || auth()->user()->can('view sub service list')) {
     $menu->add(__('messages.sidebar_form_title', ['form' => trans('messages.service')]), [
@@ -37,11 +42,11 @@ if(auth()->user()->can('view service list') || auth()->user()->can('view sub ser
             '<span>'.__('messages.Service').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.Service').'</span></span>',
             ['route' => 'service.index']
         )
-        ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> 
-            <path d="M2.5 6.5C2.5 4.29086 4.29086 2.5 6.5 2.5C8.70914 2.5 10.5 4.29086 10.5 6.5V9.16667C10.5 9.47666 10.5 9.63165 10.4659 9.75882C10.3735 10.1039 10.1039 10.3735 9.75882 10.4659C9.63165 10.5 9.47666 10.5 9.16667 10.5H6.5C4.29086 10.5 2.5 8.70914 2.5 6.5Z" stroke="currentColor" stroke-width="1.5"/> 
-            <path d="M13.5 14.8333C13.5 14.5233 13.5 14.3683 13.5341 14.2412C13.6265 13.8961 13.8961 13.6265 14.2412 13.5341C14.3683 13.5 14.5233 13.5 14.8333 13.5H17.5C19.7091 13.5 21.5 15.2909 21.5 17.5C21.5 19.7091 19.7091 21.5 17.5 21.5C15.2909 21.5 13.5 19.7091 13.5 17.5V14.8333Z" stroke="currentColor" stroke-width="1.5"/> 
-            <path d="M2.5 17.5C2.5 15.2909 4.29086 13.5 6.5 13.5H8.9C9.46005 13.5 9.74008 13.5 9.95399 13.609C10.1422 13.7049 10.2951 13.8578 10.391 14.046C10.5 14.2599 10.5 14.5399 10.5 15.1V17.5C10.5 19.7091 8.70914 21.5 6.5 21.5C4.29086 21.5 2.5 19.7091 2.5 17.5Z" stroke="currentColor" stroke-width="1.5"/> 
-            <path d="M13.5 6.5C13.5 4.29086 15.2909 2.5 17.5 2.5C19.7091 2.5 21.5 4.29086 21.5 6.5C21.5 8.70914 19.7091 10.5 17.5 10.5H14.6429C14.5102 10.5 14.4438 10.5 14.388 10.4937C13.9244 10.4415 13.5585 10.0756 13.5063 9.61196C13.5 9.55616 13.5 9.48982 13.5 9.35714V6.5Z" stroke="currentColor" stroke-width="1.5"/> 
+        ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.5 6.5C2.5 4.29086 4.29086 2.5 6.5 2.5C8.70914 2.5 10.5 4.29086 10.5 6.5V9.16667C10.5 9.47666 10.5 9.63165 10.4659 9.75882C10.3735 10.1039 10.1039 10.3735 9.75882 10.4659C9.63165 10.5 9.47666 10.5 9.16667 10.5H6.5C4.29086 10.5 2.5 8.70914 2.5 6.5Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M13.5 14.8333C13.5 14.5233 13.5 14.3683 13.5341 14.2412C13.6265 13.8961 13.8961 13.6265 14.2412 13.5341C14.3683 13.5 14.5233 13.5 14.8333 13.5H17.5C19.7091 13.5 21.5 15.2909 21.5 17.5C21.5 19.7091 19.7091 21.5 17.5 21.5C15.2909 21.5 13.5 19.7091 13.5 17.5V14.8333Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2.5 17.5C2.5 15.2909 4.29086 13.5 6.5 13.5H8.9C9.46005 13.5 9.74008 13.5 9.95399 13.609C10.1422 13.7049 10.2951 13.8578 10.391 14.046C10.5 14.2599 10.5 14.5399 10.5 15.1V17.5C10.5 19.7091 8.70914 21.5 6.5 21.5C4.29086 21.5 2.5 19.7091 2.5 17.5Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M13.5 6.5C13.5 4.29086 15.2909 2.5 17.5 2.5C19.7091 2.5 21.5 4.29086 21.5 6.5C21.5 8.70914 19.7091 10.5 17.5 10.5H14.6429C14.5102 10.5 14.4438 10.5 14.388 10.4937C13.9244 10.4415 13.5585 10.0756 13.5063 9.61196C13.5 9.55616 13.5 9.48982 13.5 9.35714V6.5Z" stroke="currentColor" stroke-width="1.5"/>
         </svg>')
         ->link->attr(['class' => '']);
     }
@@ -51,18 +56,27 @@ if(auth()->user()->can('view service list') || auth()->user()->can('view sub ser
             '<span>'.__('messages.Subservice').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.Subservice').'</span></span>',
             ['route' => 'sub-service.index']
         )
-        ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> 
-            <path d="M20.24 5.17977L17.83 2.76977C17.5 2.43977 17.05 2.25977 16.59 2.25977H13C12.04 2.25977 11.25 3.04977 11.25 4.00977V9.00977C11.25 9.96977 12.04 10.7598 13 10.7598H19C19.96 10.7598 20.75 9.96977 20.75 9.00977V6.41977C20.75 5.95977 20.56 5.50977 20.24 5.17977ZM19.25 8.99977C19.25 9.13977 19.14 9.24977 19 9.24977H13C12.86 9.24977 12.75 9.13977 12.75 8.99977V4.00977C12.75 3.86977 12.86 3.75977 13 3.75977H16.59C16.91 3.75977 17.23 3.94977 17.39 4.20977L19.79 6.61977C19.91 6.77977 19.91 7.02977 19.79 7.17977L17.39 9.58977C17.23 9.84977 16.91 10.0398 16.59 10.0398H13C12.86 10.0398 12.75 9.92977 12.75 9.79977V6.18977H11.25V9.79977C11.25 9.96977 11.14 10.0798 11 10.0798H8.75C8.6 10.0798 8.5 9.96977 8.5 9.79977V6.18977H7C6.86 6.18977 6.75 6.09977 6.75 5.95977V4.00977C6.75 3.86977 6.86 3.75977 7 3.75977H10.75C10.89 3.75977 11 3.86977 11 4.00977V7.95977H13.5V7.23977C13.5 6.65977 13.26 6.09977 12.81 5.85977C12.63 5.71977 12.39 5.79977 12.39 6.00977V9.24977C12.29 9.14977 12.19 9.08977 12.09 9.02977C11.74 8.80977 11.29 8.94977 11 9.16977C10.76 9.32977 10.69 9.64977 10.89 9.86977L11.99 10.1498L12.93 9.64977L13.94 9.90977L14.89 9.66977C14.64 9.44977 14.21 9.35977 14 9.00977ZM9.75976 6.24977L9.91976 6.44977L9.45976 6.29977L9.24976 6.14977V5.75977H8.75976L9.07976 5.72977L9.55976 5.94977L9.75976 6.24977Z" stroke="currentColor" stroke-width="1.5"/> 
+        ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.24 5.17977L17.83 2.76977C17.5 2.43977 17.05 2.25977 16.59 2.25977H13C12.04 2.25977 11.25 3.04977 11.25 4.00977V9.00977C11.25 9.96977 12.04 10.7598 13 10.7598H19C19.96 10.7598 20.75 9.96977 20.75 9.00977V6.41977C20.75 5.95977 20.56 5.50977 20.24 5.17977ZM19.25 8.99977C19.25 9.13977 19.14 9.24977 19 9.24977H13C12.86 9.24977 12.75 9.13977 12.75 8.99977V4.00977C12.75 3.86977 12.86 3.75977 13 3.75977H16.59C16.91 3.75977 17.23 3.94977 17.39 4.20977L19.79 6.61977C19.91 6.77977 19.91 7.02977 19.79 7.17977L17.39 9.58977C17.23 9.84977 16.91 10.0398 16.59 10.0398H13C12.86 10.0398 12.75 9.92977 12.75 9.79977V6.18977H11.25V9.79977C11.25 9.96977 11.14 10.0798 11 10.0798H8.75C8.6 10.0798 8.5 9.96977 8.5 9.79977V6.18977H7C6.86 6.18977 6.75 6.09977 6.75 5.95977V4.00977C6.75 3.86977 6.86 3.75977 7 3.75977H10.75C10.89 3.75977 11 3.86977 11 4.00977V7.95977H13.5V7.23977C13.5 6.65977 13.26 6.09977 12.81 5.85977C12.63 5.71977 12.39 5.79977 12.39 6.00977V9.24977C12.29 9.14977 12.19 9.08977 12.09 9.02977C11.74 8.80977 11.29 8.94977 11 9.16977C10.76 9.32977 10.69 9.64977 10.89 9.86977L11.99 10.1498L12.93 9.64977L13.94 9.90977L14.89 9.66977C14.64 9.44977 14.21 9.35977 14 9.00977ZM9.75976 6.24977L9.91976 6.44977L9.45976 6.29977L9.24976 6.14977V5.75977H8.75976L9.07976 5.72977L9.55976 5.94977L9.75976 6.24977Z" stroke="currentColor" stroke-width="1.5"/>
         </svg>')
         ->link->attr(['class' => '']);
     }
 }
 
+$menu->add(
+            '<span>'.__('messages.my_services').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.my_services').'</span></span>',
+            ['route' => 'my-services.page']
+        )
+        ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.24 5.17977L17.83 2.76977C17.5 2.43977 17.05 2.25977 16.59 2.25977H13C12.04 2.25977 11.25 3.04977 11.25 4.00977V9.00977C11.25 9.96977 12.04 10.7598 13 10.7598H19C19.96 10.7598 20.75 9.96977 20.75 9.00977V6.41977C20.75 5.95977 20.56 5.50977 20.24 5.17977ZM19.25 8.99977C19.25 9.13977 19.14 9.24977 19 9.24977H13C12.86 9.24977 12.75 9.13977 12.75 8.99977V4.00977C12.75 3.86977 12.86 3.75977 13 3.75977H16.59C16.91 3.75977 17.23 3.94977 17.39 4.20977L19.79 6.61977C19.91 6.77977 19.91 7.02977 19.79 7.17977L17.39 9.58977C17.23 9.84977 16.91 10.0398 16.59 10.0398H13C12.86 10.0398 12.75 9.92977 12.75 9.79977V6.18977H11.25V9.79977C11.25 9.96977 11.14 10.0798 11 10.0798H8.75C8.6 10.0798 8.5 9.96977 8.5 9.79977V6.18977H7C6.86 6.18977 6.75 6.09977 6.75 5.95977V4.00977C6.75 3.86977 6.86 3.75977 7 3.75977H10.75C10.89 3.75977 11 3.86977 11 4.00977V7.95977H13.5V7.23977C13.5 6.65977 13.26 6.09977 12.81 5.85977C12.63 5.71977 12.39 5.79977 12.39 6.00977V9.24977C12.29 9.14977 12.19 9.08977 12.09 9.02977C11.74 8.80977 11.29 8.94977 11 9.16977C10.76 9.32977 10.69 9.64977 10.89 9.86977L11.99 10.1498L12.93 9.64977L13.94 9.90977L14.89 9.66977C14.64 9.44977 14.21 9.35977 14 9.00977ZM9.75976 6.24977L9.91976 6.44977L9.45976 6.29977L9.24976 6.14977V5.75977H8.75976L9.07976 5.72977L9.55976 5.94977L9.75976 6.24977Z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>')
+        ->link->attr(['class' => '']);
+
     // $menu->add('<span>'.__('messages.Subservice').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.Subservice').'</span></span>', ['url' => '#'])
     // ->prepend('<svg class="mr-2 icon-yellow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M20.24 5.17977L17.83 2.76977C17.5 2.43977 17.05 2.25977 16.59 2.25977H13C12.04 2.25977 11.25 3.04977 11.25 4.00977V9.00977C11.25 9.96977 12.04 10.7598 13 10.7598H19C19.96 10.7598 20.75 9.96977 20.75 9.00977V6.41977C20.75 5.95977 20.56 5.50977 20.24 5.17977ZM19.25 8.99977C19.25 9.13977 19.14 9.24977 19 9.24977H13C12.86 9.24977 12.75 9.13977 12.75 8.99977V4.00977C12.75 3.86977 12.86 3.75977 13 3.75977H16.59C16.91 3.75977 17.23 3.94977 17.39 4.20977L19.79 6.61977C19.91 6.77977 19.91 7.02977 19.79 7.17977L17.39 9.58977C17.23 9.84977 16.91 10.0398 16.59 10.0398H13C12.86 10.0398 12.75 9.92977 12.75 9.79977V6.18977H11.25V9.79977C11.25 9.96977 11.14 10.0798 11 10.0798H8.75C8.6 10.0798 8.5 9.96977 8.5 9.79977V6.18977H7C6.86 6.18977 6.75 6.09977 6.75 5.95977V4.00977C6.75 3.86977 6.86 3.75977 7 3.75977H10.75C10.89 3.75977 11 3.86977 11 4.00977V7.95977H13.5V7.23977C13.5 6.65977 13.26 6.09977 12.81 5.85977C12.63 5.71977 12.39 5.79977 12.39 6.00977V9.24977C12.29 9.14977 12.19 9.08977 12.09 9.02977C11.74 8.80977 11.29 8.94977 11 9.16977C10.76 9.32977 10.69 9.64977 10.89 9.86977L11.99 10.1498L12.93 9.64977L13.94 9.90977L14.89 9.66977C14.64 9.44977 14.21 9.35977 14 9.00977ZM9.75976 6.24977L9.91976 6.44977L9.45976 6.29977L9.24976 6.14977V5.75977H8.75976L9.07976 5.72977L9.55976 5.94977L9.75976 6.24977Z" stroke="currentColor" stroke-width="1.5"/> </svg>')
     // ->link->attr([
-    //     'class' => 'load-content', 
-    //     'data-url' => route('sub-service.index') 
+    //     'class' => 'load-content',
+    //     'data-url' => route('sub-service.index')
     // ]);
 
 
@@ -142,7 +156,7 @@ if(auth()->user()->can('view service list') || auth()->user()->can('view sub ser
 // }
 
 //----------------------------- Users
-if(auth()->user()->can('view office list') ||  auth()->user()->can('view employee list')|| auth()->user()->can('view user list')||auth()->user()->can('view driver list') ){ 
+if(auth()->user()->can('view office list') ||  auth()->user()->can('view employee list')|| auth()->user()->can('view user list')||auth()->user()->can('view driver list') ){
 $menu->add(__('messages.sidebar_form_title',['form' => trans('messages.subscribers')]), ['class' => 'category-main']);//->data('permission', ['provider list','handyman list','user list']);
 }
 if(auth()->user()->can('view office list') || auth()->user()->can('add office')){
@@ -167,7 +181,7 @@ $menu->office->add('<span>'.__('messages.list_form_title',['form' => __('message
 ->link->attr(['class' => '']);
 }
 
-if(auth()->user()->can('add office')) { 
+if(auth()->user()->can('add office')) {
 $menu->office->add('<span>'.__('messages.add_form_title',['form' => __('messages.Office')]).'</span>', ['class' => 'sidebar-layout' ,'route' => 'office.create-page'])
 ->prepend('<svg width="15" height="15" class="sidebar-menu-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_2357_772)">
@@ -183,7 +197,7 @@ $menu->office->add('<span>'.__('messages.add_form_title',['form' => __('messages
 }
 
 
-// if(auth()->guard('admin')->check() || ){ 
+// if(auth()->guard('admin')->check() || ){
 if(auth()->user()->can('view user list') || auth()->user()->can('add user')  ) {
     $menu->add('<span>'.__('messages.users').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.user').'</span></span>', ['class' => ''])
     ->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -220,7 +234,7 @@ if(auth()->user()->can('view user list') || auth()->user()->can('add user')  ) {
 // }
 
 
-if (auth()->guard('office')->check()){ 
+if (auth()->guard('office')->check()){
 
 // if(auth()->user()->can('view user list') || auth()->user()->can('add user')) {
     $menu->add('<span>'.__('messages.myCustomers').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.user').'</span></span>', ['class' => ''])
@@ -283,7 +297,7 @@ $menu->driver->add('<span>'.__('messages.list_form_title',['form' => __('message
 }
 
 // if(auth()->user()->can('view drivers new style')) {
-// $menu->driver->add('<span>'.__('messages.view').'</span>', ['class' => 'sidebar-layout' ,'route' => ['driver.byOffice', 'officeId' => ''.auth()->user()->id.'']]) 
+// $menu->driver->add('<span>'.__('messages.view').'</span>', ['class' => 'sidebar-layout' ,'route' => ['driver.byOffice', 'officeId' => ''.auth()->user()->id.'']])
 // ->prepend('<svg width="15" height="15" class="sidebar-menu-icon" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
 //     <path d="M7.5 3C4.42 3 2 5.42 2 7.5C2 9.58 4.42 12 7.5 12C10.58 12 13 9.58 13 7.5C13 5.42 10.58 3 7.5 3ZM7.5 10C5.57 10 4 8.43 4 7.5C4 6.57 5.57 5 7.5 5C9.43 5 11 6.57 11 7.5C11 8.43 9.43 10 7.5 10ZM7.5 0C3.36 0 0 3.36 0 7.5C0 11.64 3.36 15 7.5 15C11.64 15 15 11.64 15 7.5C15 3.36 11.64 0 7.5 0ZM7.5 13C4.46 13 1.5 10.04 1.5 7.5C1.5 4.46 4.46 1.5 7.5 1.5C10.54 1.5 13.5 4.46 13.5 7.5C13.5 10.04 10.54 13 7.5 13Z" fill="#6C757D" />
 // </svg>')
@@ -435,7 +449,50 @@ $menu->vehicle->add('<span>'.__('messages.add_form_title',['form' => __('message
 </svg>')
 ->link->attr(['class' => '']);
     }
+
+
+
 }
+
+// if(auth()->user()->can('view driver applications list') || auth()->user()->can('add driver application')) {
+
+    // $menu->add(__('messages.sidebar_form_title',['form' => trans('messages.driver_applications')]), ['class' => 'category-main']);
+
+    $menu->add('<span>'.__('messages.driver_job_applications').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.driver_application').'</span></span>', ['class' => ''])
+    ->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+    <path d="M18 12C19.66 12 21 10.66 21 9C21 7.34 19.66 6 18 6C17.99 6 17.98 6 17.97 6C17.96 6.01 17.95 6.02 17.94 6.03C17.94 6.02 17.94 6.01 17.93 6C16.29 6.07 15 7.3 15 8.85C15 10.4 16.6 11.6 18.12 11.93C18.37 11.99 18.69 12 18.93 12H19C19.39 12 19.76 11.92 20.1 11.78C19.5 11.92 18.82 12 18 12Z" fill="currentColor"/>
+    <path d="M6 12C5.18 12 4.5 11.92 3.9 11.78C4.24 11.92 4.61 12 5 12H5.07C5.31 12 5.63 11.99 5.88 11.93C7.4 11.6 9 10.4 9 8.85C9 7.3 7.71 6.07 6.07 6C6.06 6.02 6.06 6.01 6.06 6.03C6.05 6.02 6.04 6.01 6.03 6C6.02 6 6.01 6 6 6C4.34 6 3 7.34 3 9C3 10.66 4.34 12 6 12Z" fill="currentColor"/>
+    </svg>')
+    ->nickname('driver_job_applications')
+    ->link->attr(["class" => ""])
+    ->href('#driver_job_applications');
+
+
+    // if(auth()->user()->can('view driver applications list')) {
+
+        $menu->driver_job_applications->add('<span>'.__('messages.list_form_title',['form' => __('messages.driver_job_applications')]).'</span>', ['class' => 'sidebar-layout' ,'route' => 'driver-applications.index'])
+        ->prepend('<svg width="15" height="15" class="sidebar-menu-icon" viewBox="0 0 15 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 4.875C1.3775 4.875 0.875 5.3775 0.875 6C0.875 6.6225 1.3775 7.125 2 7.125C2.6225 7.125 3.125 6.6225 3.125 6C3.125 5.3775 2.6225 4.875 2 4.875ZM2 0.375C1.3775 0.375 0.875 0.8775 0.875 1.5C0.875 2.1225 1.3775 2.625 2 2.625C2.6225 2.625 3.125 2.1225 3.125 1.5C3.125 0.8775 2.6225 0.375 2 0.375ZM2 9.375C1.3775 9.375 0.875 9.885 0.875 10.5C0.875 11.115 1.385 11.625 2 11.625C2.615 11.625 3.125 11.115 3.125 10.5C3.125 9.885 2.6225 9.375 2 9.375ZM4.25 11.25H14.75V9.75H4.25V11.25ZM4.25 6.75H14.75V5.25H4.25V6.75ZM4.25 0.75V2.25H14.75V0.75H4.25Z" fill="#6C757D" />
+        </svg>')
+        ->link->attr(['class' => '']);
+    // }
+
+    // if(auth()->user()->can('add driver application')) {
+        $menu->driver_job_applications->add('<span>'.__('messages.add_form_title',['form' => __('messages.driver_application')]).'</span>', ['class' => 'sidebar-layout' ,'route' => 'driver-applications.create'])
+        ->prepend('<svg width="15" height="15" class="sidebar-menu-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clip-path="url(#clip0_2357_772)">
+                <path d="M12.75 9C10.68 9 9 10.68 9 12.75C9 14.82 10.68 16.5 12.75 16.5C14.82 16.5 16.5 14.82 16.5 12.75C16.5 10.68 14.82 9 12.75 9ZM13.9875 14.5125L12.375 12.9V10.5H13.125V12.5925L14.5125 13.98L13.9875 14.5125ZM13.5 2.25H11.115C10.8 1.38 9.975 0.75 9 0.75C8.025 0.75 7.2 1.38 6.885 2.25H4.5C3.675 2.25 3 2.925 3 3.75V15C3 15.825 3.675 16.5 4.5 16.5H9.0825C8.64 16.0725 8.28 15.5625 8.0175 15H4.5V3.75H6V6H12V3.75H13.5V7.56C14.0325 7.635 14.535 7.7925 15 8.01V3.75C15 2.925 14.325 2.25 13.5 2.25ZM9 3.75C8.5875 3.75 8.25 3.4125 8.25 3C8.25 2.5875 8.5875 2.25 9 2.25C9.4125 2.25 9.75 2.5875 9.75 3C9.75 3.4125 9.4125 3.75 9 3.75Z" fill="#6C757D" />
+            </g>
+            <defs>
+                <clipPath id="clip0_2357_772">
+                    <rect width="18" height="18" fill="white" />
+                </clipPath>
+            </defs>
+        </svg>')
+        ->link->attr(['class' => '']);
+    // }
+// }
 
 
 
@@ -568,7 +625,7 @@ if(auth()->user()->can('view commission')) {
 
 $menu->add(__('messages.sidebar_form_title',['form' => 'Commission']), ['class' => 'category-main'])->data('permission', 'Commission');
 
-$menu->add('<span>'.__('Commission').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.booking').'</span></span>', ['route' => 'commissions.fleet'])
+$menu->add('<span>'.__('Commission').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.booking').'</span></span>', ['route' => 'commissions.layout'])
 ->prepend('<svg width="15" height="15" class="sidebar-menu-icon" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M12.25 2H11.5V0.5H10V2H4V0.5H2.5V2H1.75C0.9175 2 0.2575 2.675 0.2575 3.5L0.25 14C0.25 14.825 0.9175 15.5 1.75 15.5H12.25C13.075 15.5 13.75 14.825 13.75 14V3.5C13.75 2.675 13.075 2 12.25 2ZM12.25 14H1.75V6.5H12.25V14ZM12.25 5H1.75V3.5H12.25V5ZM7 8.75H10.75V12.5H7V8.75Z" fill="#6C757D" />
 </svg>')
@@ -610,10 +667,10 @@ $menu->add('<span>'.__('Commission').'</span><span class="custom-tooltip"><span 
 // // ->data('role', ['Depot', 'Neopreneur']);
 
 
-// if( auth()->user()->hasAnyRole(['super-admin']) ){ 
+// if( auth()->user()->hasAnyRole(['super-admin']) ){
 
 
-    
+
 // $menu->add('Wallets', ['class' => 'category-main'])->data('permission', ['tax list','payment list','earning list']);
 
 // // if(optional($othersetting)->wallet == 1){
@@ -656,7 +713,7 @@ $menu->add('<span>'.__('Commission').'</span><span class="custom-tooltip"><span 
 
 
 
-if(auth()->user()->can('manage roles and permission')){ 
+if(auth()->user()->can('manage roles and permission')){
     $menu->add(
                 '<span>' .' '.
                     __('messages.role_permission_setup') .
@@ -673,7 +730,7 @@ if(auth()->user()->can('manage roles and permission')){
             )
             ->nickname('role');
 }
-           
+
 
 
 
@@ -785,11 +842,6 @@ $menu->departments->add('<span>'.__('messages.add_form_title',['form' => __('mes
 
 
 
-            
-
-
-
-            
 
 
 
@@ -815,7 +867,12 @@ $menu->departments->add('<span>'.__('messages.add_form_title',['form' => __('mes
 
 
 
-            
+
+
+
+
+
+
 $menu->add('Transactions', ['class' => 'category-main'])->data('permission', ['tax list','payment list','earning list']);
 
 
@@ -902,7 +959,7 @@ $menu->add('<span>'.__('messages.walletTransactions').'</span><span class="custo
 // // }
 
 
-if( auth()->user()->hasAnyRole(['super-admin']) ){ 
+if( auth()->user()->hasAnyRole(['super-admin']) ){
 
 $menu->add(__('messages.promotion'), ['class' => 'category-main'])->data('permission', 'coupon list');
 
@@ -937,7 +994,7 @@ $menu->coupon->add('<span>'.__('messages.add_form_title',['form' => __('messages
 }
 
 
-if($auth_user->can('view banner list')){ 
+if($auth_user->can('view banner list')){
 
 $menu->add('<span>'.__('messages.banners').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.banner').'</span></span>', ['class' => ''])
 ->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1070,7 +1127,64 @@ $menu->add(__('messages.sidebar_form_title',['form' => trans('messages.system')]
 // // ->link->attr(['class' => '']);
 // // }
 
-if( auth()->user()->hasAnyRole(['super-admin']) ){ 
+if( auth()->user()->hasAnyRole(['super-admin']) ){
+
+$menu->add('<span>'.__('messages.office_requests').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.office_requests').'</span></span>',
+    ['route' => 'office.requests.index'])
+// ->data('role', ['admin','demo_admin'])
+->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 3H21V21H3V3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 21V7H17V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M7 14H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>');
+
+$contactMessagesLabel = app()->getLocale() === 'ar' ? 'طلبات التواصل' : 'Contact Requests';
+$menu->add('<span>'.$contactMessagesLabel.'</span><span class="custom-tooltip"><span class="tooltip-text">'.$contactMessagesLabel.'</span></span>',
+    ['route' => 'contact.messages.index'])
+->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 8L10.89 13.26C11.2187 13.4793 11.6049 13.5963 12 13.5963C12.3951 13.5963 12.7813 13.4793 13.11 13.26L21 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 6H21V18H3V6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>');
+
+$siteContentLabel = app()->getLocale() === 'ar' ? 'محتوى الموقع' : 'Website Content';
+$menu->add('<span>'.$siteContentLabel.'</span><span class="custom-tooltip"><span class="tooltip-text">'.$siteContentLabel.'</span></span>',
+    ['route' => 'admin.site-content.index'])
+->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z" stroke="currentColor" stroke-width="1.5"/>
+<path d="M2 12H22" stroke="currentColor" stroke-width="1.5"/>
+<path d="M12 2C14.5 4.7 15.9 8.3 16 12C15.9 15.7 14.5 19.3 12 22C9.5 19.3 8.1 15.7 8 12C8.1 8.3 9.5 4.7 12 2Z" stroke="currentColor" stroke-width="1.5"/>
+</svg>');
+
+$faqLabel = app()->getLocale() === 'ar' ? 'الأسئلة الشائعة' : 'FAQ';
+$menu->add('<span>'.$faqLabel.'</span><span class="custom-tooltip"><span class="tooltip-text">'.$faqLabel.'</span></span>',
+    ['route' => 'admin.site-faqs.index'])
+->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+<path d="M9.5 9C9.5 7.5 10.5 6.75 12 6.75C13.5 6.75 14.5 7.6 14.5 9C14.5 10.5 13 10.75 12 12V13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="currentColor"/>
+</svg>');
+
+$submissionsLabel = app()->getLocale() === 'ar' ? 'طلبات الموقع' : 'Website Submissions';
+$menu->add('<span>'.$submissionsLabel.'</span><span class="custom-tooltip"><span class="tooltip-text">'.$submissionsLabel.'</span></span>',
+    ['route' => 'admin.submissions.hub'])
+->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5C15 6.10457 14.1046 7 13 7H11C9.89543 7 9 6.10457 9 5Z" stroke="currentColor" stroke-width="1.5"/>
+<path d="M9 12H15M9 16H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>');
+
+$plansLabel = app()->getLocale() === 'ar' ? 'خطط الاشتراك' : 'Subscription Plans';
+$menu->add('<span>'.$plansLabel.'</span><span class="custom-tooltip"><span class="tooltip-text">'.$plansLabel.'</span></span>',
+    ['route' => 'admin.plans.index'])
+->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6H20V20H4V6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4 6L12 3L20 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9 11H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M9 15H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>');
+
+
 $menu->add('<span>'.__('messages.pushnotification_settings').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.pushnotification_settings').'</span></span>', ['route' => 'pushNotification.index'])
 // ->data('role', ['admin','demo_admin'])
 ->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1081,6 +1195,9 @@ $menu->add('<span>'.__('messages.pushnotification_settings').'</span><span class
 </svg>
 ')
 ->link->attr(['class' => '']);
+
+
+
 
 // $menu->add('<span>'.__('messages.notification_templates').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.notification_templates').'</span></span>', ['route' => 'notification-templates.index'])
 // ->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1191,7 +1308,7 @@ $menu->pages->add('<span>'.__('messages.terms_condition').'</span>', ['class' =>
 // // ->link->attr(["class" => ""]);
 
 
-$menu->add('<span>'.__('messages.Settings').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.Settings').'</span></span>', ['route' => 'setting.index'])
+$menu->add('<span>'.__('messages.Settings').'</span><span class="custom-tooltip"><span class="tooltip-text">'.__('messages.Settings').'</span></span>', ['route' => 'settings.index'])
 ->prepend('<svg class="mr-2" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
 <path d="M13.7654 2.15224C13.3978 2 12.9319 2 12 2C11.0681 2 10.6022 2 10.2346 2.15224C9.74457 2.35523 9.35522 2.74458 9.15223 3.23463C9.05957 3.45834 9.0233 3.7185 9.00911 4.09799C8.98826 4.65568 8.70226 5.17189 8.21894 5.45093C7.73564 5.72996 7.14559 5.71954 6.65219 5.45876C6.31645 5.2813 6.07301 5.18262 5.83294 5.15102C5.30704 5.08178 4.77518 5.22429 4.35436 5.5472C4.03874 5.78938 3.80577 6.1929 3.33983 6.99993C2.87389 7.80697 2.64092 8.21048 2.58899 8.60491C2.51976 9.1308 2.66227 9.66266 2.98518 10.0835C3.13256 10.2756 3.3397 10.437 3.66119 10.639C4.1338 10.936 4.43789 11.4419 4.43786 12C4.43783 12.5581 4.13375 13.0639 3.66118 13.3608C3.33965 13.5629 3.13248 13.7244 2.98508 13.9165C2.66217 14.3373 2.51966 14.8691 2.5889 15.395C2.64082 15.7894 2.87379 16.193 3.33973 17C3.80568 17.807 4.03865 18.2106 4.35426 18.4527C4.77508 18.7756 5.30694 18.9181 5.83284 18.8489C6.07289 18.8173 6.31632 18.7186 6.65204 18.5412C7.14547 18.2804 7.73556 18.27 8.2189 18.549C8.70224 18.8281 8.98826 19.3443 9.00911 19.9021C9.02331 20.2815 9.05957 20.5417 9.15223 20.7654C9.35522 21.2554 9.74457 21.6448 10.2346 21.8478C10.6022 22 11.0681 22 12 22C12.9319 22 13.3978 22 13.7654 21.8478C14.2554 21.6448 14.6448 21.2554 14.8477 20.7654C14.9404 20.5417 14.9767 20.2815 14.9909 19.902C15.0117 19.3443 15.2977 18.8281 15.781 18.549C16.2643 18.2699 16.8544 18.2804 17.3479 18.5412C17.6836 18.7186 17.927 18.8172 18.167 18.8488C18.6929 18.9181 19.2248 18.7756 19.6456 18.4527C19.9612 18.2105 20.1942 17.807 20.6601 16.9999C21.1261 16.1929 21.3591 15.7894 21.411 15.395C21.4802 14.8691 21.3377 14.3372 21.0148 13.9164C20.8674 13.7243 20.6602 13.5628 20.3387 13.3608C19.8662 13.0639 19.5621 12.558 19.5621 11.9999C19.5621 11.4418 19.8662 10.9361 20.3387 10.6392C20.6603 10.4371 20.8675 10.2757 21.0149 10.0835C21.3378 9.66273 21.4803 9.13087 21.4111 8.60497C21.3592 8.21055 21.1262 7.80703 20.6602 7C20.1943 6.19297 19.9613 5.78945 19.6457 5.54727C19.2249 5.22436 18.693 5.08185 18.1671 5.15109C17.9271 5.18269 17.6837 5.28136 17.3479 5.4588C16.8545 5.71959 16.2644 5.73002 15.7811 5.45096C15.2977 5.17191 15.0117 4.65566 14.9909 4.09794C14.9767 3.71848 14.9404 3.45833 14.8477 3.23463C14.6448 2.74458 14.2554 2.35523 13.7654 2.15224Z" stroke="currentColor" stroke-width="1.5"/>
@@ -1215,7 +1332,7 @@ $menu->add('<span>'.__('messages.Settings').'</span><span class="custom-tooltip"
             {{-- <img src="{{ getSingleMedia(imageSession('get'),'logo',null) }}" class="img-fluid rounded-normal light-logo site_logo_preview" alt="logo"> --}}
             {{-- <img src="{{ getSingleMedia(imageSession('get'),'logo',null) }}" class="img-fluid rounded-normal darkmode-logo site_logo_preview" alt="logo"> --}}
             {{-- <span class="white-space-no-wrap">{{ ucfirst(str_replace("_"," ",auth()->user()->user_type)) }}</span> --}}
-        {{-- </a> --}} 
+        {{-- </a> --}}
 
         <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@700&display=swap" rel="stylesheet">
 
@@ -1224,7 +1341,7 @@ $menu->add('<span>'.__('messages.Settings').'</span><span class="custom-tooltip"
                 fleet.<span style="font-size: 40px; vertical-align: top; color: #FFC107;">.</span>
             </span>
         </a> --}}
-        
+
         {{-- <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@700&display=swap" rel="stylesheet"> --}}
         {{-- <a href="{{ route('home') }}" class="header-logo" style="text-decoration: none; display: inline-block; direction: ltr;">
             <span class="site-logo" style="font-size: 43.5px; font-weight: 620; color: #FFC107; font-family: 'Poppins', sans-serif; line-height: 1;">
@@ -1234,8 +1351,8 @@ $menu->add('<span>'.__('messages.Settings').'</span><span class="custom-tooltip"
  --}}
 
         <div class="col-md-12 mt-3">
-           
-                    <div class="d-flex justify-content-start align-items-center"> 
+
+                    <div class="d-flex justify-content-start align-items-center">
                         <div class="event-icon-wrapper">
                             <svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <circle cx="10" cy="10" r="9" stroke="white" stroke-width="2" fill="none"/>
@@ -1243,15 +1360,15 @@ $menu->add('<span>'.__('messages.Settings').'</span><span class="custom-tooltip"
                                     <animate attributeName="stroke-dashoffset" from="0" to="88" dur="1.5s" repeatCount="indefinite"/>
                                 </circle>
                             </svg>
-                            
+
                         </div>
-                        {{-- <div class=" col-md-6 "> 
+                        {{-- <div class=" col-md-6 ">
                             <a href="{{ route('home') }}" class="header-logo" style="text-decoration: none; display: inline-block; direction: ltr;">
                                 <span class="site-logo" style="font-size: 43.5px; font-weight: 620; color: #FFC107; font-family: 'Poppins', sans-serif; line-height: 1;">
                                     fleet.<span style="font-size: 40px; vertical-align: top; color: #FFC107;"></span>
                                 </span>
                             </a>
-                    
+
                     </div> --}}
 
                     <div class="col-md-6">
@@ -1270,21 +1387,21 @@ $menu->add('<span>'.__('messages.Settings').'</span><span class="custom-tooltip"
                             @endphp
                         @endif
 
-                        <img src="{{ asset('storage/system/logos/'. $logo) }}" 
-                        alt="Fleet Logo" 
+                        <img src="{{ asset('storage/system/logos/'. $logo) }}"
+                        alt="Fleet Logo"
                         style="height:62.5px; width:auto; display:block;">
-                       
-                   
+
+
                     </div>
-                    
+
                 </div>
         </div>
-        
+
 @php
     $auth_user = auth()->user();
 @endphp
 
-        
+
         <div class="side-menu-bt-sidebar-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="text-light wrapper-menu" width="30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

@@ -23,8 +23,8 @@ class MainSeeder extends Seeder
             // OfficeCustomers::class,
             // BookingSeeder::class,
             // VehicleSubServiceSeeder::class,
-            RatingsSeeder::class,
-            
+            // RatingsSeeder::class,
+
 
         ]);
     }

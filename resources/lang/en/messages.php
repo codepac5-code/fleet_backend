@@ -16,6 +16,81 @@
         'customers' => 'Customers',
         'user_already_exists' => 'This user number already exists',
         'name' => 'Name',
+            'saving' => 'Saving...',
+            'unpaid_fleet_dues' => 'Unpaid Fleet Dues',
+    'settings' => 'Settings',
+    'general_settings' => 'General Settings',
+    'system_settings' => 'System Settings',
+    'notifications' => 'Notifications',
+    'security' => 'Security',
+    'region_settings' => 'Region Settings',
+
+    'country_and_language' => 'Country and Language',
+    'choose_default_country_language' => 'Choose the default country and language for users',
+    'country' => 'Country',
+    'language' => 'Language',
+    'currency_and_timezone' => 'Currency and Timezone',
+    'choose_default_currency_timezone' => 'Select the default currency and timezone',
+    'currency' => 'Currency',
+    'timezone' => 'Timezone',
+    'save_settings' => 'Save Settings',
+    'Update_Driver' => 'Update Driver',
+            'driver_application' => 'Driver Application',
+    'under_review' => 'Under Review',
+    'driver_photo' => 'Driver Photo',
+    'vehicle_information' => 'Vehicle Information',
+    'toyota_camry_2022' => 'Toyota Camry 2022',
+    'brand' => 'Brand',
+    'toyota' => 'Toyota',
+    'model' => 'Model',
+    'camry' => 'Camry',
+    'manufacturing_year' => 'Manufacturing Year',
+    'color' => 'Color',
+    'white' => 'White',
+    'plate_number' => 'Plate Number',
+    'plate_example' => 'ABC 1234',
+    'vehicle_images' => 'Vehicle Images',
+    'front_vehicle_image' => 'Front Vehicle Image',
+    'front' => 'Front',
+    'rear_vehicle_image' => 'Rear Vehicle Image',
+    'rear' => 'Rear',
+    'right_vehicle_image' => 'Right Vehicle Image',
+    'right' => 'Right',
+    'left_vehicle_image' => 'Left Vehicle Image',
+    'left' => 'Left',
+    'interior_vehicle_image' => 'Interior Vehicle Image',
+    'interior' => 'Interior',
+    'front_seats_image' => 'Front Seats Image',
+    'front_seats' => 'Front Seats',
+    'rear_seats_image' => 'Rear Seats Image',
+    'rear_seats' => 'Rear Seats',
+    'required_documents' => 'Required Documents',
+    'id_front_image' => 'ID Front Image',
+    'id_front' => 'ID - Front',
+    'id_back_image' => 'ID Back Image',
+    'id_back' => 'ID - Back',
+    'license_front_image' => 'License Front Image',
+    'license_front' => 'License - Front',
+    'license_back_image' => 'License Back Image',
+    'license_back' => 'License - Back',
+    'mechanical_inspection_image' => 'Mechanical Inspection Image',
+    'mechanical_inspection' => 'Mechanical Inspection',
+    'driver_information' => 'Driver Information',
+    'full_name' => 'Full Name',
+    'phone_number' => 'Phone Number',
+    'actions' => 'Actions',
+    'send_whatsapp' => 'Send WhatsApp Message',
+    'accept_application' => 'Accept Application',
+    'reject_application' => 'Reject Application',
+    'application_status' => 'Application Status',
+    'current_status' => 'Current Status',
+    'submission_date' => 'Submission Date',
+    'last_update' => 'Last Update',
+        'car_images' => 'Car Images',
+    'id_card' => 'ID Card',
+    'driving_license' => 'Driving License',
+    'no_documents' => 'No documents',
+    'driver_job_applications' => 'Driving Job Applications',
         'gender' => 'Gender',
         'totalOrders' => 'Total Orders',
         'driver_commission_title' => 'Driver Commission',
@@ -50,22 +125,24 @@
         'this_week' => 'This Week',
         'this_month' => 'This Month',
         'this_year' => 'This Year',
-    
+
         'from_date' => 'From Date:',
         'to_date' => 'To Date:',
         'apply_filter' => 'Apply Filter',
         'reset_filter' => 'Reset',
-    
+        'enter_phone_verification_code' => 'Please enter the phone verification code',
+    'sign_in' => 'sign in',
+
+    'launch_office' => 'Launch Your Office',
         'overview' => 'Overview',
         'financial_data' => 'Financial Data',
         'filter_message' => 'You are viewing data from :start to :end',
+        'account_already_exists' => 'This account is already registered. Please log in to continue.',
 
         'electronic_payments_count' => 'Electronic Payments Count',
         'cash_payments_count' => 'Cash Payments Count',
         'wallet_payments_count' => 'Fleet Wallet Payments Count',
-        'ride_count' => 'Ride Count',
         'create_new_issue'      => 'Create New Issue',
-        'back'                  => 'Back',
         'issue_title'           => 'Issue Title',
         'assign_to'             => 'Assign To',
         'select_employee'       => 'Select Employee',
@@ -107,19 +184,33 @@
         'additional_info' => 'Additional Information',
         'license_info' => 'License Information',
         'general_info' => 'General Information',
-        'additional_info' => 'Additional Information',
-        'license_info' => 'License Information',
+        'invalid_amount' => 'Please enter a valid amount',
+        'balance_added_success' => 'Balance added successfully',
+        'Add_Balance' => 'Add Balance',
+        'Enter_Amount' => 'Enter Amount',
+
+        'Confirm' => 'Confirm',
+        'Wallet_Balance' => 'Wallet Balance',
+        'Refresh' => 'Refresh',
         'job_information' => 'Job Information',
         'job_title_en' => 'Job Title (English)',
+    'fleet_commission' => 'Fleet Commission',
+    'save' => 'Save',
+    'value_between_0_100' => 'Value must be between 0 and 100',
+    'success' => 'Success',
+    'error' => 'Error',
+    'save_error' => 'An error occurred while saving',
+    'connection_failed' => 'Failed to connect to the server',
         'job_title_ar' => 'Job Title (Arabic)',
         'job_description_en' => 'Job Description (English)',
         'job_description_ar' => 'Job Description (Arabic)',
         'address_information' => 'Address Information',
         'roles' => 'Roles',
         'Add_New_Employee' => 'Add New Employee',
-        'general_info' => 'General Information',
         'add_new_department' => 'Add New Department',
         'confirm_delete_department' => 'Are you sure you want to delete this department?',
+        'reset_commission_to_default' => 'Reset commission to default settings',
+        'commission_reset_success' => 'Commission successfully reset to default settings',
         'error_occurred' => 'An error occurred, please try again later.',
         'create_department' => 'Add Department',
         'department_name_en' => 'Department Name (English)',
@@ -131,7 +222,7 @@
         'priority'                  => 'Priority',
         'last_updated'              => 'Last Updated',
         'actions'                   => 'Actions',
-    
+
         'total_revenue' => 'Total Revenue',
         'withdrawn_from_wallet' => 'Withdrawn from Wallet',
         'wallet' => 'Wallet',
@@ -223,7 +314,7 @@
         'confirm_balance_addition' => 'Confirm Balance Addition',
         'add_balance_question' => 'Are you sure you want to add the balance',
         'yes_add_now' => 'Yes, Add Now',
-        'cancel' => 'Cancel',
+
         'processing' => 'Processing',
         'please_wait' => 'Please wait...',
         'error' => 'Error',
@@ -236,6 +327,8 @@
         'password_does_not_match' => 'Password does not match',
         'address' => 'Address',
         'phone_number'=>'Phone Number',
+        'new_service_coming' => 'New service coming soon: Book a trip from the office',
+
         'order_history'=>'Order History',
         'select_make' => 'Select Make',
         'select_model' => 'Select Model',
@@ -278,8 +371,27 @@
         'commission_warning_text' => '⚠ You cannot exceed 100%',
         'reset_defaults' => 'Reset to Default Settings',
         'update_commission' => 'Update Commission',
-        
-        
+
+        'drivers_with_car' => 'Drivers with car',
+        'drivers_without_car' => 'Drivers without car',
+            'add_new_user'=>'add new user',
+
+                'office_requests_title' => 'Office Requests',
+    'office_requests_subtitle' => 'Manage incoming partnership requests',
+    'new' => 'New',
+    'reviewed' => 'Reviewed',
+    'contact' => 'Contact',
+    'email' => 'Email',
+    'phone' => 'Phone',
+    'license' => 'License',
+    'notes' => 'Notes',
+    'cars' => 'cars',
+    'mark_as_reviewed' => 'Mark as Reviewed',
+        'office_requests'=>'Office Requests',
+        'status_updated' => 'Status updated',
+'status_error' => 'Error updating status',
+
+
         'close' => 'Close',
         'save' => 'Save',
         'notification'=>'Notifications',
@@ -506,6 +618,7 @@
         'already_in_status' => 'Already in :status',
         'forcedelete_form_title' => 'Delete :form permanently',
         'msg_forcedelete' => ':name has been permanently deleted.',
+        'my_services' => 'My Services',
         'forcedelete_msg' => 'All the related records will be deleted once you confirm!',
         'no_notification' => 'No notification yet!',
         'all_notifications' => 'All Notifications',
@@ -986,7 +1099,7 @@
         'bulk_notification_setting_update' => 'Notification Setting Updated Successfully',
         'unknown_user' => 'Unknown User',
         'subscription_added' => 'Subscription Added',
-        'registeration_msg' => 'Register Successfully', 
+        'registeration_msg' => 'Register Successfully',
         'regex_name_en' => 'The :attribute field must contain only English letters.',
         'regex_name_ar' => 'The :attribute field must contain only Arabic letters.',
         'vehicle_number' =>'Vehicle Number',
@@ -1298,7 +1411,7 @@
      'pending_requests' => 'Pending Requests',
      'completed_rides' => 'Completed Rides',
      'ongoing_rides' => 'Ongoing Rides',
-     'pending_orders' => 'Pending Orders',     
+     'pending_orders' => 'Pending Orders',
      'wallet_status_and_dues' => 'Dues & Wallet Status',
      'live_events' => 'Live Events',
      'trip' => 'Trip',
@@ -1307,7 +1420,7 @@
      'order' => 'order',
 
 
-     
+
         'orderDetails' => 'Order Details',
         'status' => 'Status',
         'start_at' => 'Start Time',
@@ -1321,9 +1434,26 @@
         'KM' => 'KM',
         'startAddress' => 'Start Address',
         'endAddress' => 'End Address',
+        'choose_new_status' => 'Choose the new status',
+        'completed_with_payment' => 'Completed with payment',
+        'completed_without_payment' => 'Completed without payment',
+        'hold' => 'On hold',
+        'confirm_status' => 'Confirm Status',
+        'reason_hold' => 'Reason for hold',
+        'reason_cancel' => 'Reason for cancellation',
+        'enter_reason' => 'Please enter the reason...',
+        'reason_required' => 'Reason is required',
+        'confirm' => 'Confirm',
+        'updating_status' => 'Updating status...',
+        'please_wait' => 'Please wait',
+        'updated_success' => 'Updated successfully',
+        'update_failed' => 'Update failed',
+        'status_changed_successfully' => 'Status changed successfully.',
+        'error_updating_status' => 'An error occurred while updating.',
+    'change_driver' => 'Change Driver',
+    'assign_to_driver' => 'Assign to Driver',
+    'fleet'=>'Fleet',
 
-    
-    
      //=======================
 
      'orders'=>'orders',
@@ -1347,7 +1477,7 @@
      'numeric' => ':attribute must be a number.',
      'limit_orders' => ':attribute must be at least :min.',
 
-     
+
               //-================================<<<   APP  >>================
     'password_complexity' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
     'something_wrong' => 'Oops! Something went wrong. Let’s try again!',
@@ -1369,15 +1499,31 @@
     'coupon_already_used' => 'Sorry, your coupon has been used before.',
     'coupon_discount' => 'A discount of :discount% has been deducted from your service total.',
     'invalid_phone' => 'The phone number is invalid.',
-
-
     'enter_email' => 'Enter Email',
-        'phone_number' => 'Phone Number',
-        'enter_phone' => 'Enter Phone Number',
-        'searching_office' => 'You are searching for an office now',
-        'searching_driver' => 'You are searching for a driver now',
-        'searching_user' => 'You are searching for a user now',         
-'select_user_type_to_search' => 'Please select user type (Driver, User, Office)',
+    'phone_number' => 'Phone Number',
+    'enter_phone' => 'Enter Phone Number',
+    'searching_office' => 'You are searching for an office now',
+    'searching_driver' => 'You are searching for a driver now',
+    'searching_user' => 'You are searching for a user now',
+    'select_user_type_to_search' => 'Please select user type (Driver, User, Office)',
+    'password_required' => 'Password is required',
+    'password_string' => 'Password must be a string',
+    'password_min' => 'Password must be at least 8 characters',
+    'first_name_required' => 'First name is required',
+    'first_name_string' => 'First name must be a string',
+    'first_name_min' => 'First name must be at least 3 characters',
+    'first_name_max' => 'First name must not exceed 25 characters',
+    'last_name_required' => 'Last name is required',
+    'last_name_string' => 'Last name must be a string',
+    'last_name_min' => 'Last name must be at least 2 characters',
+    'last_name_max' => 'Last name must not exceed 25 characters',
+    'phone_required' => 'Phone number is required',
+    'phone_numeric' => 'Phone number must be numeric',
+    'referral_nullable' => 'Referral code is invalid',
+    'dial_code_required' => 'Dial code is required',
+    'phone_required' => 'Phone number is required',
+    'password_string' => 'Password must be a string',
+    'account_restricted' => 'Your account has been restricted by the company, please contact support',
 
 
 
@@ -1386,6 +1532,682 @@
 
 
 
+    ///----------------------------------<<<< Site >>>>>>----------------------------
 
+    'marketplace_title' => 'Multi-Tenant Marketplace',
+    'marketplace_desc' => 'Operate your taxi office inside a shared demand ecosystem where riders explore and select providers based on brand, pricing, and proximity.',
+    'shared_demand' => 'Shared Demand',
+    'visibility' => 'Visibility',
+
+    'control_title' => 'Operational Control',
+    'control_desc' => 'Define pricing strategies, manage driver performance, and control service quality through a unified operational dashboard.',
+    'pricing' => 'Pricing',
+    'drivers' => 'Drivers',
+
+    'trust_title' => 'Trust & Governance',
+    'trust_desc' => 'Built-in safety systems, transparent ratings, and governance tools ensure a reliable and trusted marketplace for all participants.',
+    'security' => 'Security',
+    'ratings' => 'Ratings',
+
+    'growth_title' => 'Growth & Optimization',
+    'growth_desc' => 'Increase bookings and improve conversion through analytics, performance insights, and continuous marketplace optimization tools.',
+    'analytics' => 'Analytics',
+    'growth' => 'Growth',
+
+
+        'category_page' => 'Category Page',
+    'faas_title' => 'Fleet-as-a-Service: The Shopify for Mobility',
+    'faas_desc' => 'Fleet-as-a-Service (FaaS) is a marketplace operating model where many independent taxi offices run in the cloud
+    and compete inside one shared passenger marketplace while keeping full local ownership and brand identity.',
+
+    'old_problem_title' => 'The problem with the old choices',
+    'old_problem_desc' => 'Traditional dispatch digitizes operations but doesn’t solve demand growth. Centralized ride-hailing creates demand,
+    but often removes local brand identity and shifts control to the platform.',
+
+    'fleetos_model_title' => 'The FleetOS model (the third option)',
+    'fleetos_model_desc' => 'Shared demand plus brand ownership. Riders use one app, offices remain visible brands, and riders choose offices directly
+    by rating and price range.',
+
+    'multi_tenant_title' => 'What multi-tenant means in practice',
+    'multi_tenant_li1' => 'Each office has its own dashboard, drivers, zones, pricing strategy, and reputation.',
+    'multi_tenant_li2' => 'All offices share one passenger marketplace and one trust layer (safety, governance, dispute resolution).',
+    'multi_tenant_li3' => 'Selection creates loyalty because riders choose brands — not anonymous supply.',
+
+    'offices_own_title' => 'Offices own',
+    'offices_own_desc' => 'Brand identity, pricing strategy, driver operations, service standards, customer experience.',
+
+    'fleetos_provides_title' => 'FleetOS provides',
+    'fleetos_provides_desc' => 'Passenger marketplace, office dashboard, driver app, safety tools, governance rules, compliance-first rollout.',
+
+    'compare_models' => 'Compare Models',
+    'launch_office' => 'Launch Office',
+
+
+
+        'marketplace_tag' => 'Marketplace',
+    'marketplace_title' => 'One App. A World of Choice.',
+    'marketplace_desc' => 'FleetOS creates a marketplace where riders compare local offices by brand, rating, and price range — and book directly into each office’s driver network.',
+
+    'step1_title' => 'Open & Search',
+    'step1_desc' => 'Riders enter pickup and destination in the FleetOS passenger app.',
+
+    'step2_title' => 'Compare',
+    'step2_desc' => 'The app lists available offices with brand, rating, and price range.',
+
+    'step3_title' => 'Direct Selection',
+    'step3_desc' => 'Riders choose the office that fits their needs and book directly.',
+
+    'selection_economics_title' => 'Why selection changes the economics',
+    'selection_li1' => 'Riders trust marketplaces with transparent choice.',
+    'selection_li2' => 'Offices build loyalty because riders choose them intentionally.',
+    'selection_li3' => 'Quality becomes a growth engine: better service → better ratings → better conversion.',
+
+    'quality_controls_title' => 'Marketplace quality controls',
+    'quality_li1' => 'Verified office onboarding (market-dependent)',
+    'quality_li2' => 'Verified-trip ratings + review integrity controls',
+    'quality_li3' => 'Dispute resolution workflows',
+    'quality_li4' => 'Safety tools + incident reporting pathways',
+    'quality_li5' => 'Governance rules for fair competition',
+
+    'antidote_title' => 'The Antidote to the “Black Box” Algorithm.',
+    'antidote_desc' => 'We replace hidden routing with an open marketplace. High-quality service is rewarded through visibility, ratings integrity, and conversion.',
+
+    'launch_office' => 'Launch Your Virtual Office',
+    'explore_governance' => 'Explore Governance',
+
+
+       'compare_tag' => 'Comparison',
+    'compare_title' => 'Not Dispatch. Not Ride-Hailing. A New Operating Model.',
+    'compare_desc' => 'Most operators think they must choose between control without demand, or demand without ownership. FleetOS is the third model: shared demand plus brand ownership.',
+
+    'feature' => 'Feature',
+    'traditional_dispatch' => 'Traditional Dispatch',
+    'ride_hailing' => 'Ride-Hailing Giants',
+    'fleetos' => 'FleetOS',
+
+    'ownership' => 'Ownership',
+    'ownership_td1' => 'You own software/hardware',
+    'ownership_td2' => 'They own the customer',
+    'ownership_td3' => 'You own brand & drivers',
+
+    'cost_structure' => 'Cost Structure',
+    'cost_td1' => 'High upfront + maintenance',
+    'cost_td2' => '25–30% commission',
+    'cost_td3' => '$25/mo + 12% commission',
+
+    'marketplace' => 'Marketplace',
+    'marketplace_td1' => 'Isolated (your app only)',
+    'marketplace_td2' => 'Shared (you are hidden)',
+    'marketplace_td3' => 'Shared (you are visible)',
+
+    'competition' => 'Competition',
+    'competition_td1' => 'Local only',
+    'competition_td2' => 'Platform-controlled ranking',
+    'competition_td3' => 'Selection + transparent rules',
+
+    'view_pricing' => 'View Pricing',
+    'launch_office' => 'Launch Your Virtual Office',
+
+        'solutions_tag' => 'Solutions',
+    'solutions_title' => 'Bring Your Fleet Into the Cloud Era.',
+    'solutions_desc' => 'Stop paying for legacy hardware. Start growing with modern demand.',
+
+    'replaces_title' => 'What FleetOS replaces',
+    'replaces_li1' => 'Hardware-heavy dispatch infrastructure and maintenance costs',
+    'replaces_li2' => 'Manual coordination workflows',
+    'replaces_li3' => 'Limited reporting and low visibility across operations',
+
+    'adds_title' => 'What FleetOS adds',
+    'adds_li1' => 'Cloud dashboard for dispatch, drivers, zones, pricing ranges',
+    'adds_li2' => 'Marketplace demand exposure inside the passenger app',
+    'adds_li3' => 'Standardized safety and governance tools',
+    'adds_li4' => 'Analytics to improve reliability, conversion, service quality',
+
+    'migration_title' => 'The 48-Hour Migration',
+    'migration_desc' => 'Our onboarding team supports driver data migration and setup planning to minimize downtime and go live quickly.',
+
+    'schedule_audit' => 'Schedule a Migration Audit',
+    'request_demo' => 'Request a Demo',
+
+    'startup_title' => 'Launch a Taxi Business for $25.',
+    'startup_desc' => 'No office space? No problem. Build a brand-led mobility business in the cloud.',
+
+    'entrepreneur_title' => 'The entrepreneur kit',
+    'entrepreneur_li1' => 'Virtual office dashboard: dispatch, zones, pricing ranges, reporting',
+    'entrepreneur_li2' => 'Driver ecosystem: recruit drivers with a dedicated Driver App workflow',
+    'entrepreneur_li3' => 'Marketplace presence: approved offices appear to riders in your city',
+    'entrepreneur_li4' => 'Trust layer: safety tools, governance rules, dispute workflows',
+    'entrepreneur_li5' => 'Scalable model: grow without physical infrastructure',
+
+    'approval_title' => 'Approval & requirements',
+    'approval_desc' => 'FleetOS expands market-by-market with compliance-first onboarding. Requirements vary by jurisdiction, but typically include business and identity verification, driver and vehicle standards, and marketplace policy compliance.',
+
+    'see_rollout' => 'See Rollout',
+    'launch_office' => 'Launch Your Virtual Office',
+
+    'start_smart_title' => 'Start smart. Scale fast.',
+    'start_smart_desc' => 'Your office profile is visible in the marketplace. Riders choose you directly. You own the brand relationship.',
+
+    'explore_academy' => 'Explore Academy',
+    'apply_now' => 'Apply Now',
+
+        'enterprise_tag' => 'Enterprise',
+    'enterprise_title' => 'Corporate Mobility with Marketplace Reliability',
+    'enterprise_desc' => 'Corporate transport needs predictable service, clean billing, and reporting. FleetOS adds a corporate layer on top of a verified marketplace of local offices.',
+
+    'billing_title' => 'Centralized billing',
+    'billing_li1' => 'Monthly consolidated invoicing',
+    'billing_li2' => 'Allocation by department or cost center (configurable)',
+    'billing_li3' => 'Policy controls (market-dependent)',
+
+    'reporting_title' => 'Reporting & analytics',
+    'reporting_li1' => 'Spend visibility by department, region, time period',
+    'reporting_li2' => 'Audit-friendly exports for finance teams',
+    'reporting_li3' => 'Optional sustainability reporting (distance-based estimates)',
+
+    'use_cases_title' => 'Use cases',
+    'use_case1' => 'Employee commute programs',
+    'use_case2' => 'Executive & VIP transport',
+    'use_case3' => 'Guest & client mobility',
+    'use_case4' => 'Airport transfers & events',
+
+    'request_brief' => 'Request Corporate Brief',
+    'schedule_demo' => 'Schedule a Demo',
+
+        'tech_tag' => 'Technology',
+    'tech_title' => 'Enterprise-Grade Infrastructure Built for a Marketplace',
+    'tech_desc' => 'FleetOS is designed for scalable operations, secure data handling, and marketplace-level governance across multiple offices and regions.',
+
+    'available_now' => 'Available now',
+    'tech_li1' => 'Office dashboard: dispatch, drivers, zones, pricing ranges, reporting',
+    'tech_li2' => 'Driver app workflow + trip routing',
+    'tech_li3' => 'Real-time GPS telemetry + trip status',
+    'tech_li4' => 'Automated billing + reporting workflows',
+    'tech_li5' => 'Role-based access control',
+    'tech_li6' => 'Audit-friendly logs for key actions',
+
+    'roadmap_title' => 'Roadmap: FleetOS AI',
+    'roadmap_desc' => 'Roadmap timing depends on market readiness and compliance requirements.',
+    'roadmap_li1' => 'Demand insights + heatmaps',
+    'roadmap_li2' => 'Marketplace performance intelligence',
+    'roadmap_li3' => 'Routing + profit-per-mile optimization',
+    'roadmap_li4' => 'Marketplace risk + fraud detection signals',
+
+    'view_faq' => 'View Technical FAQ',
+
+
+        'safety_tag' => 'Trust',
+    'safety_title' => 'Safety & Security Built for a Global Marketplace',
+    'safety_desc' => 'In a mobility marketplace, trust is the product. FleetOS is designed with safety tools, verification workflows, and data protection practices that support a trusted ecosystem.',
+
+    'rider_safety_title' => 'Rider safety workflows',
+    'rider_safety_li1' => 'Clear trip identity (office brand, driver, vehicle, reference)',
+    'rider_safety_li2' => 'Trip sharing workflows (market-dependent)',
+    'rider_safety_li3' => 'Incident reporting & escalation pathways',
+
+    'verification_title' => 'Office & driver verification',
+    'verification_li1' => 'Office eligibility checks aligned to local requirements',
+    'verification_li2' => 'Driver identity & documentation standards',
+    'verification_li3' => 'Policies designed to protect trust & quality',
+
+    'data_protection_title' => 'Data privacy & protection',
+    'data_li1' => 'Encryption in transit and at rest',
+    'data_li2' => 'Role-based access controls',
+    'data_li3' => 'Audit trails for security-relevant actions',
+    'data_li4' => 'Market-aware data handling aligned with rollout requirements',
+
+    'explore_governance' => 'Explore Marketplace Governance',
+    'launch_office' => 'Launch Your Virtual Office',
+
+
+       'drivers_tag' => 'Drivers',
+    'drivers_title' => 'A Driver Experience Built for Professional Mobility',
+    'drivers_desc' => 'Drivers are the engine of the marketplace. FleetOS is designed to make driving more predictable, more professional, and more transparent.',
+
+    'earnings_title' => 'Earnings transparency',
+    'earnings_li1' => 'Clear breakdown and take-home visibility',
+    'earnings_li2' => 'Predictable settlement logic',
+    'earnings_li3' => 'Market-dependent payout schedules/programs',
+
+    'trip_tools_title' => 'Professional trip tools',
+    'trip_tools_li1' => 'Clean trip workflow and details',
+    'trip_tools_li2' => 'Navigation and route guidance',
+    'trip_tools_li3' => 'Performance signals that help improve reliability',
+
+    'driver_roadmap_title' => 'Roadmap: demand intelligence',
+    'driver_roadmap_desc' => 'As FleetOS evolves, drivers can benefit from market-ready demand insights like heatmaps and proactive positioning guidance.',
+
+    'recruiting_title' => 'Recruiting advantage for offices',
+    'recruiting_desc' => 'Offices can recruit and retain better drivers with professional tools, clear economics, and brand-led stability.',
+
+    'rollout_tag' => 'Rollout',
+    'rollout_title' => 'A Global Platform with a Local Heart',
+    'rollout_desc' => 'FleetOS launches country-by-country with regulatory awareness and marketplace standards designed to protect riders and operators.',
+
+    'compliance_title' => 'Compliance-first approach',
+    'compliance_li1' => 'Verified office onboarding (market-dependent)',
+    'compliance_li2' => 'Minimum driver standards and service policies',
+    'compliance_li3' => 'Governance rules that protect fair competition and trust',
+
+    'launch_process_title' => 'Launch process',
+    'launch_li1' => 'Market assessment',
+    'launch_li2' => 'Office verification',
+    'launch_li3' => 'Driver standards readiness',
+    'launch_li4' => 'Controlled go-live and monitoring',
+
+    'active' => 'Active',
+    'active_desc' => 'Onboarding now.',
+    'check_availability' => 'Check Availability',
+
+    'pending' => 'Pending',
+    'pending_desc' => 'Join the waitlist to become a founding office.',
+    'join_waitlist' => 'Join Waitlist',
+
+    'planned' => 'Planned',
+    'planned_desc' => 'Interest registered; assessment underway.',
+    'register_interest' => 'Register Interest',
+
+
+
+      'pricing_tag' => 'Pricing',
+    'pricing_title' => 'We Only Succeed When You Do.',
+    'pricing_desc' => '$25/month + 12% commission per completed ride. No hidden royalties.',
+
+    'basic_plan' => 'Basic plan',
+    'plan_li1' => '$25/month subscription',
+    'plan_li2' => '12% commission per completed ride',
+    'plan_li3' => 'Includes: office dashboard, marketplace listing, unlimited driver app access',
+    'plan_li4' => 'Standard support, analytics, reporting',
+    'plan_note' => 'Callout: Keep 88% of fares — no hidden royalties or franchise fees.',
+
+    'included_title' => 'Included vs not included',
+    'included' => 'Included',
+    'not_included' => 'Not included',
+
+    'inc1' => 'Platform access',
+    'inc2' => 'Marketplace exposure',
+    'inc3' => 'Office tools',
+    'inc4' => 'Governance + trust layer',
+
+    'not1' => 'Payment processing fees (market-dependent)',
+    'not2' => 'SMS costs',
+    'not3' => 'Map provider costs',
+
+    'calc_title' => 'Profit calculator',
+    'calc_rides' => 'Monthly rides',
+    'calc_fare' => 'Average fare (USD)',
+    'calc_fee' => 'FleetOS fee (12% + $25):',
+    'calc_net' => 'Retained revenue:',
+
+    'talk_sales' => 'Talk to Sales',
+
+    'academy_tag' => 'Learning Center',
+    'academy_title' => 'FleetOS Academy: Learn, Launch, Scale',
+    'academy_desc' => 'Shopify-level platforms win through education. FleetOS Academy is your operator learning system: playbooks, checklists, and training paths to help offices grow reliably.',
+
+    'ac1' => 'Launch & Compliance Readiness',
+    'ac1_desc' => 'Onboarding checklist, service policy templates, safety standards, driver SOPs.',
+
+    'ac2' => 'Marketplace Growth & Pricing Strategy',
+    'ac2_desc' => 'Price ranges that convert, positioning, response time, reputation loops.',
+
+    'ac3' => 'Driver Recruitment & Retention',
+    'ac3_desc' => 'Recruiting playbook, training loops, retention incentives, quality control.',
+
+    'ac4' => 'Corporate Mobility Setup',
+    'ac4_desc' => 'Billing workflows, reporting setup, policy controls.',
+
+    'ac5' => 'Certification',
+    'ac5_desc' => 'Certified FleetOS Operator badge for offices completing launch & quality programs (market-dependent).',
+
+    'ac6' => 'Community',
+    'ac6_desc' => 'A moderated operator community: regulatory shifts, standards, growth learnings.',
+
+    'start_learning' => 'Start Learning',
+    'download_playbook' => 'Download Operator Playbook',
+
+    'techfaq_tag' => 'Technical',
+    'techfaq_title' => 'Technical FAQ for IT Teams, Enterprise Fleets, and Regulators',
+    'techfaq_desc' => 'FleetOS is designed for high-trust mobility operations. This page answers common technical questions from enterprise stakeholders.',
+
+    'api_title' => 'APIs & integration',
+    'api_desc' => 'FleetOS is built with integration readiness in mind. API availability and scopes depend on plan level and market readiness.',
+    'api_li1' => 'Enterprise exports and reporting can be enabled by agreement.',
+    'api_li2' => 'Integration roadmaps align with compliance requirements.',
+
+    'uptime_title' => 'Reliability & uptime',
+    'uptime_desc' => 'Designed for high availability with monitoring and operational controls.',
+    'uptime_li1' => 'Enterprise SLAs can be available for qualifying partners and markets.',
+
+    'security_title' => 'Security & auditability',
+    'sec1' => 'Role-based access control for office staff accounts.',
+    'sec2' => 'Audit-friendly logs for key operational actions.',
+    'sec3' => 'Structured incident workflows for safety and fraud scenarios.',
+
+    'data_title' => 'Data handling & residency',
+    'data_desc' => 'FleetOS expands market-by-market. Data handling aligns with operational and legal requirements as markets launch.',
+
+
+
+       'governance_tag' => 'Governance',
+    'governance_title' => 'Marketplace Governance: The Rules of the Road',
+    'governance_desc' => 'A marketplace only succeeds when participants believe it is fair. FleetOS governance protects riders and offices through transparent rules and structured enforcement.',
+
+    'fair_play_title' => 'Fair play principles',
+    'fair_play_li1' => 'Transparency over black boxes',
+    'fair_play_li2' => 'Competition based on quality, reliability, and trust',
+    'fair_play_li3' => 'Consistent rules across participants',
+
+    'ratings_title' => 'Ratings integrity',
+    'ratings_li1' => 'Verified-trip reviews only',
+    'ratings_li2' => 'Monitoring for manipulation signals',
+    'ratings_li3' => 'Structured investigation workflow for disputed ratings',
+
+    'dispute_title' => 'Dispute resolution workflow',
+    'dispute_li1' => 'Incident submitted (rider, office, or driver)',
+    'dispute_li2' => 'Evidence review (trip logs, telemetry, notes)',
+    'dispute_li3' => 'Policy-based resolution (refund rules, warnings)',
+    'dispute_li4' => 'Escalation for safety or fraud cases',
+    'dispute_li5' => 'Enforcement actions when policies are violated',
+
+    'price_dumping_title' => 'Preventing price dumping',
+    'price_dumping_desc' => 'Governance supports pricing integrity through transparency requirements, guardrails against misleading fare presentation, and monitoring for abnormal patterns (market-dependent).',
+
+    'enforcement_title' => 'Enforcement (quality control)',
+    'enforcement_li1' => 'Warnings and corrective action plans',
+    'enforcement_li2' => 'Temporary restrictions or suspensions',
+    'enforcement_li3' => 'Removal for severe or repeated violations',
+
+    'view_conduct' => 'View Code of Conduct',
+    'view_safety' => 'View Safety & Security',
+
+    'conduct_tag' => 'Policy',
+    'conduct_title' => 'Marketplace Code of Conduct',
+    'conduct_desc' => 'FleetOS is a selection-based marketplace where riders choose local taxi offices by brand, rating, and price range. This Code of Conduct protects trust and fairness for riders, drivers, and offices.',
+
+    'conduct_sections' => [
+      [
+        'title' => '1) Core principles',
+        'list' => [
+          'Safety first: any behavior that creates safety risk is prohibited.',
+          'Transparency over manipulation: honest information and fair competition.',
+          'Respect and professional conduct: no harassment, threats, or discrimination.',
+          'Trust and accountability: rules exist to protect the marketplace for everyone.',
+        ]
+      ],
+      [
+        'title' => '2) Office standards',
+        'list' => [
+          'Licensing and eligibility (market-dependent).',
+          'Accurate branding and representation (no impersonation or misleading claims).',
+          'Pricing transparency (no bait pricing, hidden fees, or deceptive fare presentation).',
+          'Service quality and incident responsiveness.',
+          'Data and privacy: use rider data only for legitimate trip operations and support.',
+        ]
+      ],
+      [
+        'title' => '3) Driver standards',
+        'list' => [
+          'Identity and vehicle integrity: approved documentation and accurate identity.',
+          'Professional conduct: no harassment, discrimination, unsafe behavior, or impairment.',
+          'Trip integrity: no manipulation, impersonation, or account sharing.',
+        ]
+      ],
+      [
+        'title' => '4) Rider standards',
+        'list' => [
+          'Respect and safety: no harassment, threats, or unsafe requests.',
+          'Booking integrity: no fraud, repeated abuse, or intentional misuse of cancellations.',
+        ]
+      ],
+      [
+        'title' => '5) Ratings and reputation integrity',
+        'list' => [
+          'No incentivized ratings, pressure tactics, or retaliatory behavior.',
+          'Verified experience: ratings should reflect genuine trips.',
+          'Dispute process: FleetOS may review disputed ratings when evidence indicates abuse.',
+        ]
+      ],
+      [
+        'title' => '6) Fraud, abuse, and prohibited behavior',
+        'list' => [
+          'Identity fraud, payment fraud, manipulation, sabotage, or harassment.',
+          'Unauthorized access, scraping, or data harvesting.',
+          'Off-platform schemes that violate platform rules.',
+        ]
+      ],
+      [
+        'title' => '7) Dispute resolution and incident handling',
+        'list' => [
+          'Incident submitted',
+          'Evidence review (trip data, telemetry, relevant logs)',
+          'Policy-based resolution',
+          'Escalation for safety and fraud',
+          'Final outcome and accountability actions',
+        ]
+      ],
+      [
+        'title' => '8) Enforcement and consequences',
+        'list' => [
+          'Warnings and corrective actions',
+          'Temporary restrictions or suspensions',
+          'Removal for severe or repeated violations',
+          'Reporting to authorities where required by law (market-dependent)',
+        ]
+      ],
+      [
+        'title' => '9) Reporting violations',
+        'paragraph' => 'Use in-app reporting tools where available, or contact FleetOS via the official channels on the Contact page.',
+      ],
+      [
+        'title' => '10) Updates to this policy',
+        'paragraph' => 'FleetOS may update this Code of Conduct to reflect operational improvements, safety standards, and regulatory changes. Updates will be published on this page with an effective date.',
+      ],
+    ],
+
+
+      'office_signup_title' => 'Launch Your Virtual Taxi Office',
+    'office_signup_subtitle' => 'Start in the cloud. Build your brand in a shared marketplace. Scale without physical infrastructure.',
+    'office_signup_alert' => 'Application Received. Our onboarding team will contact you shortly.',
+
+    'step1_title' => 'Step 1 — Market & Contact',
+    'office_label' => 'Office / Brand Name',
+    'office_placeholder' => 'e.g., City Express',
+    'contact_label' => 'Contact Name',
+    'contact_placeholder' => 'Full name',
+    'email_label' => 'Email',
+    'email_placeholder' => 'name@company.com',
+    'phone_label' => 'Phone (with country code)',
+    'phone_placeholder' => '+90 5xx xxx xxxx',
+    'city_label' => 'City',
+    'city_placeholder' => 'City',
+    'country_label' => 'Country',
+    'country_placeholder' => 'Country',
+    'website_label' => 'Website (optional)',
+    'website_placeholder' => 'https://your-domain.com',
+
+    'step2_title' => 'Step 2 — Operations Snapshot',
+    'business_category_label' => 'Business Category',
+    'fleet_size_label' => 'Fleet Size (drivers)',
+    'fleet_size_placeholder' => 'Estimated driver count',
+    'service_types_label' => 'Service Types',
+    'current_tools_label' => 'Current Tools',
+    'current_tools_placeholder' => 'e.g., radio dispatch, legacy software, spreadsheets',
+    'coverage_label' => 'Coverage / Zones',
+    'coverage_placeholder' => 'e.g., Downtown + Airport + Suburbs',
+
+    'step3_title' => 'Step 3 — Compliance & Readiness',
+    'license_label' => 'License Status',
+    'license_yes' => 'Yes (licensed)',
+    'license_no' => 'No (not licensed yet)',
+    'license_unsure' => 'Not sure',
+    'timeline_label' => 'Preferred Onboarding Timeline',
+    'timeline_immediate' => 'Immediately',
+    'timeline_30' => 'Within 30 days',
+    'timeline_60_90' => 'Within 60–90 days',
+    'timeline_exploring' => 'Exploring',
+    'notes_label' => 'Notes (optional)',
+    'notes_placeholder' => 'Anything we should know about your market, requirements, or goals?',
+    'agreement_text' => 'By submitting, you agree to our',
+    'code_of_conduct' => 'Code of Conduct',
+    'submit_button' => 'Submit Application',
+    'important_links' => 'Important links',
+    'privacy' => 'Privacy',
+    'terms' => 'Terms',
+    'billing' => 'Billing',
+    'safety' => 'Safety',
+    'rollout' => 'Rollout',
+    'select_option' => 'Select...',
+    'category_new' => 'Startup / Entrepreneur (New Brand)',
+    'category_existing' => 'Existing Fleet (Migrating from Legacy)',
+    'category_corporate' => 'Corporate Partner',
+    'service_city' => 'City rides (short distance)',
+    'service_airport' => 'Airport transfers',
+    'service_corporate' => 'Corporate contracts',
+    'service_mixed' => 'Mixed services',
+
+      'contact_tag' => 'Contact',
+    'contact_title' => 'Secure Your Spot in the Marketplace',
+    'contact_desc' => 'Tell us where you operate. We’ll confirm market availability, outline onboarding requirements, and guide your next steps.',
+    'contact_alert' => 'Thanks — we received your message.',
+
+    'contact_reason' => 'Reason',
+    'contact_demo' => 'Request a demo',
+    'contact_sales' => 'Talk to sales',
+    'contact_migration' => 'Migration audit',
+    'contact_waitlist' => 'Join waitlist',
+    'contact_corporate' => 'Corporate inquiry',
+    'contact_partnerships' => 'Partnerships (cities/regulators/enterprises)',
+    'contact_enterprise' => 'Enterprise & technical questions',
+
+    'contact_fullname' => 'Full name',
+    'contact_fullname_ph' => 'Your name',
+    'contact_company' => 'Company / Office name',
+    'contact_company_ph' => 'Company or office',
+
+    'contact_email' => 'Email',
+    'contact_email_ph' => 'name@company.com',
+    'contact_phone' => 'Phone (with country code)',
+    'contact_phone_ph' => '+90 5xx xxx xxxx',
+
+    'contact_city' => 'City',
+    'contact_city_ph' => 'City',
+    'contact_country' => 'Country',
+    'contact_country_ph' => 'Country',
+
+    'contact_fleet' => 'Fleet size (or write “New Startup”)',
+    'contact_fleet_ph' => 'e.g., 25 drivers or New Startup',
+
+    'contact_notes' => 'Notes (optional)',
+    'contact_notes_ph' => 'Tell us about your fleet size, timeline, and any requirements...',
+
+    'contact_submit' => 'Submit',
+    'contact_or' => 'Or',
+    'contact_launch' => 'launch your virtual office',
+
+      'legal_tag' => 'Legal',
+
+    'privacy_title' => 'Privacy Policy',
+    'privacy_desc' => 'Placeholder page. Add your Privacy Policy content here (data collection, processing, retention, rights, and contact).',
+
+    'terms_title' => 'Terms of Service',
+    'terms_desc' => 'Placeholder page. Add your Terms of Service here (eligibility, platform rules, liabilities, dispute resolution).',
+
+    'billing_title' => 'Billing Policy',
+    'billing_desc' => 'Placeholder page. Add your Billing Policy here (subscription billing, commissions, refunds, and payment terms).',
+ 'footer_desc' => 'Building the global infrastructure for local mobility entrepreneurs. $25/month + 12% commission. We win when you win.',
+    'platform' => 'Platform',
+    'faas' => 'Fleet-as-a-Service',
+    'marketplace' => 'Marketplace',
+    'pricing' => 'Pricing',
+    'technology' => 'Technology',
+    'trust' => 'Trust',
+    'safety' => 'Safety',
+    'governance' => 'Governance',
+    'conduct' => 'Code of Conduct',
+    'rollout' => 'Rollout',
+    'resources' => 'Resources',
+    'academy' => 'Academy',
+    'tech_faq' => 'Technical FAQ',
+    'contact' => 'Contact',
+
+    'legal_tag' => 'Legal',
+    'privacy_title' => 'Privacy Policy',
+    'terms_title' => 'Terms of Service',
+    'billing_title' => 'Billing Policy',
+
+        // Navigation
+    'platform' => 'Platform',
+    'faas' => 'Fleet-as-a-Service',
+    'faas_desc' => 'Complete fleet infrastructure',
+    'marketplace' => 'Marketplace',
+    'marketplace_desc' => 'Connecting supply & demand',
+    'compare_models' => 'Compare Models',
+    'compare_models_desc' => 'See differences & returns',
+    'technology' => 'Technology',
+    'technology_desc' => 'Architecture & roadmap',
+
+    'solutions' => 'Solutions',
+    'existing_fleets' => 'Existing Fleets',
+    'startups' => 'Startups & Entrepreneurs',
+    'corp_mobility' => 'Corporate Mobility',
+    'driver_experience' => 'Driver Experience',
+
+    'trust' => 'Trust',
+    'safety_security' => 'Safety & Security',
+    'marketplace_governance' => 'Marketplace Governance',
+    'code_of_conduct' => 'Code of Conduct',
+    'global_rollout' => 'Global Rollout',
+
+    'pricing' => 'Pricing',
+
+    'resources' => 'Resources',
+    'academy' => 'Academy',
+    'tech_faq' => 'Technical FAQ',
+    'contact' => 'Contact',
+
+    // Footer & Legal
+    'privacy_policy' => 'Privacy Policy',
+    'terms_of_service' => 'Terms of Service',
+    'billing_policy' => 'Billing Policy',
+        'sign_in' => 'Sign In',
+    'launch_office' => 'Launch Office',
+
+        'hero_tag' => 'Shopify for Mobility',
+    'hero_main' => 'The Power of a Global Platform.',
+    'hero_highlight' => 'The Independence of Your Local Brand.',
+    'hero_desc' => 'Launch your taxi office in the cloud for  $25/month. Join a shared rider marketplace where your brand is visible, your pricing strategy drives demand, and riders choose you directly.',
+    'hero_btn_launch' => 'Launch Your Virtual Office',
+    'hero_btn_compare' => 'Compare Our Model',
+    'benefit_marketplace' => 'Multi-tenant marketplace',
+    'benefit_dashboard' => 'Office dashboard',
+    'benefit_driver_app' => 'Driver app',
+    'benefit_safety' => 'Safety',
+    'benefit_governance' => 'Governance',
+    'platform_passenger' => 'Passenger App',
+    'platform_office' => 'Office Dashboard',
+    'platform_driver' => 'Driver App',
+    'market_title' => 'Selection defines the marketplace.',
+    'fleet_local' => 'Local Eco-Fleet',
+    'fleet_city' => 'City Express',
+    'fleet_premium' => 'Premium Black',
+    'live_drivers' => ':count Drivers Online',
+    'live_offices' => ':count Offices Active',
+    'live_rides' => ':count Rides Requested',
+
+      'how_tag' => 'How it works',
+    'how_title' => 'From application to marketplace growth',
+    'how_btn_marketplace' => 'Explore Marketplace',
+    'how_btn_pricing' => 'View Pricing',
+    'step_apply' => 'Apply & Verify',
+    'step_apply_desc' => 'Market status + office readiness checks.',
+    'step_launch' => 'Launch Office',
+    'step_launch_desc' => 'Listing, zones, pricing ranges, policies.',
+    'step_onboard' => 'Onboard Drivers',
+    'step_onboard_desc' => 'Drivers join via FleetOS Driver App.',
+    'step_live' => 'Go Live',
+    'step_live_desc' => 'Riders discover and choose your brand.',
+    'step_grow' => 'Grow',
+    'step_grow_desc' => 'Improve ratings, conversion, reliability.',
     )
     ?>

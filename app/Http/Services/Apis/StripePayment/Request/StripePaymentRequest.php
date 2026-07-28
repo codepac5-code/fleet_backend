@@ -25,7 +25,8 @@ class StripePaymentRequest extends BaseRequest
         return
         [
             "amount"        => ['integer'   ,"required"],
-            "paymentId"        => ['string'   ,"required"],
+            "orderId"       => ["required","unique:booking,id"],
+            // "paymentId"        => ['string'   ,"required"],
         ];
     }
 }

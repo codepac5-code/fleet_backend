@@ -11,21 +11,22 @@ class LoginToDashboardAsOfficeInput implements InputServiceInterface
     private $guardName;
     private $email;
     private $password;
-    private $role; 
-
+    private $role;
+    private $region;
     public function __construct(array $input)
     {
         $this->remember = isset($input['remember']) ? $input['remember'] : false;
         $this->password = $input['password'];
         $this->email    = $input['email'];
-        $this->role     = $input['role'] ?? null; 
+        $this->role     = $input['role'] ?? null;
+        $this->region   = $input['region'] ?? null;
 
         if ($this->role === 'employee') {
             $this->guardName = Guard::$Employee;
         } elseif ($this->role === 'manager') {
             $this->guardName = Guard::$Office;
         } else {
-            $this->guardName = null; 
+            $this->guardName = null;
         }
     }
 
@@ -40,6 +41,10 @@ class LoginToDashboardAsOfficeInput implements InputServiceInterface
         ];
     }
 
+    public function getRegion()
+    {
+        return $this->region;
+    }
     public function getOnly()
     {
         return $this->only;

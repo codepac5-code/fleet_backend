@@ -10,9 +10,9 @@
                     <div class="card-body p-0">
                         <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                             <h5 class="font-weight-bold">{{  __('messages.Sub_Service_List') }}</h5>
-                            @if($auth_user->can('add sub-service'))
+                            {{-- @if($auth_user->can('add sub-service')) --}}
                             <a href="{{ route('sub-service.create') }}" class="float-right mr-1 btn btn-sm btn-primary"><i class="fa fa-plus-circle"></i> {{ trans('messages.add_form_title',['form' => trans('messages.Subservice')  ]) }}</a>
-                            @endif
+                            {{-- @endif --}}
                         </div>
                         {{-- {{ $dataTable->table(['class' => 'table  w-100'],false) }} --}}
                     </div>
@@ -34,14 +34,14 @@
                       <option value="restore">{{ __('messages.restore') }}</option>
                       <option value="permanently-delete">{{ __('messages.permanent_dlt') }}</option>
                   </select>
-                
+
                 <div class="select-status d-none quick-action-field" id="change-status-action" style="width:100%">
                     <select name="status" class="form-control select2" id="status" >
                       <option value="1">{{ __('messages.active') }}</option>
                       <option value="0">{{ __('messages.inactive') }}</option>
                     </select>
                 </div>
-       
+
                 <button id="quick-action-apply" class="btn btn-primary" data-ajax="true"
                 data--submit="{{ route('sub-service.bulk-action') }}"
                 data-datatable="reload" data-confirmation='true'
@@ -49,9 +49,9 @@
                 title="{{ __('subservice',['form'=>  __('subservice') ]) }}"
                 data-message='{{ __("Do you want to perform this action??") }}' disabled>{{ __('messages.apply') }}</button>
             </div>
-          
+
             </form>
-            
+
           </div>
               <div class="d-flex justify-content-end">
                 <div class="datatable-filter ml-auto">
@@ -66,7 +66,7 @@
                     <input type="text" class="form-control dt-search" placeholder="Search..." aria-label="Search" aria-describedby="addon-wrapping" aria-controls="dataTableBuilder">
                   </div>
               </div>
-               
+
               <div class="table-responsive">
                 <table id="datatable" class="table table-striped border">
 
@@ -96,7 +96,7 @@
                     }
                   },
                 },
-      
+
                 columns: [
                     {
                         name: 'check',
@@ -126,8 +126,8 @@
                         name: 'openPrice',
                         title: "{{ __('messages.open_price') }}"
                     },
-                        
-                            
+
+
                     {
                         data: 'kmPrice',
                         name: 'kmPrice',
@@ -138,7 +138,7 @@
                         name: 'minutePrice',
                         title: "{{ __('messages.minute_price') }}"
                     },
-                    
+
                     {
                         data: 'status',
                         name: 'status',
@@ -151,9 +151,9 @@
                         searchable: false,
                         title: "{{ __('messages.action') }}"
                     }
-                    
+
                 ]
-                
+
             });
       });
 

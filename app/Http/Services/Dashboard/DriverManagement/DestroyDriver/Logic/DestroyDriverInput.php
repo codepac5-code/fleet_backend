@@ -7,9 +7,11 @@ class DestroyDriverInput implements InputServiceInterface
 {
 
     private $driverId;
+    private $type;
     public function __construct( array $input)
     {
-        $this->driverId = $input['driverId'];
+        $this->driverId = $input['id'];
+        $this->type = $input['type'];
     }
 
     // write your input function here..
@@ -22,7 +24,7 @@ class DestroyDriverInput implements InputServiceInterface
 
     /**
      * Get the value of driverId
-     */ 
+     */
     public function getDriverId()
     {
         return $this->driverId;
@@ -32,11 +34,19 @@ class DestroyDriverInput implements InputServiceInterface
      * Set the value of driverId
      *
      * @return  self
-     */ 
+     */
     public function setDriverId($driverId)
     {
         $this->driverId = $driverId;
 
         return $this;
+    }
+
+    /**
+     * Get the value of type
+     */
+    public function getType()
+    {
+        return $this->type;
     }
 }

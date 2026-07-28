@@ -12,8 +12,8 @@ class UpdateOfficeCommissionsInput implements InputServiceInterface
 
     public function __construct( array $input)
     {
-        $this->commission_with_office_car = $input['commission_with_office_car'] ?? null;
-        $this->commission_with_driver_car = $input['commission_with_driver_car'] ?? null;
+        // $this->commission_with_office_car = $input['commission_with_office_car'] ?? null;
+        // $this->commission_with_driver_car = $input['commission_with_driver_car'] ?? null;
         $this->driver_commission_precentage = $input['driver_commission'] ?? null;
         $this->driver_car_commission_precentage = $input['driver_car_commission'] ?? null;
         $this->type = $input['type'];

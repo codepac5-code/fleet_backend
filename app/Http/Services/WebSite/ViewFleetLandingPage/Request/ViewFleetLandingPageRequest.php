@@ -24,7 +24,7 @@ class ViewFleetLandingPageRequest extends BaseRequest
     {
         return
         [
-            // write your rules here..
+           'region' => 'nullable|string|in:sy,us,qa',
         ];
     }
 

@@ -1,0 +1,171 @@
+<?php
+
+namespace App\Http\Core\Classes\Subscription;
+
+use App\Http\Core\Const\Subscription\PlanKey;
+use App\Http\Core\Const\Subscription\SubscriptionStatus;
+use App\Models\OfficeSubscription;
+use App\Models\SubscriptionPlan;
+use RuntimeException;
+
+class OfficeSubscriptionService
+{
+    public const DEFAULT_TRIAL_DAYS = 14;
+
+    public function subscribe(int $officeId, string $planKey, float $officeRate, ?string $currency = null, ?float $fleetRateOverride = null): OfficeSubscription
+    {
+        if (!PlanKey::exists($planKey)) {
+            throw new RuntimeException('unknown subscription plan: ' . $planKey);
+        }
+
+        $fleetRate = $fleetRateOverride ?? $this->resolvePlanFleetRate($planKey);
+
+        if ($fleetRate === null) {
+            throw new RuntimeException('plan ' . $planKey . ' has no fleet commission rate; pass an override');
+        }
+
+        if ($officeRate < 0 || $fleetRate < 0 || ($officeRate + $fleetRate) > 100) {
+            throw new RuntimeException('invalid commission rates for office ' . $officeId);
+        }
+
+        $this->endCurrent($officeId);
+
+        $plan = PlanKey::plan($planKey);
+
+        return OfficeSubscription::query()->create([
+            'office_id' => $officeId,
+            'plan_key' => $planKey,
+            'fleet_commission_rate' => $fleetRate,
+            'office_commission_rate' => $officeRate,
+            'price_minor' => (int) ($plan['price_minor'] ?? 0),
+            'currency_code' => $currency,
+            'status' => SubscriptionStatus::ACTIVE,
+            'started_at' => now(),
+        ]);
+    }
+
+    public function startTrial(int $officeId, string $planKey, ?string $currency = null, ?float $fleetRateOverride = null): OfficeSubscription
+    {
+        if (!PlanKey::exists($planKey)) {
+            throw new RuntimeException('unknown subscription plan: ' . $planKey);
+        }
+
+        $fleetRate = $fleetRateOverride ?? $this->resolvePlanFleetRate($planKey);
+
+        if ($fleetRate === null) {
+            throw new RuntimeException('plan ' . $planKey . ' has no fleet commission rate; pass an override');
+        }
+
+        $this->endCurrent($officeId);
+
+        $plan = PlanKey::plan($planKey);
+        $trialEnds = now()->addDays($this->trialDaysFor($planKey));
+
+        return OfficeSubscription::query()->create([
+            'office_id' => $officeId,
+            'plan_key' => $planKey,
+            'fleet_commission_rate' => $fleetRate,
+            'office_commission_rate' => PlanKey::DEFAULT_OFFICE_RATE,
+            'price_minor' => (int) ($plan['price_minor'] ?? 0),
+            'currency_code' => $currency,
+            'status' => SubscriptionStatus::TRIALING,
+            'started_at' => now(),
+            'trial_ends_at' => $trialEnds,
+            'current_period_end' => $trialEnds,
+            'provider' => 'stripe',
+        ]);
+    }
+
+    public function beginFromProvider(int $officeId, string $planKey, ?string $currency, ?string $customerId, ?string $subscriptionId): OfficeSubscription
+    {
+        if (!PlanKey::exists($planKey)) {
+            throw new RuntimeException('unknown subscription plan: ' . $planKey);
+        }
+
+        if ($subscriptionId !== null && $subscriptionId !== '') {
+            $existing = OfficeSubscription::query()
+                ->where('provider_subscription_id', $subscriptionId)
+                ->orderByDesc('id')
+                ->first();
+
+            if ($existing !== null) {
+                return $existing;
+            }
+        }
+
+        $fleetRate = $this->resolvePlanFleetRate($planKey);
+
+        if ($fleetRate === null) {
+            throw new RuntimeException('plan ' . $planKey . ' has no fleet commission rate');
+        }
+
+        $this->endCurrent($officeId);
+
+        $plan = PlanKey::plan($planKey);
+        $trialEnds = now()->addDays($this->trialDaysFor($planKey));
+
+        return OfficeSubscription::query()->create([
+            'office_id' => $officeId,
+            'plan_key' => $planKey,
+            'fleet_commission_rate' => $fleetRate,
+            'office_commission_rate' => PlanKey::DEFAULT_OFFICE_RATE,
+            'price_minor' => (int) ($plan['price_minor'] ?? 0),
+            'currency_code' => $currency,
+            'status' => SubscriptionStatus::TRIALING,
+            'started_at' => now(),
+            'trial_ends_at' => $trialEnds,
+            'current_period_end' => $trialEnds,
+            'provider' => 'stripe',
+            'provider_customer_id' => $customerId,
+            'provider_subscription_id' => $subscriptionId,
+        ]);
+    }
+
+    public function activeFor(int $officeId): ?OfficeSubscription
+    {
+        return OfficeSubscription::query()
+            ->where('office_id', $officeId)
+            ->where('status', SubscriptionStatus::ACTIVE)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function currentFor(int $officeId): ?OfficeSubscription
+    {
+        return OfficeSubscription::query()
+            ->where('office_id', $officeId)
+            ->whereIn('status', SubscriptionStatus::ENTITLED)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function trialDaysFor(string $planKey): int
+    {
+        $plan = SubscriptionPlan::query()->where('key', $planKey)->first();
+
+        if ($plan && $plan->trial_days !== null) {
+            return (int) $plan->trial_days;
+        }
+
+        return self::DEFAULT_TRIAL_DAYS;
+    }
+
+    private function endCurrent(int $officeId): void
+    {
+        OfficeSubscription::query()
+            ->where('office_id', $officeId)
+            ->whereIn('status', SubscriptionStatus::ENTITLED)
+            ->update(['status' => SubscriptionStatus::ENDED]);
+    }
+
+    private function resolvePlanFleetRate(string $planKey): ?float
+    {
+        $plan = SubscriptionPlan::query()->where('key', $planKey)->first();
+
+        if ($plan && $plan->fleet_commission_rate !== null) {
+            return (float) $plan->fleet_commission_rate;
+        }
+
+        return PlanKey::fleetRate($planKey);
+    }
+}

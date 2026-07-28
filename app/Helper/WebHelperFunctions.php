@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\SystemSetting;
 use Google\Client as Google_Client;
 use App\Currency\CurrencyChange;
 use App\Http\Core\Const\Options\Roles;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use \Illuminate\Support\Facades\File;
+use PHPUnit\Event\Telemetry\System;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Support\Facades\Session;
 
@@ -34,19 +36,19 @@ function uploadImageAndGetUrl(UploadedFile $file, $modelType, $modelId, $collect
     $mediaItem = $model->addMedia($file)
                        ->toMediaCollection($collectionName);
 
-    return $mediaItem->getUrl(); 
+    return $mediaItem->getUrl();
 }
 
 function get_default_image($type = ''){
 
     switch ($type){
-        case 'driver': return '\storage\images\system\user_no_photo4a305405-ad0b-473a-a40c-456397a18b96.png'; 
-        case 'user':   return '\storage\images\system\user_no_photo4a305405-ad0b-473a-a40c-456397a18b96.png'; 
+        case 'driver': return '\storage\images\system\user_no_photo4a305405-ad0b-473a-a40c-456397a18b96.png';
+        case 'user':   return '\storage\images\system\user_no_photo4a305405-ad0b-473a-a40c-456397a18b96.png';
 
         default : return '\storage\images\system\caver_no_photo.png';
     }
-  
-    
+
+
 }
 
 function authSession($force=false){
@@ -113,27 +115,35 @@ function defaultSymbol(){
  }
 
 
-function switch_language_of_view_and_redirect_back($locale)
+
+
+ function switch_language_of_view_and_redirect_back($locale)
 {
     app()->setLocale($locale);
-    // \App::setLocale($locale);
+
     session()->put('locale', $locale);
-    Artisan::call('cache:clear');
-    $dir = 'ltr';
-    if (in_array($locale, ['ar', 'dv', 'ff', 'ur', 'he', 'ku', 'fa'])) {
-        $dir = 'rtl';
-    }
 
-    session()->put('dir',  $dir);
-    // if (auth()->check()) {
-    //     $user = auth()->user();
-    //     $user->language_option = $locale;
-    //     $user->save();
-    // }
+    $dir = in_array($locale, ['ar', 'dv', 'ff', 'ur', 'he', 'ku', 'fa']) ? 'rtl' : 'ltr';
 
-    // return app()->getLocale('locale');
+    session()->put('dir', $dir);
+
     return redirect()->back();
 }
+
+// function switch_language_of_view_and_redirect_back($locale)
+// {
+//     app()->setLocale($locale);
+//     // \App::setLocale($locale);
+//     session()->put('locale', $locale);
+//     Artisan::call('cache:clear');
+//     $dir = 'ltr';
+//     if (in_array($locale, ['ar', 'dv', 'ff', 'ur', 'he', 'ku', 'fa'])) {
+//         $dir = 'rtl';
+//     }
+
+//     session()->put('dir',  $dir);
+//     return redirect()->back();
+// }
 
 
 
@@ -184,12 +194,12 @@ function checkMenuRoleAndPermission($menu){
 }
 
 function checkRolePermission($role,$permission , $guardName = 'web'){
-    
+
         return $role->permissions()
                     ->where('name', $permission)
                     ->where('guard_name', $guardName)
                     ->exists();
-    
+
 }
 
 function demoUserPermission(){
@@ -311,10 +321,10 @@ function storeMediaFile($model,$file,$name){
 //     $service = Service::find($serviceId);
 
 //     $request->validate([
-//         'image' => 'required|image|max:10240', 
+//         'image' => 'required|image|max:10240',
 //     ]);
 
-//     $imagePath = $request->file('image')->store('images', 'public'); 
+//     $imagePath = $request->file('image')->store('images', 'public');
 
 //     $service->image = $imagePath;
 //     $service->save();
@@ -625,7 +635,10 @@ function envChanges($type,$value){
 
 function getPriceFormat($price , $lang = null){
 
+    $country =  SystemSetting::where('key', 'country')->first();
 
+
+       $symbol = $country ? json_decode($country->value, true)['currency_code'] : 'QAR';
     // if($lang !=null){
     //     if($lang == 'ar'){
     //         return "د.إ " .$price;
@@ -634,24 +647,35 @@ function getPriceFormat($price , $lang = null){
     // }
     // $price = number_format((float)$price);
 
-    $symbol= 'AED';
-    if (app()->getLocale() == 'ar') {
-        $symbol= 'د.إ';
-    }
+//-----------------
+    // $symbol= 'AED';
+    // if (app()->getLocale() == 'ar') {
+    //     $symbol= 'د.إ';
+    // }
 
-    $price = number_format($price )." ".$symbol;
-    return $price;
 
-    
     // $symbol= 'SYP';
     // if (app()->getLocale() == 'ar') {
     //     $symbol= 'ل.س';
     // }
 
-    // $price = number_format($price )." ".$symbol;
-    // return $price;
-}
 
+    // $symbol = 'USD';
+    // if (app()->getLocale() == 'ar') {
+    //     $symbol = '$';
+    // }
+
+
+    $price = number_format($price )." ".$symbol;
+    return $price;
+}
+function getPriceSymbol( $lang = null){
+    $symbol = 'USD';
+    if (app()->getLocale() == 'ar') {
+        $symbol = '$';
+    }
+    return $symbol;
+}
 
 
 
@@ -680,6 +704,28 @@ function currency_data(){
 
     return  $data;
 }
+
+
+ function getOfficeIdByAuthUser()
+    {
+        if (Auth::guard('admin')->check()) {
+            return null;
+        }
+
+        else if (Auth::guard('office')->check()) {
+           return Auth::guard('office')->id();
+        }
+
+        else if (Auth::guard('employee')->check()) {
+            $employee = Auth::guard('employee')->user();
+            if ($employee->officeId) {
+               return $employee->officeId;
+            } else {
+                return null;
+            }
+        }
+        return null;
+    }
 
 function payment_status(){
 
@@ -2297,10 +2343,14 @@ function getAccessToken()
     $client = new Google_Client();
     $client->setAuthConfig($credentialsFiles[0]);
     $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
+    // Fail fast on the OAuth token fetch: without a timeout, a slow/unreachable
+    // Google endpoint (common from a dev box) blocks the outbox relay ~10s per
+    // push, so realtime offer events reach the driver long after their TTL.
+    $client->setHttpClient(new \GuzzleHttp\Client(['timeout' => 4, 'connect_timeout' => 2]));
 
     $token = $client->fetchAccessTokenWithAssertion();
 
-    return $token['access_token'];
+    return $token['access_token'] ?? throw new Exception('FCM access token fetch failed');
 }
 
 function countrySymbol(){
@@ -2313,4 +2363,50 @@ function countrySymbol(){
         $symbol = $country->symbol;
     }
     return $symbol;
+}
+
+if (! function_exists('shardIsAll')) {
+    function shardIsAll(): bool
+    {
+        return \App\Http\Core\GeoServices\ShardAggregator::isActive();
+    }
+}
+
+if (! function_exists('shardAttr')) {
+    function shardAttr($model, string $key)
+    {
+        if (! shardIsAll() || ! is_object($model)) {
+            return null;
+        }
+
+        if (method_exists($model, 'getAttribute')) {
+            return $model->getAttribute($key);
+        }
+
+        return $model->{$key} ?? null;
+    }
+}
+
+if (! function_exists('shardOf')) {
+    function shardOf($model)
+    {
+        return shardAttr($model, '_shard');
+    }
+}
+
+if (! function_exists('shardCountry')) {
+    function shardCountry($model)
+    {
+        return shardAttr($model, '_country');
+    }
+}
+
+if (! function_exists('shardLink')) {
+    function shardLink(string $routeName, $id, $model = null): string
+    {
+        $url = route($routeName, $id);
+        $shard = shardOf($model);
+
+        return $shard ? $url . (str_contains($url, '?') ? '&' : '?') . 'country=' . $shard : $url;
+    }
 }

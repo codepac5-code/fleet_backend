@@ -14,6 +14,9 @@ class UsersTableSeeder extends Seeder
 
         DB::table('users')->delete();
 
+        // $dialCode = '963';
+        $dialCode = '974';
+        // $dialCode = '963';
 
         $baseUsers = [
             [
@@ -28,7 +31,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-A1B2C3",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -45,7 +48,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-A1B2F5",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -62,7 +65,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-A1R3C3",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -79,7 +82,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-R5B2C6",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -96,7 +99,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-BDE554",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -113,7 +116,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-A1B2Gk",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -130,7 +133,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-A1B299",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -147,7 +150,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-A1B2U6",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -164,7 +167,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-A1B277",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -181,7 +184,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-T1B2C3",
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -198,7 +201,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => null,
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -215,7 +218,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => null,
-                "dialCode" => "",
+                "dialCode"=> $dialCode,// => "",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -232,7 +235,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-4ABA75",
-                "dialCode" => "+963",
+                "dialCode"=> $dialCode,// => "+963",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -249,7 +252,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-5E6516",
-                "dialCode" => "+92",
+                "dialCode"=> $dialCode,// => "+92",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -266,7 +269,7 @@ class UsersTableSeeder extends Seeder
                 "isActive" => 1,
                 "deleted_at" => null,
                 "referralCode" => "REF-9F167D",
-                "dialCode" => "+92",
+                "dialCode"=> $dialCode,// => "+92",
                 "password" => Hash::make('Aa123456**'),
                 "created_at" => now(),
                 "updated_at" => now(),
@@ -296,7 +299,7 @@ class UsersTableSeeder extends Seeder
                 'firstName' => $name[0],
                 'lastName' => $name[1],
                 'gender' => 'female',
-                'phoneNumber' => '5' . rand(10000000, 99999999), 
+                'phoneNumber' => '5' . rand(10000000, 99999999),
                 'dialCode' => '+971',
                 'email_verified_at' => null,
                 'password' => Hash::make('Aa123456**'),
@@ -314,7 +317,7 @@ class UsersTableSeeder extends Seeder
                 'firstName' => $name[0],
                 'lastName' => $name[1],
                 'gender' => 'male',
-                'phoneNumber' => '5' . rand(10000000, 99999999), 
+                'phoneNumber' => '5' . rand(10000000, 99999999),
                 'dialCode' => '+971',
                 'email_verified_at' => null,
                 'password' => Hash::make('Aa123456**'),
@@ -328,7 +331,7 @@ class UsersTableSeeder extends Seeder
         }
 
 
-        $id = 50; 
+        $id = 50;
         foreach ($extraUsers as &$user) {
             $user['id'] = $id;
             $id++;

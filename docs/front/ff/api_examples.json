@@ -1,0 +1,2798 @@
+{
+  "info": {
+    "title": "Fleet Ride API",
+    "version": "2.0.0",
+    "description": "Model-backed contract for the Fleet Ride rider app, derived from `docs/API_MODEL_MAPPED.md` (every attribute is a real column verified against `docs/Models/*.php` and `docs/migrations/*.php`).\n\nTransport: REST/HTTPS + a Socket.IO realtime gateway (handshake `auth:{ token, country }`; receive-only + subscribe/unsubscribe, all actions are REST) for the live trip — see `docs/realtime (1).md` and `docs/RIDER_REALTIME_EVENTS.md`. Every REST response uses the `ApiResponse` envelope (Socket.IO frames are raw, not enveloped).\n\nMoney: **integer minor units** (`*_minor`) paired with a sibling `currency_code` (`currencies.code`, e.g. `QAR`, `decimals=2`). Legacy `double` money columns are never used by this API.\n\nLocalization: send `Accept-Language: en | ar`; the resolved language is persisted per user (`rider_profiles.locale`, fallback `users.current_country`) and echoed as `locale` on every response. Bilingual `*_ar`/`*_en` columns are collapsed server-side to the single resolved string.\n\nPayments: Stripe. Raw PAN/CVV never reach Fleet Ride — cards are tokenized client-side. Add-card = SetupIntent; pay/top-up = PaymentIntent (3DS/SCA via `requiresAction`).\n"
+  },
+  "servers": [
+    {
+      "url": "https://fleetapp.net/v1"
+    }
+  ],
+  "envelope": "Every REST response uses the ApiResponse envelope shown in each 'response.body'. Money is integer minor units + sibling currency_code. Send Accept-Language: en|ar.",
+  "count": 70,
+  "endpoints": [
+    {
+      "tag": "Auth",
+      "summary": "Send an OTP to a phone number",
+      "method": "POST",
+      "path": "/auth/otp/request",
+      "examplePath": "/auth/otp/request",
+      "auth": false,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "dialCode": "+974",
+        "phone": "33001234",
+        "country": "QA"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "challengeId": "chg_9f2a",
+            "expiresIn": 3600,
+            "isNewUser": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Auth",
+      "summary": "Verify an OTP and issue a Passport token",
+      "method": "POST",
+      "path": "/auth/otp/verify",
+      "examplePath": "/auth/otp/verify",
+      "auth": false,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "challengeId": "chg_9f2a",
+        "code": "WELCOME10"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "accessToken": "eyJ0eXAiOiJKV1Qi…",
+            "refreshToken": "eyJ0eXAiOiJKV1Qi…",
+            "tokenType": "eyJ0eXAiOiJKV1Qi…",
+            "expiresIn": 3600,
+            "user": {
+              "id": 1,
+              "firstName": "Ahmed",
+              "lastName": "Ali",
+              "phoneNumber": "33001234",
+              "dialCode": "+974",
+              "gender": "male",
+              "photo": "https://cdn.fleetapp.net/img/sample.png",
+              "isActive": true,
+              "referralCode": "referralCode",
+              "walletBalance": 150.0,
+              "stripeCustomerId": "cus_Ff…",
+              "current_country": "QA",
+              "email": "rider@example.com",
+              "locale": "en"
+            }
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Auth",
+      "summary": "Complete registration after OTP verification",
+      "method": "POST",
+      "path": "/auth/register",
+      "examplePath": "/auth/register",
+      "auth": false,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "challengeId": "chg_9f2a",
+        "fullName": "Ahmed Ali",
+        "email": "rider@example.com",
+        "country": "QA"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "accessToken": "eyJ0eXAiOiJKV1Qi…",
+            "refreshToken": "eyJ0eXAiOiJKV1Qi…",
+            "tokenType": "eyJ0eXAiOiJKV1Qi…",
+            "expiresIn": 3600,
+            "user": {
+              "id": 1,
+              "firstName": "Ahmed",
+              "lastName": "Ali",
+              "phoneNumber": "33001234",
+              "dialCode": "+974",
+              "gender": "male",
+              "photo": "https://cdn.fleetapp.net/img/sample.png",
+              "isActive": true,
+              "referralCode": "referralCode",
+              "walletBalance": 150.0,
+              "stripeCustomerId": "cus_Ff…",
+              "current_country": "QA",
+              "email": "rider@example.com",
+              "locale": "en"
+            }
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Auth",
+      "summary": "Exchange a refresh token for a new token pair",
+      "method": "POST",
+      "path": "/auth/refresh",
+      "examplePath": "/auth/refresh",
+      "auth": false,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "refreshToken": "eyJ0eXAiOiJKV1Qi…"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "accessToken": "eyJ0eXAiOiJKV1Qi…",
+            "refreshToken": "eyJ0eXAiOiJKV1Qi…",
+            "tokenType": "eyJ0eXAiOiJKV1Qi…",
+            "expiresIn": 3600
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Auth",
+      "summary": "Request an OTP to change the account phone number",
+      "method": "POST",
+      "path": "/auth/phone/change",
+      "examplePath": "/auth/phone/change",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "dialCode": "+974",
+        "phone": "33001234"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "challengeId": "chg_9f2a",
+            "expiresIn": 3600,
+            "isNewUser": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Auth",
+      "summary": "Revoke the current access token",
+      "method": "POST",
+      "path": "/auth/logout",
+      "examplePath": "/auth/logout",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Auth",
+      "summary": "Soft-delete the account (`users.deleted_at`)",
+      "method": "DELETE",
+      "path": "/account",
+      "examplePath": "/account",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Get the current user",
+      "method": "GET",
+      "path": "/me",
+      "examplePath": "/me",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "firstName": "Ahmed",
+            "lastName": "Ali",
+            "phoneNumber": "33001234",
+            "dialCode": "+974",
+            "gender": "male",
+            "photo": "https://cdn.fleetapp.net/img/sample.png",
+            "isActive": true,
+            "referralCode": "referralCode",
+            "walletBalance": 150.0,
+            "stripeCustomerId": "cus_Ff…",
+            "current_country": "QA",
+            "email": "rider@example.com",
+            "locale": "en"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Update the current user",
+      "method": "PATCH",
+      "path": "/me",
+      "examplePath": "/me",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "fullName": "Ahmed Ali",
+        "email": "rider@example.com",
+        "avatarUrl": "https://cdn.fleetapp.net/img/sample.png",
+        "language": "en"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "firstName": "Ahmed",
+            "lastName": "Ali",
+            "phoneNumber": "33001234",
+            "dialCode": "+974",
+            "gender": "male",
+            "photo": "https://cdn.fleetapp.net/img/sample.png",
+            "isActive": true,
+            "referralCode": "referralCode",
+            "walletBalance": 150.0,
+            "stripeCustomerId": "cus_Ff…",
+            "current_country": "QA",
+            "email": "rider@example.com",
+            "locale": "en"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "List saved places",
+      "method": "GET",
+      "path": "/me/places",
+      "examplePath": "/me/places",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": [
+            {
+              "id": 1,
+              "user_id": 1,
+              "label": "Home",
+              "icon": "home",
+              "title": "Home",
+              "address": "West Bay, Doha",
+              "lat": 25.2854,
+              "lng": 51.531
+            }
+          ],
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Create a saved place",
+      "method": "POST",
+      "path": "/me/places",
+      "examplePath": "/me/places",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "label": "Home",
+        "icon": "home",
+        "address": "West Bay, Doha",
+        "lat": 25.2854,
+        "lng": 51.531
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "label": "Home",
+            "icon": "home",
+            "title": "Home",
+            "address": "West Bay, Doha",
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Update a saved place",
+      "method": "PATCH",
+      "path": "/me/places/{id}",
+      "examplePath": "/me/places/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "label": "Home",
+        "icon": "home",
+        "address": "West Bay, Doha",
+        "lat": 25.2854,
+        "lng": 51.531
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "label": "Home",
+            "icon": "home",
+            "title": "Home",
+            "address": "West Bay, Doha",
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Delete a saved place",
+      "method": "DELETE",
+      "path": "/me/places/{id}",
+      "examplePath": "/me/places/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "List safety contacts",
+      "method": "GET",
+      "path": "/me/safety-contacts",
+      "examplePath": "/me/safety-contacts",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "contacts": [
+              {
+                "id": 1,
+                "user_id": 1,
+                "name": "Ahmed Ali",
+                "phone": "33001234",
+                "relation": "spouse",
+                "is_primary": true,
+                "auto_share": true
+              }
+            ],
+            "autoShare": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Add a safety contact",
+      "method": "POST",
+      "path": "/me/safety-contacts",
+      "examplePath": "/me/safety-contacts",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "name": "Ahmed Ali",
+        "phone": "33001234",
+        "relation": "spouse",
+        "primary": true
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "name": "Ahmed Ali",
+            "phone": "33001234",
+            "relation": "spouse",
+            "is_primary": true,
+            "auto_share": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Delete a safety contact",
+      "method": "DELETE",
+      "path": "/me/safety-contacts/{id}",
+      "examplePath": "/me/safety-contacts/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Toggle auto-share of live trip with safety contacts",
+      "method": "PATCH",
+      "path": "/me/safety-contacts/auto-share",
+      "examplePath": "/me/safety-contacts/auto-share",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "enabled": true
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "enabled": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Get notification preferences",
+      "method": "GET",
+      "path": "/me/notifications-prefs",
+      "examplePath": "/me/notifications-prefs",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "tripUpdates": true,
+            "promotions": true,
+            "officeMessages": true,
+            "safetyAlerts": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Update notification preferences",
+      "method": "PATCH",
+      "path": "/me/notifications-prefs",
+      "examplePath": "/me/notifications-prefs",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "tripUpdates": true,
+        "promotions": true,
+        "officeMessages": true,
+        "safetyAlerts": true
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "tripUpdates": true,
+            "promotions": true,
+            "officeMessages": true,
+            "safetyAlerts": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Get privacy settings",
+      "method": "GET",
+      "path": "/me/privacy",
+      "examplePath": "/me/privacy",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "locationDuringTrips": true,
+            "shareTripDataWithOffice": true,
+            "marketing": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Profile",
+      "summary": "Update privacy settings",
+      "method": "PATCH",
+      "path": "/me/privacy",
+      "examplePath": "/me/privacy",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "locationDuringTrips": true,
+        "shareTripDataWithOffice": true,
+        "marketing": true
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "locationDuringTrips": true,
+            "shareTripDataWithOffice": true,
+            "marketing": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Marketplace",
+      "summary": "Search offices along a route",
+      "method": "POST",
+      "path": "/offices/search",
+      "examplePath": "/offices/search",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "route": {
+          "pickup": {
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "dropoff": {
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "service": "service",
+          "serviceClass": "serviceClass"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "offices": [
+              {
+                "id": 1,
+                "officeName": "officeName",
+                "initials": "AL",
+                "palette": "a",
+                "logo": "https://cdn.fleetapp.net/img/sample.png",
+                "rating": 4.7,
+                "ratings_count": 3,
+                "is_verified": true,
+                "is_monitored": true,
+                "on_time_percentage": 4.7,
+                "avg_response_minutes": 4,
+                "contactNumber": "33001234",
+                "country": "QA",
+                "city": "Doha",
+                "region": "Doha",
+                "address": "West Bay, Doha",
+                "lat": 25.2854,
+                "lng": 51.531,
+                "working_hours": null,
+                "ratingExcellent": 1,
+                "ratingGood": 1,
+                "ratingAverage": 1,
+                "ratingPoor": 1
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Marketplace",
+      "summary": "Get an office profile",
+      "method": "GET",
+      "path": "/offices/{id}",
+      "examplePath": "/offices/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "officeName": "officeName",
+            "initials": "AL",
+            "palette": "a",
+            "logo": "https://cdn.fleetapp.net/img/sample.png",
+            "rating": 4.7,
+            "ratings_count": 3,
+            "is_verified": true,
+            "is_monitored": true,
+            "on_time_percentage": 4.7,
+            "avg_response_minutes": 4,
+            "contactNumber": "33001234",
+            "country": "QA",
+            "city": "Doha",
+            "region": "Doha",
+            "address": "West Bay, Doha",
+            "lat": 25.2854,
+            "lng": 51.531,
+            "working_hours": null,
+            "ratingExcellent": 1,
+            "ratingGood": 1,
+            "ratingAverage": 1,
+            "ratingPoor": 1,
+            "services": [
+              {
+                "id": 1,
+                "title": "Home",
+                "description": "Sample text",
+                "image": "https://cdn.fleetapp.net/img/sample.png",
+                "icon": "home",
+                "badge": "badge",
+                "sort_order": 1,
+                "status": true,
+                "travel_service": true
+              }
+            ],
+            "classes": [
+              {
+                "id": 1,
+                "serviceId": 1,
+                "name": "Ahmed Ali",
+                "description": "Sample text",
+                "image": "https://cdn.fleetapp.net/img/sample.png",
+                "icon": "home",
+                "badge": "badge",
+                "sort_order": 1,
+                "status": true,
+                "is_travel": true
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Marketplace",
+      "summary": "List favorite offices",
+      "method": "GET",
+      "path": "/me/favorites",
+      "examplePath": "/me/favorites",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": [
+            {
+              "id": 1,
+              "officeName": "officeName",
+              "initials": "AL",
+              "palette": "a",
+              "logo": "https://cdn.fleetapp.net/img/sample.png",
+              "rating": 4.7,
+              "ratings_count": 3,
+              "is_verified": true,
+              "is_monitored": true,
+              "on_time_percentage": 4.7,
+              "avg_response_minutes": 4,
+              "contactNumber": "33001234",
+              "country": "QA",
+              "city": "Doha",
+              "region": "Doha",
+              "address": "West Bay, Doha",
+              "lat": 25.2854,
+              "lng": 51.531,
+              "working_hours": null,
+              "ratingExcellent": 1,
+              "ratingGood": 1,
+              "ratingAverage": 1,
+              "ratingPoor": 1,
+              "favoritedAt": "2026-07-15T10:20:30Z"
+            }
+          ],
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Marketplace",
+      "summary": "Add an office to favorites",
+      "method": "POST",
+      "path": "/me/favorites/{officeId}",
+      "examplePath": "/me/favorites/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Marketplace",
+      "summary": "Remove an office from favorites",
+      "method": "DELETE",
+      "path": "/me/favorites/{officeId}",
+      "examplePath": "/me/favorites/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Booking",
+      "summary": "List service definitions (dynamic, admin-driven)",
+      "method": "GET",
+      "path": "/catalog/services",
+      "examplePath": "/catalog/services",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "services": [
+              {
+                "id": 1,
+                "title": "Home",
+                "description": "Sample text",
+                "image": "https://cdn.fleetapp.net/img/sample.png",
+                "icon": "home",
+                "badge": "badge",
+                "sort_order": 1,
+                "status": true,
+                "travel_service": true
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Booking",
+      "summary": "List service classes for a service",
+      "method": "GET",
+      "path": "/catalog/classes",
+      "examplePath": "/catalog/classes",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "queryParams": {
+        "service": "service"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "classes": [
+              {
+                "id": 1,
+                "serviceId": 1,
+                "name": "Ahmed Ali",
+                "description": "Sample text",
+                "image": "https://cdn.fleetapp.net/img/sample.png",
+                "icon": "home",
+                "badge": "badge",
+                "sort_order": 1,
+                "status": true,
+                "is_travel": true
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Booking",
+      "summary": "Autocomplete place suggestions",
+      "method": "GET",
+      "path": "/places/suggest",
+      "examplePath": "/places/suggest",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "queryParams": {
+        "q": "q",
+        "lat": 25.2854,
+        "lng": 51.531
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "results": [
+              {
+                "id": "id",
+                "title": "Home",
+                "address": "West Bay, Doha",
+                "lat": 25.2854,
+                "lng": 51.531,
+                "source": "recent"
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Booking",
+      "summary": "Estimate a route and fares",
+      "method": "POST",
+      "path": "/routes/estimate",
+      "examplePath": "/routes/estimate",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "pickup": {
+          "lat": 25.2854,
+          "lng": 51.531
+        },
+        "dropoff": {
+          "lat": 25.2854,
+          "lng": 51.531
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "distance_m": 5400,
+            "duration_s": 720,
+            "currency_code": "QAR",
+            "polyline": "polyline",
+            "classes": [
+              {
+                "id": 1,
+                "serviceId": 1,
+                "name": "Ahmed Ali",
+                "description": "Sample text",
+                "image": "https://cdn.fleetapp.net/img/sample.png",
+                "icon": "home",
+                "badge": "badge",
+                "sort_order": 1,
+                "status": true,
+                "is_travel": true,
+                "openPrice": 150.0,
+                "kmPrice": 150.0,
+                "minutePrice": 150.0,
+                "base_fare": 150.0,
+                "fare_minor": 1500,
+                "currency_code": "QAR"
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Booking",
+      "summary": "Reverse-geocode coordinates to an address",
+      "method": "POST",
+      "path": "/geocode/reverse",
+      "examplePath": "/geocode/reverse",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "lat": 25.2854,
+        "lng": 51.531
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "address": "West Bay, Doha"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Booking",
+      "summary": "Create a ride (emits booking.status_changed:matching)",
+      "method": "POST",
+      "path": "/bookings",
+      "examplePath": "/bookings",
+      "auth": true,
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {accessToken}"
+      },
+      "request": {
+        "service": "ride",
+        "service_class": "City",
+        "pricing_style": "meterEstimate",
+        "office_id": 12,
+        "pickup_lat": 25.276,
+        "pickup_lng": 51.52,
+        "pickup_title": "Al Sadd, Zone 38",
+        "pickup_note": "North gate, blue door",
+        "dropoff_lat": 25.2731,
+        "dropoff_lng": 51.608,
+        "dropoff_title": "Hamad Intl. Airport",
+        "scheduled_at": null,
+        "idempotency_key": "b1f2…"
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "locale": "en",
+          "data": {
+            "id": 4100,
+            "user_id": 1,
+            "office_id": 12,
+            "driver_id": null,
+            "vehicle_id": null,
+            "service": "ride",
+            "service_class": "City",
+            "pricing_style": "meterEstimate",
+            "status": "matching",
+            "pickup_lat": 25.276,
+            "pickup_lng": 51.52,
+            "pickup_title": "Al Sadd, Zone 38",
+            "pickup_note": "North gate, blue door",
+            "dropoff_lat": 25.2731,
+            "dropoff_lng": 51.608,
+            "dropoff_title": "Hamad Intl. Airport",
+            "distance_m": 14800,
+            "duration_s": 1320,
+            "currency_code": "QAR",
+            "fare_minor": 2400,
+            "total_minor": 2400,
+            "scheduled_at": null,
+            "created_at": "2026-07-15T09:12:03Z"
+          },
+          "error": null,
+          "meta": null
+        }
+      }
+    },
+    {
+      "tag": "Booking",
+      "summary": "Rider cancels the ride",
+      "method": "POST",
+      "path": "/bookings/:id/cancel",
+      "examplePath": "/bookings/4100/cancel",
+      "auth": true,
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {accessToken}"
+      },
+      "request": {
+        "reason": "Changed my mind"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "locale": "en",
+          "data": {
+            "id": 4100,
+            "user_id": 1,
+            "office_id": 12,
+            "driver_id": null,
+            "vehicle_id": null,
+            "service": "ride",
+            "service_class": "City",
+            "pricing_style": "meterEstimate",
+            "status": "cancelled",
+            "pickup_lat": 25.276,
+            "pickup_lng": 51.52,
+            "pickup_title": "Al Sadd, Zone 38",
+            "pickup_note": "North gate, blue door",
+            "dropoff_lat": 25.2731,
+            "dropoff_lng": 51.608,
+            "dropoff_title": "Hamad Intl. Airport",
+            "distance_m": 14800,
+            "duration_s": 1320,
+            "currency_code": "QAR",
+            "fare_minor": 2400,
+            "total_minor": 2400,
+            "scheduled_at": null,
+            "created_at": "2026-07-15T09:12:03Z",
+            "cancel_reason": "Changed my mind"
+          },
+          "error": null,
+          "meta": null
+        }
+      }
+    },
+    {
+      "tag": "Trips",
+      "summary": "List trips",
+      "method": "GET",
+      "path": "/trips",
+      "examplePath": "/trips",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "queryParams": {
+        "status": "active",
+        "limit": 3,
+        "cursor": "eyJpZCI6MjB9"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "items": [
+              {
+                "id": 1,
+                "user_id": 1,
+                "office_id": 1,
+                "driver_id": 1,
+                "vehicle_id": 1,
+                "service": "service",
+                "service_class": "service_class",
+                "pricing_style": "meterEstimate",
+                "status": "active",
+                "pickup_lat": 25.2854,
+                "pickup_lng": 51.531,
+                "pickup_title": "Home",
+                "pickup_note": "pickup_note",
+                "dropoff_lat": 25.2854,
+                "dropoff_lng": 51.531,
+                "dropoff_title": "Home",
+                "distance_m": 5400,
+                "duration_s": 720,
+                "currency_code": "QAR",
+                "fare_minor": 1500,
+                "discount_minor": 1500,
+                "waiting_minor": 1500,
+                "tip_minor": 1500,
+                "total_minor": 1500,
+                "held_minor": 1500,
+                "payment_method": "payment_method",
+                "stripe_payment_intent_id": "stripe_payment_intent_id",
+                "promo_code": "WELCOME10",
+                "coupon_id": 1,
+                "scheduled_at": "2026-07-15T10:20:30Z",
+                "passengers": 2,
+                "luggage": 1,
+                "flight_no": "QR1234",
+                "assigned_at": "2026-07-15T10:20:30Z",
+                "completed_at": "2026-07-15T10:20:30Z",
+                "cancelled_at": "2026-07-15T10:20:30Z",
+                "rated_at": "2026-07-15T10:20:30Z",
+                "cancel_reason": "cancel_reason",
+                "change_revision": 1,
+                "source": "source",
+                "created_by": "created_by"
+              }
+            ],
+            "nextCursor": "eyJpZCI6MjB9"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Trips",
+      "summary": "Get a trip receipt",
+      "method": "GET",
+      "path": "/trips/{id}",
+      "examplePath": "/trips/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "office_id": 1,
+            "driver_id": 1,
+            "vehicle_id": 1,
+            "service": "service",
+            "service_class": "service_class",
+            "pricing_style": "meterEstimate",
+            "status": "active",
+            "pickup_lat": 25.2854,
+            "pickup_lng": 51.531,
+            "pickup_title": "Home",
+            "pickup_note": "pickup_note",
+            "dropoff_lat": 25.2854,
+            "dropoff_lng": 51.531,
+            "dropoff_title": "Home",
+            "distance_m": 5400,
+            "duration_s": 720,
+            "currency_code": "QAR",
+            "fare_minor": 1500,
+            "discount_minor": 1500,
+            "waiting_minor": 1500,
+            "tip_minor": 1500,
+            "total_minor": 1500,
+            "held_minor": 1500,
+            "payment_method": "payment_method",
+            "stripe_payment_intent_id": "stripe_payment_intent_id",
+            "promo_code": "WELCOME10",
+            "coupon_id": 1,
+            "scheduled_at": "2026-07-15T10:20:30Z",
+            "passengers": 2,
+            "luggage": 1,
+            "flight_no": "QR1234",
+            "assigned_at": "2026-07-15T10:20:30Z",
+            "completed_at": "2026-07-15T10:20:30Z",
+            "cancelled_at": "2026-07-15T10:20:30Z",
+            "rated_at": "2026-07-15T10:20:30Z",
+            "cancel_reason": "cancel_reason",
+            "change_revision": 1,
+            "source": "source",
+            "created_by": "created_by",
+            "office": {
+              "id": 1,
+              "officeName": "officeName",
+              "initials": "AL",
+              "palette": "a",
+              "logo": "https://cdn.fleetapp.net/img/sample.png",
+              "rating": 4.7,
+              "ratings_count": 3,
+              "is_verified": true,
+              "is_monitored": true,
+              "on_time_percentage": 4.7,
+              "avg_response_minutes": 4,
+              "contactNumber": "33001234",
+              "country": "QA",
+              "city": "Doha",
+              "region": "Doha",
+              "address": "West Bay, Doha",
+              "lat": 25.2854,
+              "lng": 51.531,
+              "working_hours": null,
+              "ratingExcellent": 1,
+              "ratingGood": 1,
+              "ratingAverage": 1,
+              "ratingPoor": 1
+            },
+            "rating": {
+              "id": 1,
+              "booking_id": 1,
+              "rater_type": "rater_type",
+              "rater_id": 1,
+              "ratee_type": "ratee_type",
+              "ratee_id": 1,
+              "stars": 5,
+              "tags": [
+                "tags"
+              ],
+              "comment": "Sample text",
+              "book_again": true,
+              "favorite": true
+            }
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Trips",
+      "summary": "Report a lost item on a trip",
+      "method": "POST",
+      "path": "/trips/{id}/lost-item",
+      "examplePath": "/trips/1/lost-item",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "category": "Phone",
+        "description": "Sample text",
+        "shareMaskedNumber": true
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "ticketId": 1,
+            "status": "active"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Trips",
+      "summary": "Rate a trip (driver + office)",
+      "method": "POST",
+      "path": "/trips/{id}/rating",
+      "examplePath": "/trips/1/rating",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "stars": 5,
+        "tags": [
+          "tags"
+        ],
+        "comment": "Sample text",
+        "bookAgain": true,
+        "favorite": true
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "ok": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Wallet",
+      "summary": "Get wallet balance",
+      "method": "GET",
+      "path": "/wallet",
+      "examplePath": "/wallet",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "balance": 150.0,
+            "currency": "QAR",
+            "symbol": "﷼",
+            "decimals": 1
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Wallet",
+      "summary": "Top up the wallet",
+      "method": "POST",
+      "path": "/wallet/topup",
+      "examplePath": "/wallet/topup",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json",
+        "Idempotency-Key": "<uuid>"
+      },
+      "request": {
+        "amount": 1500,
+        "paymentMethodId": 1
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "ledgerId": 1,
+            "status": "active",
+            "clientSecret": "pi_3Ff…_secret_xyz",
+            "requiresAction": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Wallet",
+      "summary": "List wallet transactions",
+      "method": "GET",
+      "path": "/wallet/transactions",
+      "examplePath": "/wallet/transactions",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "queryParams": {
+        "limit": 3,
+        "cursor": "eyJpZCI6MjB9"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "items": [
+              {
+                "id": 1,
+                "amount": 150.0,
+                "balance_before": 150.0,
+                "balance_after": 150.0,
+                "status": "active",
+                "transaction_type": "transaction_type",
+                "transaction_reference": "transaction_reference",
+                "description": "Sample text",
+                "paymentName": "paymentName",
+                "created_at": "2026-07-15T10:20:30Z"
+              }
+            ],
+            "nextCursor": "eyJpZCI6MjB9"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "List saved payment methods",
+      "method": "GET",
+      "path": "/payment-methods",
+      "examplePath": "/payment-methods",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": [
+            {
+              "id": 1,
+              "user_id": 1,
+              "type": "card",
+              "brand": "visa",
+              "last4": "4242",
+              "exp": "12/28",
+              "is_default": true,
+              "stripe_payment_method_id": "stripe_payment_method_id",
+              "stripe_setup_intent_id": "stripe_setup_intent_id"
+            }
+          ],
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "Save a confirmed Stripe payment method",
+      "method": "POST",
+      "path": "/payment-methods",
+      "examplePath": "/payment-methods",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json",
+        "Idempotency-Key": "<uuid>"
+      },
+      "request": {
+        "stripePaymentMethodId": "pm_1Ff…",
+        "setDefault": true
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "type": "card",
+            "brand": "visa",
+            "last4": "4242",
+            "exp": "12/28",
+            "is_default": true,
+            "stripe_payment_method_id": "stripe_payment_method_id",
+            "stripe_setup_intent_id": "stripe_setup_intent_id"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "Set a payment method as default",
+      "method": "PATCH",
+      "path": "/payment-methods/{id}",
+      "examplePath": "/payment-methods/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "default": true
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "type": "card",
+            "brand": "visa",
+            "last4": "4242",
+            "exp": "12/28",
+            "is_default": true,
+            "stripe_payment_method_id": "stripe_payment_method_id",
+            "stripe_setup_intent_id": "stripe_setup_intent_id"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "Delete a payment method",
+      "method": "DELETE",
+      "path": "/payment-methods/{id}",
+      "examplePath": "/payment-methods/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "List available promos",
+      "method": "GET",
+      "path": "/promos",
+      "examplePath": "/promos",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "promos": [
+              {
+                "code": "WELCOME10",
+                "discountType": "percentage",
+                "discount": 150.0,
+                "isPercentage": true,
+                "isActive": true,
+                "limit": 3,
+                "expireDate": "2026-07-15T10:20:30Z",
+                "userCount": 3
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "Redeem a promo code",
+      "method": "POST",
+      "path": "/promos/redeem",
+      "examplePath": "/promos/redeem",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "code": "WELCOME10"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "code": "WELCOME10",
+            "applied": true,
+            "discount": 150.0,
+            "discountType": "percentage",
+            "message": "Sample text"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "Create a Stripe SetupIntent (add-card flow)",
+      "method": "POST",
+      "path": "/payments/stripe/setup-intent",
+      "examplePath": "/payments/stripe/setup-intent",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "setupIntentId": "seti_1Ff…",
+            "clientSecret": "pi_3Ff…_secret_xyz",
+            "customerId": "cus_Ff…"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Payments",
+      "summary": "Create a Stripe PaymentIntent (top-up or trip)",
+      "method": "POST",
+      "path": "/payments/stripe/payment-intent",
+      "examplePath": "/payments/stripe/payment-intent",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json",
+        "Idempotency-Key": "<uuid>"
+      },
+      "request": {
+        "amount": 1500,
+        "purpose": "topup",
+        "tripId": 1,
+        "paymentMethodId": 1
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "paymentIntentId": "pi_1Ff…",
+            "clientSecret": "pi_3Ff…_secret_xyz",
+            "requiresAction": true,
+            "status": "active"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Support",
+      "summary": "List support tickets",
+      "method": "GET",
+      "path": "/tickets",
+      "examplePath": "/tickets",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": [
+            {
+              "id": 1,
+              "user_id": 1,
+              "tripId": 1,
+              "office_id": 1,
+              "category": "category",
+              "topic": "topic",
+              "layer": "layer",
+              "subject": "Home",
+              "status": "open",
+              "last_message_at": "2026-07-15T10:20:30Z",
+              "messages": [
+                {
+                  "id": 1,
+                  "ticket_id": 1,
+                  "sender_type": "sender_type",
+                  "sender_id": 1,
+                  "body": "Sample text",
+                  "created_at": "2026-07-15T10:20:30Z"
+                }
+              ]
+            }
+          ],
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Support",
+      "summary": "Open a support ticket",
+      "method": "POST",
+      "path": "/tickets",
+      "examplePath": "/tickets",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "topic": "topic",
+        "tripId": 1,
+        "message": "Sample text"
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "ticketId": 1,
+            "status": "active"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Support",
+      "summary": "Get a ticket with its messages",
+      "method": "GET",
+      "path": "/tickets/{id}",
+      "examplePath": "/tickets/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "tripId": 1,
+            "office_id": 1,
+            "category": "category",
+            "topic": "topic",
+            "layer": "layer",
+            "subject": "Home",
+            "status": "open",
+            "last_message_at": "2026-07-15T10:20:30Z",
+            "messages": [
+              {
+                "id": 1,
+                "ticket_id": 1,
+                "sender_type": "sender_type",
+                "sender_id": 1,
+                "body": "Sample text",
+                "created_at": "2026-07-15T10:20:30Z"
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Support",
+      "summary": "File a complaint",
+      "method": "POST",
+      "path": "/complaints",
+      "examplePath": "/complaints",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "about": "driver",
+        "tripId": 1,
+        "description": "Sample text",
+        "photoUrl": "https://cdn.fleetapp.net/img/sample.png"
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "routed_to": "office",
+            "priority": "normal",
+            "case_ref": "case_ref",
+            "status": "active"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Support",
+      "summary": "List help articles",
+      "method": "GET",
+      "path": "/help/articles",
+      "examplePath": "/help/articles",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "queryParams": {
+        "category": "category"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": [
+            {
+              "id": 1,
+              "category": "category",
+              "title": "Home",
+              "readMinutes": 4
+            }
+          ],
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Support",
+      "summary": "Get a help article",
+      "method": "GET",
+      "path": "/help/articles/{id}",
+      "examplePath": "/help/articles/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "category": "category",
+            "title": "Home",
+            "description": "Sample text",
+            "read_minutes": 4,
+            "priority": 1,
+            "target_user": "user"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Scheduled",
+      "summary": "Schedule a ride",
+      "method": "POST",
+      "path": "/scheduled",
+      "examplePath": "/scheduled",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json",
+        "Idempotency-Key": "<uuid>"
+      },
+      "request": {
+        "route": {
+          "pickup": {
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "dropoff": {
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "service": "service",
+          "serviceClass": "serviceClass"
+        },
+        "scheduledFor": "2026-07-15T10:20:30Z",
+        "passengers": 2,
+        "luggage": 1,
+        "flightNo": "QR1234"
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "office_id": 1,
+            "driver_id": 1,
+            "vehicle_id": 1,
+            "service": "service",
+            "service_class": "service_class",
+            "pricing_style": "meterEstimate",
+            "status": "active",
+            "pickup_lat": 25.2854,
+            "pickup_lng": 51.531,
+            "pickup_title": "Home",
+            "pickup_note": "pickup_note",
+            "dropoff_lat": 25.2854,
+            "dropoff_lng": 51.531,
+            "dropoff_title": "Home",
+            "distance_m": 5400,
+            "duration_s": 720,
+            "currency_code": "QAR",
+            "fare_minor": 1500,
+            "discount_minor": 1500,
+            "waiting_minor": 1500,
+            "tip_minor": 1500,
+            "total_minor": 1500,
+            "held_minor": 1500,
+            "payment_method": "payment_method",
+            "stripe_payment_intent_id": "stripe_payment_intent_id",
+            "promo_code": "WELCOME10",
+            "coupon_id": 1,
+            "scheduled_at": "2026-07-15T10:20:30Z",
+            "passengers": 2,
+            "luggage": 1,
+            "flight_no": "QR1234",
+            "assigned_at": "2026-07-15T10:20:30Z",
+            "completed_at": "2026-07-15T10:20:30Z",
+            "cancelled_at": "2026-07-15T10:20:30Z",
+            "rated_at": "2026-07-15T10:20:30Z",
+            "cancel_reason": "cancel_reason",
+            "change_revision": 1,
+            "source": "source",
+            "created_by": "created_by",
+            "steps": [
+              {
+                "key": "key",
+                "label": "Home",
+                "status": "active",
+                "at": "2026-07-15T10:20:30Z"
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Scheduled",
+      "summary": "Get a scheduled trip",
+      "method": "GET",
+      "path": "/scheduled/{id}",
+      "examplePath": "/scheduled/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "office_id": 1,
+            "driver_id": 1,
+            "vehicle_id": 1,
+            "service": "service",
+            "service_class": "service_class",
+            "pricing_style": "meterEstimate",
+            "status": "active",
+            "pickup_lat": 25.2854,
+            "pickup_lng": 51.531,
+            "pickup_title": "Home",
+            "pickup_note": "pickup_note",
+            "dropoff_lat": 25.2854,
+            "dropoff_lng": 51.531,
+            "dropoff_title": "Home",
+            "distance_m": 5400,
+            "duration_s": 720,
+            "currency_code": "QAR",
+            "fare_minor": 1500,
+            "discount_minor": 1500,
+            "waiting_minor": 1500,
+            "tip_minor": 1500,
+            "total_minor": 1500,
+            "held_minor": 1500,
+            "payment_method": "payment_method",
+            "stripe_payment_intent_id": "stripe_payment_intent_id",
+            "promo_code": "WELCOME10",
+            "coupon_id": 1,
+            "scheduled_at": "2026-07-15T10:20:30Z",
+            "passengers": 2,
+            "luggage": 1,
+            "flight_no": "QR1234",
+            "assigned_at": "2026-07-15T10:20:30Z",
+            "completed_at": "2026-07-15T10:20:30Z",
+            "cancelled_at": "2026-07-15T10:20:30Z",
+            "rated_at": "2026-07-15T10:20:30Z",
+            "cancel_reason": "cancel_reason",
+            "change_revision": 1,
+            "source": "source",
+            "created_by": "created_by",
+            "steps": [
+              {
+                "key": "key",
+                "label": "Home",
+                "status": "active",
+                "at": "2026-07-15T10:20:30Z"
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Scheduled",
+      "summary": "Modify a scheduled trip (bumps `change_revision`)",
+      "method": "PATCH",
+      "path": "/scheduled/{id}",
+      "examplePath": "/scheduled/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "route": {
+          "pickup": {
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "dropoff": {
+            "lat": 25.2854,
+            "lng": 51.531
+          },
+          "service": "service",
+          "serviceClass": "serviceClass"
+        },
+        "scheduledFor": "2026-07-15T10:20:30Z",
+        "passengers": 2,
+        "luggage": 1,
+        "flightNo": "QR1234"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "office_id": 1,
+            "driver_id": 1,
+            "vehicle_id": 1,
+            "service": "service",
+            "service_class": "service_class",
+            "pricing_style": "meterEstimate",
+            "status": "active",
+            "pickup_lat": 25.2854,
+            "pickup_lng": 51.531,
+            "pickup_title": "Home",
+            "pickup_note": "pickup_note",
+            "dropoff_lat": 25.2854,
+            "dropoff_lng": 51.531,
+            "dropoff_title": "Home",
+            "distance_m": 5400,
+            "duration_s": 720,
+            "currency_code": "QAR",
+            "fare_minor": 1500,
+            "discount_minor": 1500,
+            "waiting_minor": 1500,
+            "tip_minor": 1500,
+            "total_minor": 1500,
+            "held_minor": 1500,
+            "payment_method": "payment_method",
+            "stripe_payment_intent_id": "stripe_payment_intent_id",
+            "promo_code": "WELCOME10",
+            "coupon_id": 1,
+            "scheduled_at": "2026-07-15T10:20:30Z",
+            "passengers": 2,
+            "luggage": 1,
+            "flight_no": "QR1234",
+            "assigned_at": "2026-07-15T10:20:30Z",
+            "completed_at": "2026-07-15T10:20:30Z",
+            "cancelled_at": "2026-07-15T10:20:30Z",
+            "rated_at": "2026-07-15T10:20:30Z",
+            "cancel_reason": "cancel_reason",
+            "change_revision": 1,
+            "source": "source",
+            "created_by": "created_by",
+            "steps": [
+              {
+                "key": "key",
+                "label": "Home",
+                "status": "active",
+                "at": "2026-07-15T10:20:30Z"
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Scheduled",
+      "summary": "Cancel a scheduled trip",
+      "method": "DELETE",
+      "path": "/scheduled/{id}",
+      "examplePath": "/scheduled/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "B2B",
+      "summary": "List corporate invoices",
+      "method": "GET",
+      "path": "/corporate/invoices",
+      "examplePath": "/corporate/invoices",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "invoices": [
+              {
+                "id": 1,
+                "user_id": 1,
+                "month": "2026-07",
+                "trips": 3,
+                "amount_minor": 1500,
+                "currency_code": "QAR",
+                "status": "unbilled"
+              }
+            ]
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "B2B",
+      "summary": "List family members",
+      "method": "GET",
+      "path": "/family/members",
+      "examplePath": "/family/members",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": [
+            {
+              "id": 1,
+              "user_id": 1,
+              "name": "Ahmed Ali",
+              "phone": "33001234",
+              "type": "minor",
+              "approval_required": true,
+              "auto_share": true
+            }
+          ],
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "B2B",
+      "summary": "Add a family member",
+      "method": "POST",
+      "path": "/family/members",
+      "examplePath": "/family/members",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "name": "Ahmed Ali",
+        "phone": "33001234",
+        "type": "minor",
+        "approvalRequired": true,
+        "autoShare": true
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "name": "Ahmed Ali",
+            "phone": "33001234",
+            "type": "minor",
+            "approval_required": true,
+            "auto_share": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "B2B",
+      "summary": "Update a family member",
+      "method": "PATCH",
+      "path": "/family/members/{id}",
+      "examplePath": "/family/members/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "name": "Ahmed Ali",
+        "phone": "33001234",
+        "type": "minor",
+        "approvalRequired": true,
+        "autoShare": true
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "user_id": 1,
+            "name": "Ahmed Ali",
+            "phone": "33001234",
+            "type": "minor",
+            "approval_required": true,
+            "auto_share": true
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "B2B",
+      "summary": "Remove a family member",
+      "method": "DELETE",
+      "path": "/family/members/{id}",
+      "examplePath": "/family/members/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "tag": "Trips",
+      "summary": "List in-ride chat messages for a trip",
+      "method": "GET",
+      "path": "/trips/{id}/messages",
+      "examplePath": "/trips/1/messages",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "queryParams": {
+        "limit": 3,
+        "cursor": "eyJpZCI6MjB9"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "items": [
+              {
+                "id": 1,
+                "booking_id": 1,
+                "from_type": "rider",
+                "body": "Sample text",
+                "read_at": "2026-07-15T10:20:30Z",
+                "created_at": "2026-07-15T10:20:30Z"
+              }
+            ],
+            "nextCursor": "eyJpZCI6MjB9"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Trips",
+      "summary": "Send an in-ride chat message",
+      "method": "POST",
+      "path": "/trips/{id}/messages",
+      "examplePath": "/trips/1/messages",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "body": "Sample text"
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "booking_id": 1,
+            "from_type": "rider",
+            "body": "Sample text",
+            "read_at": "2026-07-15T10:20:30Z",
+            "created_at": "2026-07-15T10:20:30Z"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Notifications",
+      "summary": "List in-app notifications",
+      "method": "GET",
+      "path": "/notifications",
+      "examplePath": "/notifications",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "queryParams": {
+        "unread": true,
+        "limit": 3,
+        "cursor": "eyJpZCI6MjB9"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "items": [
+              {
+                "id": 1,
+                "template_key": "template_key",
+                "type": "type",
+                "locale": "en",
+                "title": "Home",
+                "body": "Sample text",
+                "data": null,
+                "read_at": "2026-07-15T10:20:30Z",
+                "created_at": "2026-07-15T10:20:30Z"
+              }
+            ],
+            "unreadCount": 3,
+            "nextCursor": "eyJpZCI6MjB9"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Notifications",
+      "summary": "Mark a notification as read",
+      "method": "POST",
+      "path": "/notifications/{id}/read",
+      "examplePath": "/notifications/1/read",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "template_key": "template_key",
+            "type": "type",
+            "locale": "en",
+            "title": "Home",
+            "body": "Sample text",
+            "data": null,
+            "read_at": "2026-07-15T10:20:30Z",
+            "created_at": "2026-07-15T10:20:30Z"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Notifications",
+      "summary": "Mark all notifications as read",
+      "method": "POST",
+      "path": "/notifications/read-all",
+      "examplePath": "/notifications/read-all",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 200,
+        "body": {
+          "status": true,
+          "statusCode": 200,
+          "message": "OK",
+          "data": {
+            "updated": 1
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Notifications",
+      "summary": "Register (upsert) a push device token",
+      "method": "POST",
+      "path": "/devices",
+      "examplePath": "/devices",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "token": "eyJ0eXAiOiJKV1Qi…",
+        "platform": "ios"
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "status": true,
+          "statusCode": 201,
+          "message": "OK",
+          "data": {
+            "id": 1,
+            "token": "eyJ0eXAiOiJKV1Qi…",
+            "platform": "ios",
+            "last_seen_at": "2026-07-15T10:20:30Z"
+          },
+          "error": null,
+          "meta": null,
+          "locale": "en"
+        }
+      }
+    },
+    {
+      "tag": "Notifications",
+      "summary": "Unregister a push device token",
+      "method": "DELETE",
+      "path": "/devices/{token}",
+      "examplePath": "/devices/1",
+      "auth": true,
+      "headers": {
+        "Authorization": "Bearer <accessToken>",
+        "Content-Type": "application/json"
+      },
+      "request": null,
+      "response": {
+        "status": 204,
+        "body": null
+      }
+    }
+  ]
+}

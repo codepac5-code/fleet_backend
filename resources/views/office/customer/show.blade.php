@@ -4,18 +4,18 @@
         <div class="row justify-content-center">
             <div class="col-xl-8 col-lg-9">
                 <div class="profile-card shadow-lg border-0 rounded-4 p-5">
-    
+
                     <!-- Header Section -->
                     <div class="profile-header text-center mb-5">
                         <div class="avatar-wrapper mb-3">
-                            <img src="{{ $customer->photo ? asset($customer->photo) : asset('default-avatar.png') }}" 
+                            <img src="{{ $customer->photo ? asset($customer->photo) : asset('default-avatar.png') }}"
                                  alt="Avatar" class="customer-avatar">
                         </div>
                         <h1 class="fw-bold mb-1">{{ $customer->firstName }} {{ $customer->lastName }}</h1>
                         <p class="text-muted mb-2"><i class="fas fa-phone-alt text-warning me-1"></i> {{ $customer->phoneNumber }}</p>
                         <p class="text-muted mb-0"><i class="fas fa-credit-card text-warning me-1"></i> حالة الدفع الأخيرة: {{ $lastPaymentStatus }}</p>
                     </div>
-    
+
                     <!-- Stats Section -->
                     <div class="stats-wrapper">
                         <div class="stat-item">
@@ -29,7 +29,7 @@
                             <h6>إجمالي المبلغ</h6>
                             <div class="stat-circle bg-gradient-2">
                                 <i class="fas fa-money-bill-wave"></i>
-                                <span>{{ number_format($totalAmount,2) }} ر.س</span>
+                                <span>{{ getPriceFormat($totalAmount,2) }} </span>
                             </div>
                         </div>
                         <div class="stat-item">
@@ -54,7 +54,7 @@
                             </div>
                         </div>
                     </div>
-    
+
                 </div>
             </div>
         </div>
@@ -63,21 +63,21 @@
     <script>
         document.querySelectorAll('.stat-circle span').forEach(el => {
     const len = el.textContent.length;
-    if(len > 5){ 
+    if(len > 5){
         el.parentElement.style.width = `${120 + len*5}px`;
         el.parentElement.style.height = `${120 + len*5}px`;
     }
 });
 
         </script>
-    
-    
+
+
     <style>
     /* Background */
     body {
         background: linear-gradient(135deg, #F3F3F3 0%, #E1E1E1 100%);
     }
-    
+
     /* Profile Card */
     .profile-card {
         background: rgba(255,255,255,0.95);
@@ -90,7 +90,7 @@
         transform: translateY(-5px);
         box-shadow: 0 30px 60px rgba(0,0,0,0.15);
     }
-    
+
     /* Avatar */
     .avatar-wrapper {
         width: 180px;
@@ -107,7 +107,7 @@
         border-radius: 50%;
         border: 6px solid #fff;
     }
-    
+
     /* Header Text */
     .profile-header h1 {
         color: #312873;
@@ -117,7 +117,7 @@
     .profile-header p {
         font-size: 1.1rem;
     }
-    
+
     /* Stats */
     .stats-wrapper {
         display: flex;
@@ -126,19 +126,19 @@
         gap: 25px;
         margin-top: 30px;
     }
-    
+
     .stat-item {
         flex: 1 1 30%;
         text-align: center;
     }
-    
+
     .stat-item h6 {
         margin-bottom: 12px;
         font-size: 1.1rem;
         color: #312873;
         letter-spacing: 0.5px;
     }
-    
+
     /* Stat Circle */
     .stat-circle {
         min-width: 120px;
@@ -159,29 +159,29 @@
         text-align: center;
         padding: 10px;
     }
-    
+
     .stat-circle i {
         font-size: 1.5rem;
         margin-bottom: 5px;
     }
-    
+
     .stat-circle span {
         font-size: 1.3rem;
     }
-    
+
     /* Hover */
     .stat-circle:hover {
         transform: scale(1.15);
         box-shadow: 0 12px 25px rgba(0,0,0,0.2);
     }
-    
+
     /* Gradients */
     .bg-gradient-1 { background: linear-gradient(135deg, #F8A609, #FFD46B); }
     .bg-gradient-2 { background: linear-gradient(135deg, #312873, #6156B7); }
     .bg-gradient-3 { background: linear-gradient(135deg, #F8A609, #FFB74D); }
     .bg-gradient-4 { background: linear-gradient(135deg, #312873, #7E6CBF); }
     .bg-gradient-5 { background: linear-gradient(135deg, #F8A609, #FFD54F); }
-    
+
     /* Responsive */
     @media(max-width: 991px){
         .profile-card { padding: 40px 25px; }
@@ -255,6 +255,5 @@ body.dark .profile-card:hover {
 }
 
     </style>
-    
+
     </x-master-layout>
-    

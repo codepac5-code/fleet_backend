@@ -3,15 +3,15 @@
     @csrf
     @method('DELETE')
     <div class="d-flex justify-content-end align-items-center">
-        
+
     @if(!$subservice->trashed())
     @if(auth()->user()->can('edit sub-service'))
     <a class="mr-2" href="{{route('sub-service.create', ['id' => $subservice->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.office') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
     @endif
 
       @if(auth()->user()->can('delete sub-service'))
-        <a class="mr-3 text-danger" href="{{ route('sub-service.destroy', $subservice->id) }}" data--submit="subservice{{$subservice->id}}" 
-            data--confirmation='true' 
+        <a class="mr-3 text-danger" href="{{ route('sub-service.destroy', $subservice->id) }}" data--submit="subservice{{$subservice->id}}"
+            data--confirmation='true'
             data--ajax="true"
             data-datatable="reload"
             data-title="{{ __('messages.delete_form_title',['form'=>  __('messages.subservice') ]) }}"

@@ -28,11 +28,12 @@ class CU_DriverPageController extends Controller
         if($driver == null){
             $pageTitle = __('messages.add_button_form',['form' => __('messages.driver')]);
             $driver = new Driver;
+            
         }
 
-        $offices = Office::all(); 
-        $countries = Country::all(); 
-        $cities = City::all(); 
+        $offices = Office::all();
+        $countries = Country::all();
+        $cities = City::all();
 
         $repository = new RepositoryCaller();
         if(auth()->user()->hasAnyRole([Roles::Super_Admin->value])){

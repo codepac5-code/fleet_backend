@@ -26,16 +26,25 @@ class ViewFleetLandingPageLogic implements Service {
     public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
 
 
-        $services = $this->repository->ServiceRepository()
-        ->readRepository()->getByConditions(['status'=>true]);
+        // $services = $this->repository->ServiceRepository()
+        // ->readRepository()->getByConditions(['status'=>true]);
 
-        $payment_methods = $this->repository->PaymentMethodRepository()
-        ->readRepository()->getByConditions(['status'=>true]);
-        
+        // $payment_methods = $this->repository->PaymentMethodRepository()
+        // ->readRepository()->getByConditions(['status'=>true]);
 
-        app()->setLocale('ar');
+        // ,compact('services' ,'payment_methods')
 
-        return view('fleet-landing-page.index',compact('services' ,'payment_methods'));
+        try {
+            $plans = \App\Models\SubscriptionPlan::query()
+                ->where('is_active', true)
+                ->orderBy('sort')
+                ->get();
+        } catch (\Throwable $e) {
+            $plans = collect();
+        }
+
+        return view('panel.fleet-landing', ['plans' => $plans]);
+        // return view('web-site.site'); // original landing (kept as backup)
 
    }
 }

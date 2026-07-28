@@ -1,23 +1,25 @@
 <?php
 namespace App\Models;
 
+use App\Traits\BelongsToOffice;
+use Illuminate\Support\Arr;
 use Laravel\Passport\HasApiTokens;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Spatie\MediaLibrary\HasMedia;
 
-class Driver extends Authenticatable
+class Driver extends Authenticatable implements HasMedia
 {
     use HasFactory, Notifiable , HasApiTokens , HasRoles ,  InteractsWithMedia  , SoftDeletes  ;
-
+    use BelongsToOffice;
     protected $table = 'drivers';
     // protected $primaryKey = 'id';
 
@@ -34,7 +36,9 @@ class Driver extends Authenticatable
         'address',
         'country',
         'city',
-        'isConected',
+        'is_online',
+        'busy',
+        'busy_reason',
         'region',
         'isActive',
         'status',
@@ -58,8 +62,7 @@ class Driver extends Authenticatable
         'driverCommissionCustomValue',
         'isOfficeCommissionCustom',
         'isFleetCommissionCustom',
-
-
+        'dialCode',
     ];
 
     protected $hidden = [
@@ -68,7 +71,7 @@ class Driver extends Authenticatable
         'is_registered',
     ];
 
-    
+
     /**
      * The channels the user receives notification broadcasts on.
      */
@@ -111,11 +114,11 @@ class Driver extends Authenticatable
     public function replies(){
         return $this->morphMany(Reply::class, 'sender');
     }
-    
+
     public function ratingsReceived()
     {
     return $this->morphMany(Rating::class, 'rated_person');
-    }   
+    }
 
     public function ratingsGiven()
     {
@@ -124,7 +127,7 @@ class Driver extends Authenticatable
 
 
     public function has_sub_service($subServiceId) : bool
-    {  
+    {
        $subServiceId = intval($subServiceId);
        $subServiceIds = $this->hasMany(Vehicle_SubService::class, 'vehicleId', 'vehicleId')
       ->where(['subServiceId'=>$subServiceId])
@@ -136,7 +139,7 @@ class Driver extends Authenticatable
     }
 
     public function getSubServicesAsArray() : array
-    {  
+    {
       return $this->hasMany(Vehicle_SubService::class, 'vehicleId', 'vehicleId')
       ->pluck('subServiceId')
       ->toArray();
@@ -153,7 +156,8 @@ class Driver extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'isConected' => 'boolean'
+            'is_online' => 'boolean',
+            'busy' => 'boolean',
         ];
     }
 

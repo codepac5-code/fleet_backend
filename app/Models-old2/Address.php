@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Address;
+
+class Address extends Model
+{
+    use HasFactory;
+    protected $fillable = [
+        'address',
+        'addressName',
+        'town',
+        'phone',
+        'description',
+        'lat',
+        'lang',
+        'userId'
+    ];
+}

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Fleet — ERD (المخطّط العلائقيّ بعد إعادة الهيكلة)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  :root{--ink:#1f2333;--muted:#5b6178;--primary:#312873;--accent:#F8A609;--line:#d9dcee;--bg:#f4f5fb;--global:#0e7490;--shard:#6d28d9}
+  @page{size:A3 landscape;margin:10mm}
+  body{font-family:'Segoe UI','Tahoma',sans-serif;color:var(--ink);font-size:12px;background:#fff}
+  .page{page-break-after:always;padding:6px 4px 14px}
+  .page:last-child{page-break-after:auto}
+  .brandbar{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--accent);padding-bottom:7px;margin-bottom:12px}
+  .brand{font-family:'Poppins','Segoe UI',sans-serif;font-weight:800;font-size:20px;color:var(--primary);direction:ltr}
+  .brand i{color:var(--accent);font-style:normal}
+  .brandbar small{color:var(--muted);font-size:11px}
+  h2{color:var(--primary);font-size:16px;display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  h2::before{content:"";width:6px;height:18px;border-radius:3px;background:linear-gradient(180deg,var(--accent),var(--primary))}
+  .tag{display:inline-block;font-size:10px;font-weight:800;border-radius:6px;padding:2px 9px;color:#fff;margin-inline-start:6px;vertical-align:middle}
+  .tag-g{background:var(--global)} .tag-s{background:var(--shard)}
+  p.lead{color:var(--muted);font-size:11.5px;margin:2px 0 10px}
+  .mermaid{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .mermaid svg{max-width:100%;height:auto}
+  /* cover */
+  .cover{height:262mm;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:linear-gradient(135deg,#241c52,#322878 60%,#46389a);color:#fff;border-radius:18px;padding:40px}
+  .cover .logo{font-family:'Poppins',sans-serif;font-weight:800;font-size:52px;direction:ltr}
+  .cover .logo i{color:var(--accent);font-style:normal}
+  .cover h1{font-size:28px;margin:20px 0 10px}
+  .cover p{font-size:14px;opacity:.85;max-width:640px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+  .legend span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700}
+  .chip-g{background:var(--global)!important;border:0!important} .chip-s{background:var(--shard)!important;border:0!important}
+  .note{background:#fff8ec;border:1px solid #f3d9a3;border-radius:10px;padding:9px 12px;font-size:11px;color:#7a5a12;margin-top:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .foot{margin-top:8px;text-align:center;color:var(--muted);font-size:10px}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="cover">
+    <div class="logo">fleet<i>.</i></div>
+    <h1>المخطّط العلائقيّ للقاعدة (ERD)</h1>
+    <p>البنية المستهدفة بعد إعادة الهيكلة — عزل عالميّ/شارد · نموذج السوق (الراكب يختار المكتب) · دفتر قيد مزدوج متعدّد العملات · إعدادات موحّدة · إشعارات وقوالب · اشتراكات · شات · تقارير وسجلّات</p>
+    <div class="legend">
+      <span class="chip-g">GLOBAL DB — مشترك بين كلّ المناطق</span>
+      <span class="chip-s">PER-SHARD DB — لكلّ دولة</span>
+      <span>Double-Entry Ledger</span>
+      <span>Marketplace</span>
+    </div>
+    <div style="margin-top:30px;font-size:12px;opacity:.7">FK المسبوقة بـ «global» تشير عبر حدود الشارد إلى القاعدة العامّة (مراجع ليّنة، لا قيود FK فيزيائيّة)</div>
+  </div>
+</div>
+
+<!-- 1 GLOBAL -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>١ · العالميّ والمراجع والعزل</small></div>
+  <h2>القاعدة العامّة + المراجع + بنية الشاردات <span class="tag tag-g">GLOBAL</span></h2>
+  <p class="lead">العملاء والمشرفون والعملات والدول وقوالب الخدمات وفئات المركبات وخطط الاشتراك وإعدادات النظام — كلّها مشتركة عالميّاً. الـ InfrastructureNode يحمل بيانات اتّصال كلّ شارد دولة.</p>
+  <pre class="mermaid">
+erDiagram
+  INFRASTRUCTURE_NODES ||--o{ INFRASTRUCTURE_NODES : "parent_id"
+  COUNTRIES ||--o{ INFRASTRUCTURE_NODES : "country_code"
+  CURRENCIES ||--o{ COUNTRIES : "currency_code"
+  COUNTRIES ||--o{ USERS : "current_country"
+  SERVICES ||--o{ VEHICLE_CLASSES : "service_id"
+  SUBSCRIPTION_PLANS ||--o{ PLAN_COMMISSION_TIERS : "plan_id"
+
+  INFRASTRUCTURE_NODES {
+    bigint id PK
+    string type "country|zone|shard"
+    bigint parent_id FK
+    string country_code
+    string db_host
+    string db_name
+    string redis_prefix
+    bool is_active
+  }
+  COUNTRIES {
+    bigint id PK
+    string iso2 UK
+    string currency_code FK
+    string timezone
+    bool is_active
+  }
+  CURRENCIES {
+    bigint id PK
+    string code UK
+    string symbol
+    tinyint decimals
+    decimal exchange_rate
+  }
+  USERS {
+    bigint id PK
+    string phone UK
+    string current_country FK
+    string status
+  }
+  ADMINS {
+    bigint id PK
+    string email UK
+    string role
+  }
+  SERVICES {
+    bigint id PK
+    string key "ride|premium|travel"
+    string pricing_style "meter|fixed"
+    bool is_active
+  }
+  VEHICLE_CLASSES {
+    bigint id PK
+    bigint service_id FK
+    string key "standard|comfort|ev|suv|van|luxury|ultra"
+    bool guaranteed_need
+  }
+  SUBSCRIPTION_PLANS {
+    bigint id PK
+    string key "free|starter|business|scale|enterprise"
+    bigint price_minor
+    string currency_code
+  }
+  PLAN_COMMISSION_TIERS {
+    bigint id PK
+    bigint plan_id FK
+    decimal fleet_commission_rate
+  }
+  SYSTEM_SETTINGS {
+    bigint id PK
+    string scope "global|region:{code}"
+    string key
+    json value
+    string data_type
+    int version
+  }
+  NOTIFICATION_TEMPLATES {
+    bigint id PK
+    string key UK
+    string channel "inapp|push|email"
+    json subject_i18n
+    json body_i18n
+  }
+  </pre>
+</div>
+
+<!-- 2 IDENTITY -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٢ · المكاتب والسائقون والمركبات</small></div>
+  <h2>الكيانات التشغيليّة <span class="tag tag-s">PER-SHARD</span></h2>
+  <p class="lead">المكاتب (المشغّلون) هي محور السوق؛ السائق ينتمي لمكتب (يُربط عبر دعوة/موافقة)، والمركبة لها فئة عالميّة. الاشتراك يربط المكتب بخطّة عالميّة وبنسبة عمولة منصّة.</p>
+  <pre class="mermaid">
+erDiagram
+  OFFICES ||--o{ EMPLOYEES : "office_id"
+  OFFICES ||--o{ DRIVERS : "office_id"
+  OFFICES ||--o{ VEHICLES : "office_id"
+  DRIVERS ||--o| VEHICLES : "assigned vehicle_id"
+  OFFICES ||--o{ OFFICE_DOCUMENTS : "office_id"
+  DRIVERS ||--o{ DRIVER_DOCUMENTS : "driver_id"
+  OFFICES ||--o{ OFFICE_SUBSCRIPTIONS : "office_id"
+  DRIVERS ||--o| DRIVER_PRESENCE : "driver_id"
+
+  OFFICES {
+    bigint id PK
+    string name
+    string email UK
+    bool is_verified
+    string support_hours
+    string status
+  }
+  EMPLOYEES {
+    bigint id PK
+    bigint office_id FK
+    string email
+    string role
+  }
+  DRIVERS {
+    bigint id PK
+    bigint office_id FK
+    bigint vehicle_id FK
+    string phone UK
+    string status "online|busy|offline"
+    bool is_connected
+    decimal rating
+    bool is_active
+  }
+  VEHICLES {
+    bigint id PK
+    bigint office_id FK
+    bigint vehicle_class_id "FK global"
+    string plate
+    bool is_ev
+    string color
+  }
+  OFFICE_DOCUMENTS {
+    bigint id PK
+    bigint office_id FK
+    string type
+    string status
+  }
+  DRIVER_DOCUMENTS {
+    bigint id PK
+    bigint driver_id FK
+    string type
+    date expires_at
+  }
+  OFFICE_SUBSCRIPTIONS {
+    bigint id PK
+    bigint office_id FK
+    bigint plan_id "FK global"
+    decimal commission_rate "snapshot"
+    string status
+    date period_end
+  }
+  DRIVER_PRESENCE {
+    bigint driver_id PK
+    decimal lat
+    decimal lng
+    string geohash
+    timestamp heartbeat_at
+  }
+  </pre>
+  <div class="note"><b>ملاحظة عزل:</b> <code>vehicle_class_id</code> و<code>plan_id</code> يشيران إلى جداول عالميّة (مراجع ليّنة عبر الشارد). حضور السائق (presence) مرآة دائمة لفهرس Redis GEO المستخدم وقت التشغيل.</div>
+</div>
+
+<!-- 3 CATALOG -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٣ · الخدمات والفئات والتسعير</small></div>
+  <h2>كتالوج السوق والتسعير <span class="tag tag-s">PER-SHARD</span></h2>
+  <p class="lead">كلّ مكتب يفعّل خدمات ويسعّر فئاتها: عدّاد (Ride/Premium) عبر أسعار فتح/كم/دقيقة، وثابت (Travel) عبر مسارات A‑to‑Z. نوع المسار يُكشف خلفيّاً ولا يُختار.</p>
+  <pre class="mermaid">
+erDiagram
+  OFFICES ||--o{ OFFICE_SERVICES : "office_id"
+  OFFICES ||--o{ OFFICE_CLASS_PRICING : "office_id"
+  OFFICES ||--o{ FIXED_ROUTES : "office_id"
+  OFFICES ||--o{ COUPONS : "office_id"
+  CITIES ||--o{ FIXED_ROUTES : "from_city_id"
+  CITIES ||--o{ REGIONS : "region_id"
+
+  OFFICE_SERVICES {
+    bigint id PK
+    bigint office_id FK
+    bigint service_id "FK global"
+    bool is_active
+  }
+  OFFICE_CLASS_PRICING {
+    bigint id PK
+    bigint office_id FK
+    bigint service_id "FK global"
+    bigint vehicle_class_id "FK global"
+    bigint open_minor
+    bigint km_minor
+    bigint minute_minor
+    string currency_code
+  }
+  FIXED_ROUTES {
+    bigint id PK
+    bigint office_id FK
+    bigint vehicle_class_id "FK global"
+    bigint from_city_id FK
+    bigint to_city_id FK
+    bigint price_minor
+    string currency_code
+    bool is_published
+  }
+  COUPONS {
+    bigint id PK
+    bigint office_id FK
+    string code
+    string type "percent|fixed"
+    bigint value
+    bigint budget_minor
+    bool is_active
+  }
+  REGIONS {
+    bigint id PK
+    string name
+    bigint country_id "FK global"
+  }
+  CITIES {
+    bigint id PK
+    bigint region_id FK
+    string name
+  }
+  </pre>
+</div>
+
+<!-- 4 BOOKINGS -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٤ · الرحلات والإسناد</small></div>
+  <h2>الحجوزات والإسناد ضمن نطاق المكتب <span class="tag tag-s">PER-SHARD</span></h2>
+  <p class="lead">الراكب يختار المكتب أوّلاً، فيُسند المكتب سائقاً عبر عروض متتابعة (offers) مع مطالبة ذرّيّة. سجلّ المراحل يلتقط الانتقالات؛ التقييم مزدوج (سائق + مكتب).</p>
+  <pre class="mermaid">
+erDiagram
+  OFFICES ||--o{ BOOKINGS : "office_id"
+  DRIVERS ||--o{ BOOKINGS : "driver_id"
+  BOOKINGS ||--o{ BOOKING_OFFERS : "booking_id"
+  DRIVERS ||--o{ BOOKING_OFFERS : "driver_id"
+  BOOKINGS ||--o{ TRIP_EVENTS : "booking_id"
+  BOOKINGS ||--o{ RATINGS : "booking_id"
+  OFFICES ||--o{ FAVORITE_OFFICES : "office_id"
+
+  BOOKINGS {
+    bigint id PK
+    bigint user_id "FK global"
+    bigint office_id FK
+    bigint driver_id FK
+    bigint service_id "FK global"
+    bigint vehicle_class_id "FK global"
+    string pricing_style "meter|fixed"
+    string route_type "local|airport|intercity"
+    string status
+    bool is_scheduled
+    bigint fare_minor
+    bigint discount_minor
+    bigint total_minor
+    string currency_code
+    string payment_method
+    string payment_status
+    timestamp assigned_at
+    timestamp accepted_at
+    timestamp started_at
+    timestamp ended_at
+  }
+  BOOKING_OFFERS {
+    bigint id PK
+    bigint booking_id FK
+    bigint driver_id FK
+    string status "offered|accepted|expired"
+    int wave
+    timestamp expires_at
+  }
+  TRIP_EVENTS {
+    bigint id PK
+    bigint booking_id FK
+    string stage
+    json payload
+    timestamp at
+  }
+  RATINGS {
+    bigint id PK
+    bigint booking_id FK
+    string target "driver|office"
+    bigint user_id "FK global"
+    tinyint stars
+    json tags
+  }
+  FAVORITE_OFFICES {
+    bigint id PK
+    bigint user_id "FK global"
+    bigint office_id FK
+  }
+  </pre>
+</div>
+
+<!-- 5 FINANCIAL -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٥ · الدفتر الماليّ والدفع</small></div>
+  <h2>دفتر القيد المزدوج + المدفوعات <span class="tag tag-s">PER-SHARD</span></h2>
+  <p class="lead">كلّ حركة = معاملة متوازنة من قيود مدين/دائن غير قابلة للتعديل، بوحدات صغرى ولكلّ عملة. العمولة مجمّدة في snapshot؛ المحفظة إسقاط من الدفتر؛ المدفوعات والسحوبات بمراجع مزوّد ومطابقة.</p>
+  <pre class="mermaid">
+erDiagram
+  LEDGER_TRANSACTIONS ||--|{ LEDGER_ENTRIES : "transaction_id"
+  LEDGER_ACCOUNTS ||--o{ LEDGER_ENTRIES : "account_id"
+  BOOKINGS ||--o| COMMISSION_SNAPSHOTS : "booking_id"
+  BOOKINGS ||--o{ PAYMENTS : "booking_id"
+  PAYMENTS ||--o{ REFUNDS : "payment_id"
+  PAYMENT_METHODS ||--o{ PAYMENTS : "payment_method_id"
+  CORPORATE_ACCOUNTS ||--o{ CORPORATE_INVOICES : "corporate_id"
+
+  LEDGER_ACCOUNTS {
+    bigint id PK
+    string owner_type
+    bigint owner_id
+    string account_type "wallet|escrow|dues|revenue|psp|payout"
+    string currency_code
+    bigint balance_minor
+    string code
+  }
+  LEDGER_TRANSACTIONS {
+    bigint id PK
+    uuid uuid UK
+    string idempotency_key UK
+    string reference_type
+    bigint reference_id
+    string kind
+    string currency_code
+    string status "posted|reversed"
+    timestamp posted_at
+  }
+  LEDGER_ENTRIES {
+    bigint id PK
+    bigint transaction_id FK
+    bigint account_id FK
+    string direction "debit|credit"
+    bigint amount_minor
+    bigint balance_after_minor
+  }
+  COMMISSION_SNAPSHOTS {
+    bigint id PK
+    bigint booking_id UK
+    bigint fleet_minor
+    bigint office_minor
+    bigint driver_minor
+    string subscription_plan
+  }
+  WALLET_BALANCES {
+    bigint id PK
+    string owner_type
+    bigint owner_id
+    string currency_code
+    bigint balance_minor "projection"
+  }
+  PAYMENTS {
+    bigint id PK
+    bigint booking_id FK
+    bigint payment_method_id FK
+    string provider "stripe|syriatel|mtn|cash|wallet"
+    string provider_ref
+    string idempotency_key UK
+    string status
+    bigint amount_minor
+  }
+  PAYMENT_METHODS {
+    bigint id PK
+    bigint user_id "FK global"
+    string type "card|applepay|wallet|corporate"
+    string token
+    bool is_default
+  }
+  REFUNDS {
+    bigint id PK
+    bigint payment_id FK
+    bigint amount_minor
+    string status
+    string reason
+  }
+  PAYOUTS {
+    bigint id PK
+    string owner_type "driver|office"
+    bigint owner_id
+    bigint amount_minor
+    string psp_ref
+    string status "requested|paid|failed"
+  }
+  CORPORATE_ACCOUNTS {
+    bigint id PK
+    string company
+    bigint preferred_office_id FK
+    string billing_cycle
+  }
+  CORPORATE_INVOICES {
+    bigint id PK
+    bigint corporate_id FK
+    bigint amount_minor
+    string status
+    date period
+  }
+  </pre>
+  <div class="note"><b>الثابت:</b> لكلّ معاملة وكلّ عملة Σ مدين = Σ دائن. <code>WALLET_BALANCES</code> إسقاط يُعاد بناؤه من الدفتر. <code>reference_type/id</code> مرجع متعدّد الأشكال (Booking/Payout/TopUp).</div>
+</div>
+
+<!-- 6 SUPPORT/CHAT/NOTIF -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٦ · الدعم والشات والإشعارات</small></div>
+  <h2>الدعم بطبقتين · الشات المُقنّع · الإشعارات <span class="tag tag-s">PER-SHARD</span> + قوالب <span class="tag tag-g">GLOBAL</span></h2>
+  <p class="lead">التذاكر بطبقتين (مكتب/فليت). الشات راكب↔سائق مُقنّع لكلّ رحلة. الإشعارات في قاعدة البيانات عبر قنوات (in‑app/FCM/email) تُبنى من قوالب عالميّة متعدّدة اللغات مع تفضيلات وأجهزة.</p>
+  <pre class="mermaid">
+erDiagram
+  TICKETS ||--o{ TICKET_MESSAGES : "ticket_id"
+  BOOKINGS ||--o| TICKETS : "booking_id"
+  BOOKINGS ||--o| CHAT_THREADS : "booking_id"
+  CHAT_THREADS ||--o{ CHAT_MESSAGES : "thread_id"
+  NOTIFICATION_TEMPLATES ||--o{ NOTIFICATIONS : "template_key"
+
+  TICKETS {
+    bigint id PK
+    string layer "office|fleetos"
+    bigint booking_id FK
+    string category
+    string status
+    string requester_type "user|driver|office"
+    bigint requester_id
+  }
+  TICKET_MESSAGES {
+    bigint id PK
+    bigint ticket_id FK
+    string sender_type
+    bigint sender_id
+    text body
+    bool internal
+  }
+  CHAT_THREADS {
+    bigint id PK
+    bigint booking_id FK
+    bigint user_id "FK global"
+    bigint driver_id FK
+    bool masked
+  }
+  CHAT_MESSAGES {
+    bigint id PK
+    bigint thread_id FK
+    string sender "user|driver"
+    text body
+    timestamp read_at
+  }
+  NOTIFICATIONS {
+    bigint id PK
+    string notifiable_type
+    bigint notifiable_id
+    string template_key "FK global"
+    string channel
+    json data
+    timestamp read_at
+  }
+  NOTIFICATION_PREFERENCES {
+    bigint id PK
+    string owner_type
+    bigint owner_id
+    json channels
+  }
+  DEVICE_TOKENS {
+    bigint id PK
+    string owner_type "user|driver"
+    bigint owner_id
+    string fcm_token UK
+    string platform
+  }
+  </pre>
+</div>
+
+<!-- 7 SETTINGS/SUBS/LOGS -->
+<div class="page">
+  <div class="brandbar"><span class="brand">fleet<i>.</i></span><small>٧ · الإعدادات والاشتراكات والسجلّات</small></div>
+  <h2>إعدادات موحّدة · اشتراكات · تقارير وسجلّات</h2>
+  <div class="grid2">
+    <div>
+      <p class="lead">جدول إعدادات واحد مُصنّف ومُؤرشف بالنطاق (يستبدل ٧ جداول متفرّقة). الاشتراكات تربط المكتب بخطّة عالميّة. سجلّات تدقيق ونشاط غير قابلة للتعديل.</p>
+      <pre class="mermaid">
+erDiagram
+  SUBSCRIPTION_PLANS ||--o{ OFFICE_SUBSCRIPTIONS : "plan_id"
+  OFFICES ||--o{ OFFICE_SUBSCRIPTIONS : "office_id"
+
+  SETTINGS {
+    bigint id PK
+    string scope "global|region|office:{id}"
+    string key
+    json value
+    string data_type
+    int version
+  }
+  OFFICE_SUBSCRIPTIONS {
+    bigint id PK
+    bigint office_id FK
+    bigint plan_id "FK global"
+    decimal commission_rate
+    string status
+    date period_end
+  }
+  AUDIT_LOGS {
+    bigint id PK
+    string actor_type
+    bigint actor_id
+    string action
+    string subject_type
+    bigint subject_id
+    json changes
+    timestamp at
+  }
+  ACTIVITY_LOGS {
+    bigint id PK
+    string channel
+    string event
+    json context
+    timestamp at
+  }
+  </pre>
+    </div>
+    <div>
+      <h2 style="font-size:14px">جسر السوق + الماليّ</h2>
+      <p class="lead">كيف ترتبط المجالات في السيناريو الكامل:</p>
+      <pre class="mermaid">
+flowchart TB
+  U["USERS (global)"] -->|يختار| O["OFFICES"]
+  O -->|تسعّر| P["OFFICE_CLASS_PRICING / FIXED_ROUTES"]
+  U -->|يطلب| B["BOOKINGS"]
+  O -->|تُسند عبر offers| B
+  B --> CS["COMMISSION_SNAPSHOTS"]
+  B -->|escrow hold| L["LEDGER_TRANSACTIONS"]
+  L -->|release ثلاثيّ| RA["revenue: fleet/office + wallet: driver"]
+  OS["OFFICE_SUBSCRIPTIONS"] -->|نسبة العمولة| CS
+  B --> PAY["PAYMENTS"]
+  PAY --> L
+  classDef g fill:#0e7490,color:#fff,stroke:#0a5566;
+  classDef s fill:#6d28d9,color:#fff,stroke:#4c1d95;
+  class U g;
+  class O,P,B,CS,L,RA,OS,PAY s;
+  </pre>
+    </div>
+  </div>
+  <div class="foot">منصّة Fleet — ERD البنية المستهدفة · مسوّدة معماريّة · العقد عالميّة = أزرق، شارد = بنفسجيّ</div>
+</div>
+
+<script src="mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad:true,
+    theme:'base',
+    er:{layoutDirection:'LR',entityPadding:8,fontSize:11},
+    themeVariables:{
+      primaryColor:'#ece9f7',primaryBorderColor:'#312873',primaryTextColor:'#1f2333',
+      lineColor:'#8a83b8',fontFamily:'Segoe UI, Tahoma, sans-serif'
+    }
+  });
+</script>
+</body>
+</html>

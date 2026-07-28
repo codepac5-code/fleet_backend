@@ -1,0 +1,2280 @@
+openapi: 3.1.0
+info:
+  title: Fleet Ride API
+  version: 2.0.0
+  description: >
+    Model-backed contract for the Fleet Ride rider app, derived from
+    `docs/API_MODEL_MAPPED.md` (every attribute is a real column verified against
+    `docs/Models/*.php` and `docs/migrations/*.php`).
+
+
+    Transport: REST/HTTPS + a Socket.IO realtime gateway (handshake
+    `auth:{ token, country }`) for the live trip — see `docs/realtime (1).md` and
+    `docs/RIDER_REALTIME_EVENTS.md`. Every REST response uses the `ApiResponse`
+    envelope (Socket.IO frames are raw, not enveloped).
+
+
+    Money: **integer minor units** (`*_minor`) paired with a sibling
+    `currency_code` (`currencies.code`, e.g. `QAR`, `decimals=2`). Legacy
+    `double` money columns are never used by this API.
+
+
+    Localization: send `Accept-Language: en | ar`; the resolved language is
+    persisted per user (`rider_profiles.locale`, fallback `users.current_country`)
+    and echoed as `locale` on every response. Bilingual `*_ar`/`*_en` columns are
+    collapsed server-side to the single resolved string.
+
+
+    Payments: Stripe. Raw PAN/CVV never reach Fleet Ride — cards are tokenized
+    client-side. Add-card = SetupIntent; pay/top-up = PaymentIntent (3DS/SCA via
+    `requiresAction`).
+
+servers:
+- url: https://fleetapp.net/v1
+security:
+- bearerAuth: []
+tags:
+- name: Auth
+  description: Passport (`oauth_*`) OTP login, registration, token refresh, account deletion.
+- name: Profile
+  description: '`users` + `rider_profiles`: identity, saved places, safety contacts, preferences.'
+- name: Marketplace
+  description: Office discovery and favorites (`offices`, `favorite_offices`, `office_sub_service_prices`).
+- name: Booking
+  description: Service catalog, place suggestions and route/fare estimation.
+- name: Trips
+  description: Trip history, receipts, lost items and ratings (`ride_bookings`, `ride_ratings`, `lost_items`).
+- name: Wallet
+  description: Balance, top-up and ledger (`wallet_balances`, `wallet_transactions`, `ledger_payments`).
+- name: Payments
+  description: Saved cards, promos and Stripe intents (`rider_payment_methods`, `coupons`).
+- name: Support
+  description: Tickets, complaints and help articles.
+- name: Scheduled
+  description: Scheduled rides (`ride_bookings` where `scheduled_at` is set).
+- name: B2B
+  description: Corporate invoices and family members.
+- name: Notifications
+  description: In-app notification center (`app_notifications`) and push-token registration (`app_device_tokens`).
+- name: Realtime
+  description: >
+    Socket.IO realtime gateway (authoritative contract: `docs/realtime (1).md`;
+    full rider catalog + payloads: `docs/RIDER_REALTIME_EVENTS.md`). Connect to
+    `wss://<host>:<FLEET_RT_PORT>` with handshake `auth:{ token, country }`
+    (`country` = ISO-2, same as `X-Country`). Frames are raw JSON (NOT wrapped in
+    `ApiResponse`) and arrive as `"{channel}:{eventType}"`.
+
+    **Receive-only for domain events.** The only client→server messages are
+    `subscribe` / `unsubscribe` (acknowledged — join only on `{authorized:true}`).
+    Every action is REST (this spec); the gateway then pushes the resulting event.
+    Re-subscribe on each (re)connect and snapshot via REST — Redis pub/sub does
+    not replay missed events. Rooms: `user.{id}` (whole session) and
+    `booking.{id}` (active ride; leave on a terminal status + `ride.released`).
+
+    Server→client on `booking.{id}`: `booking.status_changed`,
+    `dispatch.ride_assigned`, `driver.location`, `booking.chat_message`,
+    `ride.released`, and `booking.meter` (live fare — **proposed**, Q-2).
+    Server→client on `user.{id}`: `booking.status_changed`,
+    `dispatch.ride_assigned`, `notification.created` (**proposed**, Q-6),
+    `chat.message_created`, `support.message_created`, `wallet.credited`,
+    `payment.succeeded`, `rating.received`.
+
+paths:
+
+  # ─────────────────────────── Auth ───────────────────────────
+  /auth/otp/request:
+    post:
+      tags: [Auth]
+      summary: Send an OTP to a phone number
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OtpRequest' }
+      responses:
+        '200':
+          description: OTP challenge issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/OtpChallenge' }
+        '429': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify an OTP and issue a Passport token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OtpVerify' }
+      responses:
+        '200':
+          description: Authenticated session
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/AuthSession' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Complete registration after OTP verification
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200':
+          description: Authenticated session
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/AuthSession' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange a refresh token for a new token pair
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string, description: '`oauth_refresh_tokens`' }
+      responses:
+        '200':
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/TokenPair' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /auth/phone/change:
+    post:
+      tags: [Auth]
+      summary: Request an OTP to change the account phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dialCode, phone]
+              properties:
+                dialCode: { type: string, description: '`users.dialCode`' }
+                phone: { type: string, description: '`users.phoneNumber`' }
+      responses:
+        '200':
+          description: OTP challenge issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/OtpChallenge' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke the current access token
+      responses:
+        '204': { description: Logged out }
+        default: { $ref: '#/components/responses/Error' }
+
+  /account:
+    delete:
+      tags: [Auth]
+      summary: Soft-delete the account (`users.deleted_at`)
+      responses:
+        '204': { description: Account deleted }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Profile ───────────────────────────
+  /me:
+    get:
+      tags: [Profile]
+      summary: Get the current user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/User' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [Profile]
+      summary: Update the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserUpdate' }
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/User' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/places:
+    get:
+      tags: [Profile]
+      summary: List saved places
+      responses:
+        '200':
+          description: Saved places
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/SavedPlace' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Profile]
+      summary: Create a saved place
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SavedPlaceInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/SavedPlace' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/places/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    patch:
+      tags: [Profile]
+      summary: Update a saved place
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SavedPlaceInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/SavedPlace' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Profile]
+      summary: Delete a saved place
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/safety-contacts:
+    get:
+      tags: [Profile]
+      summary: List safety contacts
+      responses:
+        '200':
+          description: Safety contacts
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/SafetyContactsResponse' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Profile]
+      summary: Add a safety contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SafetyContactInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/SafetyContact' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/safety-contacts/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    delete:
+      tags: [Profile]
+      summary: Delete a safety contact
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/safety-contacts/auto-share:
+    patch:
+      tags: [Profile]
+      summary: Toggle auto-share of live trip with safety contacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean, description: '`safety_contacts.auto_share`' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        enabled: { type: boolean }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/notifications-prefs:
+    get:
+      tags: [Profile]
+      summary: Get notification preferences
+      description: 'Served from `system_settings.value` json (key `notif_prefs.<userId>`); no dedicated table.'
+      responses:
+        '200':
+          description: Preferences
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/NotificationPrefs' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [Profile]
+      summary: Update notification preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationPrefs' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/NotificationPrefs' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/privacy:
+    get:
+      tags: [Profile]
+      summary: Get privacy settings
+      description: 'Served from `system_settings.value` json; no dedicated table.'
+      responses:
+        '200':
+          description: Privacy settings
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/PrivacySettings' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [Profile]
+      summary: Update privacy settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PrivacySettings' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/PrivacySettings' }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Marketplace ───────────────────────────
+  /offices/search:
+    post:
+      tags: [Marketplace]
+      summary: Search offices along a route
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [route]
+              properties:
+                route: { $ref: '#/components/schemas/Route' }
+      responses:
+        '200':
+          description: Matching offices
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/OfficeSearchResponse' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /offices/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Marketplace]
+      summary: Get an office profile
+      responses:
+        '200':
+          description: Office profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/OfficeProfile' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/favorites:
+    get:
+      tags: [Marketplace]
+      summary: List favorite offices
+      responses:
+        '200':
+          description: Favorites
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/FavoriteOffice' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /me/favorites/{officeId}:
+    parameters:
+    - name: officeId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+      description: '`favorite_offices.office_id`'
+    post:
+      tags: [Marketplace]
+      summary: Add an office to favorites
+      responses:
+        '204': { description: Added }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Marketplace]
+      summary: Remove an office from favorites
+      responses:
+        '204': { description: Removed }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Booking / Catalog ───────────────────────────
+  /catalog/services:
+    get:
+      tags: [Booking]
+      summary: List service definitions (dynamic, admin-driven)
+      responses:
+        '200':
+          description: Service catalog
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/ServiceCatalog' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /catalog/classes:
+    get:
+      tags: [Booking]
+      summary: List service classes for a service
+      parameters:
+      - name: service
+        in: query
+        required: true
+        schema: { type: string }
+        description: '`sub_services.serviceId`'
+      responses:
+        '200':
+          description: Class cards
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        classes:
+                          type: array
+                          items: { $ref: '#/components/schemas/ClassCard' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /places/suggest:
+    get:
+      tags: [Booking]
+      summary: Autocomplete place suggestions
+      description: Recent from `ride_bookings`, saved from `saved_places`, plus geocoder results.
+      parameters:
+      - { name: q, in: query, schema: { type: string } }
+      - { name: lat, in: query, schema: { type: number, format: double } }
+      - { name: lng, in: query, schema: { type: number, format: double } }
+      responses:
+        '200':
+          description: Suggestions
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        results:
+                          type: array
+                          items: { $ref: '#/components/schemas/PlaceSuggestion' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /routes/estimate:
+    post:
+      tags: [Booking]
+      summary: Estimate a route and fares
+      description: Fares computed from `sub_services.openPrice`/`kmPrice`/`minutePrice` and `office_sub_service_prices` overrides.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pickup, dropoff]
+              properties:
+                pickup: { $ref: '#/components/schemas/LatLng' }
+                dropoff: { $ref: '#/components/schemas/LatLng' }
+      responses:
+        '200':
+          description: Route estimate
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/RouteEstimate' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /geocode/reverse:
+    post:
+      tags: [Booking]
+      summary: Reverse-geocode coordinates to an address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat: { type: number, format: double }
+                lng: { type: number, format: double }
+      responses:
+        '200':
+          description: Address
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        address: { type: string }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Trips ───────────────────────────
+  /bookings:
+    post:
+      tags: [Booking]
+      summary: Create a ride
+      description: >
+        Inserts a `ride_bookings` row (`status=matching`, or `scheduled` when
+        `scheduled_at` is set) and starts dispatch. The gateway then emits
+        `booking.status_changed` (`matching`) on `user.{id}`/`booking.{id}`
+        (drivers get `dispatch.offer_created`). Subscribe `booking.{id}` on the
+        returned `id`. `pickup_note` is a free-text hint persisted for the driver.
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingInput' }
+      responses:
+        '201':
+          description: Ride created (status=matching)
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/RideBooking' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /bookings/{id}/cancel:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Booking]
+      summary: Rider cancels the ride
+      description: >
+        Sets `ride_bookings.status=cancelled` (+ `cancelled_at`, `cancel_reason`,
+        `source=rider`) and emits `booking.status_changed` (`cancelled`).
+        Unsubscribe `booking.{id}` after the terminal event.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingCancelInput' }
+      responses:
+        '200':
+          description: Ride cancelled
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/RideBooking' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /trips:
+    get:
+      tags: [Trips]
+      summary: List trips
+      parameters:
+      - name: status
+        in: query
+        schema: { type: string }
+        description: '`ride_bookings.status`'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Trip page
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/TripPage' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /trips/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Trips]
+      summary: Get a trip receipt
+      responses:
+        '200':
+          description: Receipt
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/Receipt' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /trips/{id}/lost-item:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Trips]
+      summary: Report a lost item on a trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LostItemInput' }
+      responses:
+        '201':
+          description: Ticket reference
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/TicketRef' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /trips/{id}/rating:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Trips]
+      summary: Rate a trip (driver + office)
+      description: Writes two `ride_ratings` rows — one for the driver, one for the office.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RatingRequest' }
+      responses:
+        '200':
+          description: Rated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/Ok' }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Wallet ───────────────────────────
+  /wallet:
+    get:
+      tags: [Wallet]
+      summary: Get wallet balance
+      responses:
+        '200':
+          description: Wallet
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/Wallet' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /wallet/topup:
+    post:
+      tags: [Wallet]
+      summary: Top up the wallet
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, paymentMethodId]
+              properties:
+                amount:
+                  type: integer
+                  format: int64
+                  description: 'Minor units → `ledger_payments.amount_minor`'
+                paymentMethodId:
+                  type: integer
+                  format: int64
+                  description: '`rider_payment_methods.id`'
+      responses:
+        '200':
+          description: Top-up result (may require Stripe 3DS)
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/TopUpResult' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /wallet/transactions:
+    get:
+      tags: [Wallet]
+      summary: List wallet transactions
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Transaction page
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/TransactionPage' }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Payments ───────────────────────────
+  /payment-methods:
+    get:
+      tags: [Payments]
+      summary: List saved payment methods
+      responses:
+        '200':
+          description: Payment methods
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/PaymentMethod' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Payments]
+      summary: Save a confirmed Stripe payment method
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stripePaymentMethodId]
+              properties:
+                stripePaymentMethodId:
+                  type: string
+                  description: '`rider_payment_methods.stripe_payment_method_id`'
+                setDefault:
+                  type: boolean
+                  description: '`rider_payment_methods.is_default`'
+      responses:
+        '201':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/PaymentMethod' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /payment-methods/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    patch:
+      tags: [Payments]
+      summary: Set a payment method as default
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                default: { type: boolean, description: '`rider_payment_methods.is_default`' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/PaymentMethod' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Payments]
+      summary: Delete a payment method
+      responses:
+        '204': { description: Deleted }
+        default: { $ref: '#/components/responses/Error' }
+
+  /promos:
+    get:
+      tags: [Payments]
+      summary: List available promos
+      responses:
+        '200':
+          description: Promo list
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/PromoList' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /promos/redeem:
+    post:
+      tags: [Payments]
+      summary: Redeem a promo code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, description: '`coupons.code`' }
+      responses:
+        '200':
+          description: Redemption result
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/PromoRedeemResult' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /payments/stripe/setup-intent:
+    post:
+      tags: [Payments]
+      summary: Create a Stripe SetupIntent (add-card flow)
+      responses:
+        '200':
+          description: SetupIntent client secret
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/StripeSetupIntent' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /payments/stripe/payment-intent:
+    post:
+      tags: [Payments]
+      summary: Create a Stripe PaymentIntent (top-up or trip)
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, purpose]
+              properties:
+                amount: { type: integer, format: int64, description: Minor units }
+                purpose: { type: string, enum: [topup, trip] }
+                tripId: { type: integer, format: int64, description: '`ride_bookings.id`' }
+                paymentMethodId: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: PaymentIntent (may require 3DS)
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/StripePaymentIntent' }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Support ───────────────────────────
+  /tickets:
+    get:
+      tags: [Support]
+      summary: List support tickets
+      responses:
+        '200':
+          description: Tickets
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/Ticket' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Support]
+      summary: Open a support ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TicketInput' }
+      responses:
+        '201':
+          description: Ticket reference
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/TicketRef' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /tickets/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Support]
+      summary: Get a ticket with its messages
+      responses:
+        '200':
+          description: Ticket
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/Ticket' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /complaints:
+    post:
+      tags: [Support]
+      summary: File a complaint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ComplaintInput' }
+      responses:
+        '201':
+          description: Complaint result
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/ComplaintResult' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /help/articles:
+    get:
+      tags: [Support]
+      summary: List help articles
+      parameters:
+      - name: category
+        in: query
+        schema: { type: string }
+        description: '`help_suggestions.category`'
+      responses:
+        '200':
+          description: Article summaries
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/ArticleSummary' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /help/articles/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Support]
+      summary: Get a help article
+      responses:
+        '200':
+          description: Article
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/Article' }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Scheduled ───────────────────────────
+  /scheduled:
+    post:
+      tags: [Scheduled]
+      summary: Schedule a ride
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduledInput' }
+      responses:
+        '201':
+          description: Scheduled trip
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/ScheduledTrip' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /scheduled/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Scheduled]
+      summary: Get a scheduled trip
+      responses:
+        '200':
+          description: Scheduled trip
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/ScheduledTrip' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [Scheduled]
+      summary: Modify a scheduled trip (bumps `change_revision`)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduledInput' }
+      responses:
+        '200':
+          description: Updated scheduled trip
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/ScheduledTrip' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Scheduled]
+      summary: Cancel a scheduled trip
+      description: Sets `cancelled_at` and `cancel_reason`.
+      responses:
+        '204': { description: Cancelled }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── B2B ───────────────────────────
+  /corporate/invoices:
+    get:
+      tags: [B2B]
+      summary: List corporate invoices
+      responses:
+        '200':
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/InvoicesResponse' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /family/members:
+    get:
+      tags: [B2B]
+      summary: List family members
+      responses:
+        '200':
+          description: Family members
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/FamilyMember' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [B2B]
+      summary: Add a family member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FamilyMemberInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/FamilyMember' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /family/members/{id}:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    patch:
+      tags: [B2B]
+      summary: Update a family member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FamilyMemberInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/FamilyMember' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [B2B]
+      summary: Remove a family member
+      responses:
+        '204': { description: Removed }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Trips: in-ride chat ───────────────────────────
+  /trips/{id}/messages:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Trips]
+      summary: List in-ride chat messages for a trip
+      description: History from `booking_chat_messages` where `booking_id = {id}`. Live messages arrive over Socket.IO as `booking.{id}:booking.chat_message`.
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Chat message page
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/ChatMessagePage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Trips]
+      summary: Send an in-ride chat message
+      description: Inserts a `booking_chat_messages` row (`from_type='rider'`). Numbers stay masked; delivery is echoed over Socket.IO as `booking.{id}:booking.chat_message`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatMessageInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/ChatMessage' }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Notifications ───────────────────────────
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List in-app notifications
+      description: '`app_notifications` where `notifiable_id = <user>`; rendered per resolved `locale`.'
+      parameters:
+      - name: unread
+        in: query
+        schema: { type: boolean }
+        description: When true, return only notifications with `read_at = null`.
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Notification page
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/NotificationPage' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /notifications/{id}/read:
+    parameters:
+    - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Notifications]
+      summary: Mark a notification as read
+      description: Sets `app_notifications.read_at`.
+      responses:
+        '200':
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/AppNotification' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      description: Sets `read_at` on every unread `app_notifications` row for the user.
+      responses:
+        '200':
+          description: Count of notifications marked read
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        updated: { type: integer, description: Rows marked read }
+        default: { $ref: '#/components/responses/Error' }
+
+  # ─────────────────────────── Devices (push tokens) ───────────────────────────
+  /devices:
+    post:
+      tags: [Notifications]
+      summary: Register (upsert) a push device token
+      description: Upserts `app_device_tokens` on the unique `token`; refreshes `last_seen_at`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceTokenInput' }
+      responses:
+        '201':
+          description: Registered
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - properties:
+                    data: { $ref: '#/components/schemas/DeviceToken' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /devices/{token}:
+    parameters:
+    - name: token
+      in: path
+      required: true
+      schema: { type: string }
+      description: '`app_device_tokens.token`'
+    delete:
+      tags: [Notifications]
+      summary: Unregister a push device token
+      description: Deletes the `app_device_tokens` row (call on logout).
+      responses:
+        '204': { description: Unregistered }
+        default: { $ref: '#/components/responses/Error' }
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Laravel Passport access token. Socket.IO handshake uses `auth:{ token, country }`.
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100 }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+      description: Opaque cursor from `meta.nextCursor`.
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      schema: { type: string, format: uuid }
+      description: Persisted as `*_idempotency_key` (unique) to make the write safe to retry.
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      schema: { type: string, enum: [en, ar] }
+
+  responses:
+    Error:
+      description: Error (same envelope, `status:false`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiResponse' }
+
+  schemas:
+
+    # ───────── Envelope ─────────
+    ApiResponse:
+      type: object
+      description: The single response envelope used by EVERY REST endpoint.
+      required: [status, statusCode, message, locale]
+      properties:
+        status: { type: boolean, description: true on 2xx, false on error }
+        statusCode: { type: integer, description: Mirrors the HTTP status }
+        message: { type: string, description: Localized message (see localization rules) }
+        data:
+          description: The endpoint payload; null on error.
+          nullable: true
+        error:
+          type: object
+          nullable: true
+          properties:
+            code: { type: string }
+            message: { type: string }
+            field: { type: string }
+        meta:
+          type: object
+          nullable: true
+          properties:
+            nextCursor: { type: string, nullable: true }
+        locale: { type: string, enum: [en, ar] }
+
+    Ok:
+      type: object
+      properties:
+        ok: { type: boolean }
+
+    # ───────── Auth ─────────
+    OtpRequest:
+      type: object
+      required: [dialCode, phone]
+      properties:
+        dialCode: { type: string, description: '`users.dialCode`' }
+        phone: { type: string, description: '`users.phoneNumber`' }
+        country: { type: string, maxLength: 5, description: '`users.current_country`' }
+
+    OtpVerify:
+      type: object
+      required: [challengeId, code]
+      properties:
+        challengeId: { type: string }
+        code: { type: string }
+
+    OtpChallenge:
+      type: object
+      properties:
+        challengeId: { type: string }
+        expiresIn: { type: integer, description: Seconds until the code expires }
+        isNewUser: { type: boolean }
+
+    RegisterRequest:
+      type: object
+      required: [challengeId, fullName]
+      properties:
+        challengeId: { type: string }
+        fullName: { type: string, description: 'Split into `users.firstName` + `users.lastName` (string(30) each)' }
+        email: { type: string, description: '`rider_profiles.email`' }
+        country: { type: string, maxLength: 5, description: '`users.current_country`' }
+
+    AuthSession:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        tokenType: { type: string, default: Bearer }
+        expiresIn: { type: integer }
+        user: { $ref: '#/components/schemas/User' }
+
+    TokenPair:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        tokenType: { type: string, default: Bearer }
+        expiresIn: { type: integer }
+
+    # ───────── User / Profile ─────────
+    User:
+      type: object
+      description: '← `users` (+ `rider_profiles`, `wallet_balances`)'
+      required: [id, firstName, lastName, phoneNumber, dialCode, isActive, walletBalance, locale]
+      properties:
+        id: { type: integer, format: int64, description: '`users.id`' }
+        firstName: { type: string, maxLength: 30 }
+        lastName: { type: string, maxLength: 30 }
+        phoneNumber: { type: string, description: '`users.phoneNumber` (unique)' }
+        dialCode: { type: string }
+        gender: { type: string, enum: [male, female], nullable: true }
+        photo: { type: string, nullable: true, description: '`users.photo`' }
+        isActive: { type: boolean }
+        referralCode: { type: string, nullable: true }
+        walletBalance:
+          type: number
+          description: 'Authoritative `wallet_balances.balance` decimal(18,2). (Legacy `users.walletBalance` double is not used.)'
+        stripeCustomerId: { type: string, nullable: true, description: '`users.stripe_customer_id`' }
+        current_country: { type: string, maxLength: 5, nullable: true }
+        email: { type: string, nullable: true, description: '`rider_profiles.email`' }
+        locale: { type: string, maxLength: 5, description: '`rider_profiles.locale`' }
+
+    UserUpdate:
+      type: object
+      properties:
+        fullName: { type: string, description: 'Split into `firstName`/`lastName`' }
+        email: { type: string, description: '`rider_profiles.email`' }
+        avatarUrl: { type: string, description: '`users.photo`' }
+        language: { type: string, maxLength: 5, description: '`rider_profiles.locale`' }
+
+    SavedPlace:
+      type: object
+      description: '← `saved_places`'
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: integer, format: int64 }
+        label: { type: string, maxLength: 16 }
+        icon: { type: string, maxLength: 16 }
+        title: { type: string, nullable: true }
+        address: { type: string }
+        lat: { type: number, format: double, description: decimal(10,7) }
+        lng: { type: number, format: double, description: decimal(10,7) }
+
+    SavedPlaceInput:
+      type: object
+      required: [label, icon, address]
+      properties:
+        label: { type: string, maxLength: 16 }
+        icon: { type: string, maxLength: 16 }
+        address: { type: string }
+        lat: { type: number, format: double, nullable: true }
+        lng: { type: number, format: double, nullable: true }
+
+    SafetyContact:
+      type: object
+      description: '← `safety_contacts`'
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: integer, format: int64 }
+        name: { type: string }
+        phone: { type: string }
+        relation: { type: string, maxLength: 32, nullable: true }
+        is_primary: { type: boolean }
+        auto_share: { type: boolean }
+
+    SafetyContactInput:
+      type: object
+      required: [name, phone]
+      properties:
+        name: { type: string }
+        phone: { type: string }
+        relation: { type: string, maxLength: 32, nullable: true }
+        primary: { type: boolean, description: '`safety_contacts.is_primary`' }
+
+    SafetyContactsResponse:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items: { $ref: '#/components/schemas/SafetyContact' }
+        autoShare: { type: boolean }
+
+    NotificationPrefs:
+      type: object
+      description: Stored in `system_settings.value` json (no typed table).
+      properties:
+        tripUpdates: { type: boolean }
+        promotions: { type: boolean }
+        officeMessages: { type: boolean }
+        safetyAlerts: { type: boolean }
+
+    PrivacySettings:
+      type: object
+      description: Stored in `system_settings.value` json (no typed table).
+      properties:
+        locationDuringTrips: { type: boolean }
+        shareTripDataWithOffice: { type: boolean }
+        marketing: { type: boolean }
+
+    # ───────── Geo ─────────
+    LatLng:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat: { type: number, format: double }
+        lng: { type: number, format: double }
+
+    Route:
+      type: object
+      required: [pickup, dropoff]
+      properties:
+        pickup: { $ref: '#/components/schemas/LatLng' }
+        dropoff: { $ref: '#/components/schemas/LatLng' }
+        service: { type: string }
+        serviceClass: { type: string }
+
+    PlaceSuggestion:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        address: { type: string }
+        lat: { type: number, format: double }
+        lng: { type: number, format: double }
+        source: { type: string, enum: [recent, saved, geocoder] }
+
+    RouteEstimate:
+      type: object
+      properties:
+        distance_m: { type: integer, description: unsignedInt }
+        duration_s: { type: integer, description: unsignedInt }
+        currency_code: { type: string, maxLength: 3 }
+        polyline: { type: string, nullable: true }
+        classes:
+          type: array
+          items: { $ref: '#/components/schemas/ClassFare' }
+
+    # ───────── Marketplace ─────────
+    Office:
+      type: object
+      description: '← `offices`'
+      properties:
+        id: { type: integer, format: int64 }
+        officeName: { type: string }
+        initials: { type: string, maxLength: 4 }
+        palette: { type: string, enum: [a, b, c] }
+        logo: { type: string, nullable: true }
+        rating: { type: number, format: float }
+        ratings_count: { type: integer }
+        is_verified: { type: boolean }
+        is_monitored: { type: boolean }
+        on_time_percentage: { type: number, description: decimal(5,2) }
+        avg_response_minutes: { type: integer, nullable: true }
+        contactNumber: { type: string, maxLength: 20, nullable: true }
+        country: { type: string }
+        city: { type: string }
+        region: { type: string }
+        address: { type: string, nullable: true }
+        lat: { type: number, format: double }
+        lng: { type: number, format: double }
+        working_hours: { type: object, nullable: true, description: json }
+        ratingExcellent: { type: integer }
+        ratingGood: { type: integer }
+        ratingAverage: { type: integer }
+        ratingPoor: { type: integer }
+
+    OfficeProfile:
+      allOf:
+      - $ref: '#/components/schemas/Office'
+      - type: object
+        properties:
+          services:
+            type: array
+            items: { $ref: '#/components/schemas/ServiceDef' }
+          classes:
+            type: array
+            items: { $ref: '#/components/schemas/ClassCard' }
+
+    OfficeSearchResponse:
+      type: object
+      properties:
+        offices:
+          type: array
+          items: { $ref: '#/components/schemas/Office' }
+
+    FavoriteOffice:
+      allOf:
+      - $ref: '#/components/schemas/Office'
+      - type: object
+        properties:
+          favoritedAt: { type: string, format: date-time }
+
+    # ───────── Catalog ─────────
+    ServiceDef:
+      type: object
+      description: '← `services`'
+      properties:
+        id: { type: integer, format: int64 }
+        title: { type: string, description: Localized from `services.title`/`title_en` }
+        description: { type: string, nullable: true }
+        image: { type: string }
+        icon: { type: string, nullable: true }
+        badge: { type: string, nullable: true }
+        sort_order: { type: integer }
+        status: { type: boolean, description: active }
+        travel_service: { type: boolean }
+
+    ServiceCatalog:
+      type: object
+      properties:
+        services:
+          type: array
+          items: { $ref: '#/components/schemas/ServiceDef' }
+
+    ClassCard:
+      type: object
+      description: '← `sub_services`'
+      properties:
+        id: { type: integer, format: int64 }
+        serviceId: { type: integer, format: int64 }
+        name: { type: string, description: Localized from `sub_services.name`/`name_en` }
+        description: { type: string, nullable: true }
+        image: { type: string, nullable: true }
+        icon: { type: string, nullable: true }
+        badge: { type: string, nullable: true }
+        sort_order: { type: integer }
+        status: { type: boolean }
+        is_travel: { type: boolean }
+
+    ClassFare:
+      allOf:
+      - $ref: '#/components/schemas/ClassCard'
+      - type: object
+        description: A class card with computed fare (base `sub_services` price + `office_sub_service_prices` override).
+        properties:
+          openPrice: { type: number, description: decimal(10,2) }
+          kmPrice: { type: number, description: decimal(10,2) }
+          minutePrice: { type: number, description: decimal(10,2) }
+          base_fare: { type: number, nullable: true, description: decimal(10,2) }
+          fare_minor: { type: integer, description: Estimated total in minor units }
+          currency_code: { type: string, maxLength: 3 }
+
+    # ───────── Trips ─────────
+    RideBooking:
+      type: object
+      description: '← `ride_bookings` (base for TripSummary / Receipt / ScheduledTrip)'
+      required: [id, user_id, status]
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: integer, format: int64 }
+        office_id: { type: integer, format: int64, nullable: true }
+        driver_id: { type: integer, format: int64, nullable: true }
+        vehicle_id: { type: integer, format: int64, nullable: true }
+        service: { type: string, maxLength: 16 }
+        service_class: { type: string, maxLength: 32 }
+        pricing_style: { type: string, enum: [meterEstimate, fixedRoute] }
+        status: { type: string, maxLength: 16 }
+        pickup_lat: { type: number, format: double }
+        pickup_lng: { type: number, format: double }
+        pickup_title: { type: string, nullable: true }
+        pickup_note: { type: string, nullable: true }
+        dropoff_lat: { type: number, format: double }
+        dropoff_lng: { type: number, format: double }
+        dropoff_title: { type: string, nullable: true }
+        distance_m: { type: integer, description: unsignedInt }
+        duration_s: { type: integer, description: unsignedInt }
+        currency_code: { type: string, maxLength: 3 }
+        fare_minor: { type: integer }
+        discount_minor: { type: integer }
+        waiting_minor: { type: integer }
+        tip_minor: { type: integer }
+        total_minor: { type: integer }
+        held_minor: { type: integer }
+        payment_method: { type: string, maxLength: 16 }
+        stripe_payment_intent_id: { type: string, nullable: true }
+        promo_code: { type: string, nullable: true }
+        coupon_id: { type: integer, format: int64, nullable: true }
+        scheduled_at: { type: string, format: date-time, nullable: true }
+        passengers: { type: integer, nullable: true }
+        luggage: { type: integer, nullable: true }
+        flight_no: { type: string, maxLength: 16, nullable: true }
+        assigned_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        cancelled_at: { type: string, format: date-time, nullable: true }
+        rated_at: { type: string, format: date-time, nullable: true }
+        cancel_reason: { type: string, nullable: true }
+        change_revision: { type: integer, description: unsignedInt }
+        source: { type: string, maxLength: 16 }
+        created_by: { type: string, maxLength: 40, nullable: true }
+
+    BookingInput:
+      type: object
+      description: 'Create-ride body → inserts `ride_bookings` (status=matching, or scheduled when `scheduled_at` is set).'
+      required: [service, service_class, pricing_style, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng]
+      properties:
+        service: { type: string, maxLength: 16, description: '`ride_bookings.service` (e.g. ride, premium, travel)' }
+        service_class: { type: string, maxLength: 32, description: '`ride_bookings.service_class` (admin-driven catalog)' }
+        pricing_style: { type: string, enum: [meterEstimate, fixedRoute] }
+        office_id: { type: integer, format: int64, nullable: true, description: 'chosen `offices.id`' }
+        pickup_lat: { type: number, format: double }
+        pickup_lng: { type: number, format: double }
+        pickup_title: { type: string, nullable: true }
+        pickup_note: { type: string, nullable: true, description: 'free-text pickup hint for the driver (`ride_bookings.pickup_note`)' }
+        dropoff_lat: { type: number, format: double }
+        dropoff_lng: { type: number, format: double }
+        dropoff_title: { type: string, nullable: true }
+        scheduled_at: { type: string, format: date-time, nullable: true, description: 'set → scheduled ride; null → immediate' }
+        idempotency_key: { type: string, nullable: true, description: 'client idempotency token (or send the Idempotency-Key header)' }
+
+    BookingCancelInput:
+      type: object
+      properties:
+        reason: { type: string, description: '`ride_bookings.cancel_reason`' }
+
+    TripPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/RideBooking' }
+        nextCursor: { type: string, nullable: true }
+
+    Receipt:
+      allOf:
+      - $ref: '#/components/schemas/RideBooking'
+      - type: object
+        properties:
+          office: { $ref: '#/components/schemas/Office' }
+          rating: { $ref: '#/components/schemas/RideRating' }
+
+    ScheduledTrip:
+      allOf:
+      - $ref: '#/components/schemas/RideBooking'
+      - type: object
+        properties:
+          steps:
+            type: array
+            description: Dispatch steps from `dispatch_jobs`/`dispatch_offers`.
+            items:
+              type: object
+              properties:
+                key: { type: string }
+                label: { type: string }
+                status: { type: string }
+                at: { type: string, format: date-time, nullable: true }
+
+    LostItemInput:
+      type: object
+      description: '→ `lost_items`'
+      required: [category]
+      properties:
+        category: { type: string, enum: [Phone, Wallet, Bag, Keys, Other] }
+        description: { type: string, nullable: true }
+        shareMaskedNumber: { type: boolean, description: '`lost_items.share_masked_number`' }
+
+    RideRating:
+      type: object
+      description: '← `ride_ratings`'
+      properties:
+        id: { type: integer, format: int64 }
+        booking_id: { type: integer, format: int64 }
+        rater_type: { type: string }
+        rater_id: { type: integer, format: int64 }
+        ratee_type: { type: string }
+        ratee_id: { type: integer, format: int64 }
+        stars: { type: integer, minimum: 1, maximum: 5, description: tinyint }
+        tags: { type: array, items: { type: string }, description: json }
+        comment: { type: string, nullable: true }
+        book_again: { type: boolean, nullable: true }
+        favorite: { type: boolean, nullable: true }
+
+    RatingRequest:
+      type: object
+      required: [stars]
+      properties:
+        stars: { type: integer, minimum: 1, maximum: 5 }
+        tags: { type: array, items: { type: string } }
+        comment: { type: string, nullable: true }
+        bookAgain: { type: boolean, description: '`ride_ratings.book_again`' }
+        favorite: { type: boolean, description: '`ride_ratings.favorite`' }
+
+    # ───────── Wallet ─────────
+    Wallet:
+      type: object
+      description: '← `wallet_balances` (+ `currencies`)'
+      properties:
+        balance: { type: number, description: decimal(18,2) }
+        currency: { type: string, maxLength: 10, description: '`wallet_balances.currency_code`' }
+        symbol: { type: string, description: '`currencies.symbol`' }
+        decimals: { type: integer, description: '`currencies.decimals`' }
+
+    TopUpResult:
+      type: object
+      properties:
+        ledgerId: { type: integer, format: int64, description: '`ledger_payments.id`' }
+        status: { type: string }
+        clientSecret: { type: string, nullable: true, description: Stripe PaymentIntent client secret }
+        requiresAction: { type: boolean, description: 3DS/SCA required }
+
+    WalletTransaction:
+      type: object
+      description: '← `wallet_transactions`'
+      properties:
+        id: { type: integer, format: int64 }
+        amount: { type: number, description: double }
+        balance_before: { type: number, nullable: true }
+        balance_after: { type: number, nullable: true }
+        status: { type: string, maxLength: 50 }
+        transaction_type: { type: string, nullable: true }
+        transaction_reference: { type: string, maxLength: 100, nullable: true }
+        description: { type: string, description: Localized label (`description`/`description_en`) }
+        paymentName: { type: string, nullable: true, description: Localized (`paymentName`/`paymentName_en`) }
+        created_at: { type: string, format: date-time }
+
+    TransactionPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/WalletTransaction' }
+        nextCursor: { type: string, nullable: true }
+
+    # ───────── Payments ─────────
+    PaymentMethod:
+      type: object
+      description: '← `rider_payment_methods`'
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: integer, format: int64 }
+        type: { type: string, enum: [card, applepay, googlepay, cash, wallet] }
+        brand: { type: string, maxLength: 24, nullable: true }
+        last4: { type: string, maxLength: 4, nullable: true }
+        exp: { type: string, maxLength: 7, nullable: true }
+        is_default: { type: boolean }
+        stripe_payment_method_id: { type: string, nullable: true }
+        stripe_setup_intent_id: { type: string, nullable: true }
+
+    Promo:
+      type: object
+      description: '← `coupons` (+ `coupon_users`)'
+      properties:
+        code: { type: string, nullable: true }
+        discountType: { type: string, enum: [percentage, fixed], nullable: true }
+        discount: { type: number, description: double }
+        isPercentage: { type: boolean }
+        isActive: { type: boolean }
+        limit: { type: integer }
+        expireDate: { type: string, format: date-time, nullable: true }
+        userCount: { type: integer, description: '`coupon_users.count`' }
+
+    PromoList:
+      type: object
+      properties:
+        promos:
+          type: array
+          items: { $ref: '#/components/schemas/Promo' }
+
+    PromoRedeemResult:
+      type: object
+      properties:
+        code: { type: string }
+        applied: { type: boolean }
+        discount: { type: number }
+        discountType: { type: string, enum: [percentage, fixed] }
+        message: { type: string }
+
+    StripeSetupIntent:
+      type: object
+      properties:
+        setupIntentId: { type: string, description: 'seti_… → `rider_payment_methods.stripe_setup_intent_id`' }
+        clientSecret: { type: string }
+        customerId: { type: string, description: '`users.stripe_customer_id`' }
+
+    StripePaymentIntent:
+      type: object
+      properties:
+        paymentIntentId: { type: string, description: pi_… }
+        clientSecret: { type: string }
+        requiresAction: { type: boolean, description: 3DS/SCA required }
+        status: { type: string }
+
+    # ───────── Support ─────────
+    Message:
+      type: object
+      description: '← `rider_support_messages`'
+      properties:
+        id: { type: integer, format: int64 }
+        ticket_id: { type: integer, format: int64 }
+        sender_type: { type: string, maxLength: 8 }
+        sender_id: { type: integer, format: int64 }
+        body: { type: string }
+        created_at: { type: string, format: date-time }
+
+    Ticket:
+      type: object
+      description: '← `rider_support_tickets` (+ `rider_support_messages`)'
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: integer, format: int64 }
+        tripId: { type: integer, format: int64, nullable: true, description: '`rider_support_tickets.booking_id`' }
+        office_id: { type: integer, format: int64, nullable: true }
+        category: { type: string, maxLength: 32 }
+        topic: { type: string, maxLength: 16 }
+        layer: { type: string, maxLength: 16 }
+        subject: { type: string }
+        status: { type: string, enum: [open, awaiting_reply, resolved] }
+        last_message_at: { type: string, format: date-time, nullable: true }
+        messages:
+          type: array
+          items: { $ref: '#/components/schemas/Message' }
+
+    TicketInput:
+      type: object
+      required: [topic, message]
+      properties:
+        topic: { type: string, maxLength: 16, description: '`rider_support_tickets.topic`' }
+        tripId: { type: integer, format: int64, nullable: true, description: '`rider_support_tickets.booking_id`' }
+        message: { type: string, description: '`rider_support_messages.body`' }
+
+    TicketRef:
+      type: object
+      properties:
+        ticketId: { type: integer, format: int64 }
+        status: { type: string }
+
+    ComplaintInput:
+      type: object
+      description: '→ `complaints`'
+      required: [about, description]
+      properties:
+        about: { type: string, enum: [driver, office, safety, other] }
+        tripId: { type: integer, format: int64, nullable: true, description: '`complaints.booking_id`' }
+        description: { type: string }
+        photoUrl: { type: string, nullable: true, description: '`complaints.photo_url`' }
+
+    ComplaintResult:
+      type: object
+      description: '← `complaints`'
+      properties:
+        id: { type: integer, format: int64 }
+        routed_to: { type: string, enum: [office, fleetos] }
+        priority: { type: string, enum: [normal, urgent] }
+        case_ref: { type: string, nullable: true }
+        status: { type: string, maxLength: 16 }
+
+    ArticleSummary:
+      type: object
+      description: '← `help_suggestions`'
+      properties:
+        id: { type: integer, format: int64 }
+        category: { type: string, nullable: true }
+        title: { type: string, description: Localized }
+        readMinutes: { type: integer, description: '`help_suggestions.read_minutes`' }
+
+    Article:
+      type: object
+      description: '← `help_suggestions`'
+      properties:
+        id: { type: integer, format: int64 }
+        category: { type: string, nullable: true }
+        title: { type: string, description: Localized (`title`/`title_en`) }
+        description: { type: string, description: Localized body (`description`/`description_en`) }
+        read_minutes: { type: integer, nullable: true }
+        priority: { type: integer }
+        target_user: { type: string, enum: [user, driver, web] }
+
+    # ───────── Scheduled ─────────
+    ScheduledInput:
+      type: object
+      required: [route, scheduledFor]
+      properties:
+        route: { $ref: '#/components/schemas/Route' }
+        scheduledFor: { type: string, format: date-time, description: '`ride_bookings.scheduled_at`' }
+        passengers: { type: integer, description: smallint }
+        luggage: { type: integer, description: smallint }
+        flightNo: { type: string, maxLength: 16, description: '`ride_bookings.flight_no`' }
+
+    # ───────── B2B ─────────
+    CorporateInvoice:
+      type: object
+      description: '← `corporate_invoices`'
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: integer, format: int64 }
+        month: { type: string, pattern: '^\d{4}-\d{2}$', description: 'YYYY-MM' }
+        trips: { type: integer, description: unsignedInt }
+        amount_minor: { type: integer }
+        currency_code: { type: string, maxLength: 3 }
+        status: { type: string, enum: [unbilled, due, paid] }
+
+    InvoicesResponse:
+      type: object
+      properties:
+        invoices:
+          type: array
+          items: { $ref: '#/components/schemas/CorporateInvoice' }
+
+    FamilyMember:
+      type: object
+      description: '← `family_members`'
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: integer, format: int64 }
+        name: { type: string }
+        phone: { type: string }
+        type: { type: string, enum: [minor, elder, adult] }
+        approval_required: { type: boolean }
+        auto_share: { type: boolean }
+
+    FamilyMemberInput:
+      type: object
+      required: [name, phone, type]
+      properties:
+        name: { type: string }
+        phone: { type: string }
+        type: { type: string, enum: [minor, elder, adult] }
+        approvalRequired: { type: boolean, description: '`family_members.approval_required`' }
+        autoShare: { type: boolean, description: '`family_members.auto_share`' }
+
+    # ───────── In-ride chat ─────────
+    ChatMessage:
+      type: object
+      description: '← `booking_chat_messages`'
+      properties:
+        id: { type: integer, format: int64 }
+        booking_id: { type: integer, format: int64, description: '→ tripId' }
+        from_type: { type: string, maxLength: 8, enum: [rider, driver] }
+        body: { type: string }
+        read_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    ChatMessageInput:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, description: '`booking_chat_messages.body`' }
+
+    ChatMessagePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ChatMessage' }
+        nextCursor: { type: string, nullable: true }
+
+    # ───────── Notifications ─────────
+    AppNotification:
+      type: object
+      description: '← `app_notifications` (rendered per resolved `locale`)'
+      properties:
+        id: { type: integer, format: int64 }
+        template_key: { type: string, maxLength: 64, nullable: true }
+        type: { type: string, maxLength: 64 }
+        locale: { type: string, maxLength: 8 }
+        title: { type: string, maxLength: 191, nullable: true }
+        body: { type: string, nullable: true }
+        data: { type: object, nullable: true, description: 'json payload, e.g. { tripId }' }
+        read_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    NotificationPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/AppNotification' }
+        unreadCount: { type: integer }
+        nextCursor: { type: string, nullable: true }
+
+    # ───────── Device push tokens ─────────
+    DeviceToken:
+      type: object
+      description: '← `app_device_tokens`'
+      properties:
+        id: { type: integer, format: int64 }
+        token: { type: string, maxLength: 255, description: unique }
+        platform: { type: string, maxLength: 16, enum: [ios, android, web], nullable: true }
+        last_seen_at: { type: string, format: date-time, nullable: true }
+
+    DeviceTokenInput:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, maxLength: 255, description: FCM/APNs token }
+        platform: { type: string, enum: [ios, android, web] }

@@ -25,7 +25,7 @@ function upload_and_save_file($model, $file, $collection = 'default') {
                 return Hash::check($password, $hashedPassword);
             }
         }
-        
+
         function getAuthUser( $guardName = null ) {
             if($guardName != null){
                 return  Auth::guard($guardName)->user();
@@ -61,7 +61,7 @@ function upload_and_save_file($model, $file, $collection = 'default') {
         function make_exception( $message , $code = 500 ){
             throw new Exception(  $message , $code );
         }
-        
+
 
         function checkGuard($guardName){
             return Auth::guard($guardName)->check();
@@ -74,7 +74,7 @@ function upload_and_save_file($model, $file, $collection = 'default') {
             }
 
         }
-        
+
 
 
     function getCatch($key){
@@ -145,7 +145,7 @@ function upload_and_save_file($model, $file, $collection = 'default') {
             }
     }
 
-    
+
 
 
     function makeSignature($body) {
@@ -198,7 +198,7 @@ function upload_and_save_file($model, $file, $collection = 'default') {
 
 
 
-    
+
     function readArrayFromRedis($key ) : array {
        return json_decode(Redis::get($key ), true);
     }
@@ -217,7 +217,7 @@ function upload_and_save_file($model, $file, $collection = 'default') {
 
         }
 
-        
+
 
     function authenticate( $credentials ,  $remember = false , $guardName = 'employee' ):bool{
        return Auth::guard($guardName)->attempt($credentials, $remember);

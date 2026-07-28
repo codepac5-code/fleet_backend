@@ -9,8 +9,12 @@ use App\Http\Services\WebSite\ViewFleetLandingPage\Request\ViewFleetLandingPageR
 
 class ViewFleetLandingPageController extends Controller
 {
-    public function __invoke(ViewFleetLandingPageRequest $request)
+    public function __invoke(ViewFleetLandingPageRequest $request , $region = null)
     {
+
+        $request->merge(['region' => $region]);
+
+
         // validate input data and pass it to the service..
         $input = new ViewFleetLandingPageInput($request->validated());
 

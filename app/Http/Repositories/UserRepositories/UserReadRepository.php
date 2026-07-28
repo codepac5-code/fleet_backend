@@ -19,9 +19,9 @@ class UserReadRepository extends ReadRepository
         $this->model = new User();
     }
 
-  
-    
-    public function addCouponToUser( 
+
+
+    public function addCouponToUser(
         $userId,
         $percentage_discount,
         $expireDate,
@@ -30,10 +30,10 @@ class UserReadRepository extends ReadRepository
         $length = 10 ):string {
 
 
-        $bytes = random_bytes(ceil($length / 2)); 
-        $random = strtoupper(bin2hex($bytes)); 
+        $bytes = random_bytes(ceil($length / 2));
+        $random = strtoupper(bin2hex($bytes));
         $coupon_code = $prefix . '-' . substr($random, 0, $length);
-         
+
         $coupon = Coupon::create([
             'code' =>  $coupon_code,
             'discounType' => 'percentage',
@@ -72,10 +72,10 @@ class UserReadRepository extends ReadRepository
 
 
     public function userDataTable(){
-       return $this->model->scopeForCurrentUser()->orderBy('updated_at','desc')->get();
+       return $this->model->scopeForCurrentUser()->where('is_registered',true)->orderBy('updated_at','desc')->get();
     }
-        
-        
+
+
 
 
 
@@ -87,7 +87,7 @@ class UserReadRepository extends ReadRepository
     public function getById(int $id , array $selected = ["*"]){return null;}
 
 
-    
+
     public function notifyByConditions( $conditions =[] , NotificationModel $notificationModel , array $selected = ["id"] ) {
         $user = UserNotification_model::select($selected)->where($conditions)
         ->chunk(500, function ($users) use ($notificationModel) {
@@ -108,7 +108,7 @@ class UserReadRepository extends ReadRepository
     }
 
 
-    public function notifyUser(int $id , NotificationModel $notificationModel , array $selected = ["*"] ) {
+    public function notifyUser( $id , NotificationModel $notificationModel , array $selected = ["*"] ) {
         return$this->model->select($selected)->find($id)->notify(new PrivateNotification($notificationModel));
     }
 
@@ -116,11 +116,11 @@ class UserReadRepository extends ReadRepository
     //     Notification::sendNow($users, new BroadcastUserNotification($notificationModel));
     // }
 
-    
-    
 
 
-    
+
+
+
 
     // use Illuminate\Support\LazyCollection;
 

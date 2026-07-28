@@ -5,8 +5,11 @@ use App\Http\Core\InternalInterface\InputServiceInterface;
 
 class ViewFleetLandingPageInput implements InputServiceInterface
 {
+    private $region;
     public function __construct( array $input)
-    {}
+    {
+        $this->region = $input['region'] ?? null;
+    }
 
     // write your input function here..
 
@@ -14,5 +17,10 @@ class ViewFleetLandingPageInput implements InputServiceInterface
         return [
             ''=>''
         ];
+    }
+
+    public function getRegion(): ?string
+    {
+        return $this->region;
     }
 }

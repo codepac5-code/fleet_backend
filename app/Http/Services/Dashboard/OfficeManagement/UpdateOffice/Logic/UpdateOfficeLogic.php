@@ -27,7 +27,7 @@ class UpdateOfficeLogic implements Service {
 
 
         beginTransaction();
-        $new_data = 
+        $new_data =
         [
             "email"         =>$this->input->getEmail(),
             "country"       =>$this->input->getCountry(),
@@ -60,7 +60,10 @@ class UpdateOfficeLogic implements Service {
             return redirect()->back()->withErrors(__('message.something_wrong'));
         }
 
-        
+            $this->repository->OfficeRepository()->updateRepository()->updateOfficeServices(
+            $this->input->getId(),
+            $this->input->getServiceIds()
+        );
         commitTransaction();
         $message = __('messages.update_form',[ 'form' => __('messages.office') ] );
 

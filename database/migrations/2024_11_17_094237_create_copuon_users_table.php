@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('coupon_users', function (Blueprint $table) {
             $table->id();
             $table->foreignId('couponId')->references('id')->on('coupons')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->foreignId('userId')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->unsignedBigInteger('userId')->index();
             $table->integer('count')->default(0);
-            $table->unique(['couponId', 'userId','couponId']);
+            $table->unique(['couponId', 'userId']);
             $table->softDeletes();
             $table->timestamps();
         });
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('copon_users');
+        Schema::dropIfExists('coupon_users');
     }
 };

@@ -12,8 +12,7 @@ class DestroyDriverController extends Controller
     public function __invoke(DestroyDriverRequest $request , $id)
     {
         // validate input data and pass it to the service..
-        $data = $request->all();
-        $data['driverId'] =  $id;
+        $data = $request->validated();
         $input = new DestroyDriverInput( $data);
 
         $service = new DestroyDriverLogic($input); // call the service's logic

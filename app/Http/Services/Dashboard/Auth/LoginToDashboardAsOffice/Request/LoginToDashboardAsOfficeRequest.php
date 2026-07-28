@@ -23,19 +23,20 @@ class LoginToDashboardAsOfficeRequest extends BaseRequest
         return [
             'email'    => 'required|email',
             'password' => 'required|string',
-            'role'     => 'required|string|in:employee,manager',  // تم تعديل الحقل هنا
+            'role'     => 'required|string|in:employee,manager',
+            'region'   => 'required',
         ];
     }
 
     public function authenticate()
     {
-        $role = $this->input('role'); 
+        $role = $this->input('role');
 
         $guard = null;
         if ($role === 'employee') {
             $guard = Guard::$Employee;
         } elseif ($role === 'manager') {
-            $guard = Guard::$Office;  
+            $guard = Guard::$Office;
         } else {
             throw ValidationException::withMessages([
                 'role' => __('نوع الحساب غير صالح.'),

@@ -12,7 +12,7 @@ class UpdateOfficeCommissionsController extends Controller
     public function __invoke(UpdateOfficeCommissionsRequest $request)
     {
         // validate input data and pass it to the service..
-        $input = new UpdateOfficeCommissionsInput($request->validated());
+        $input = new UpdateOfficeCommissionsInput($request->all());
 
         $service = new UpdateOfficeCommissionsLogic($input); // call the service's logic
 

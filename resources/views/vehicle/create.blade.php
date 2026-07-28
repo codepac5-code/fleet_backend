@@ -22,8 +22,12 @@
                 @csrf
                 @if(isset($vehicledata->id))
                     <input type="hidden" name="id" value="{{ $vehicledata->id }}">
-                @endif   
+                @endif
                 <div class="row">
+
+
+
+                    @if(is_null(getOfficeIdByAuthUser()))
                     <!-- Office -->
                     <div class="form-group col-md-6">
                         <label for="office_id" class="form-control-label">
@@ -32,14 +36,15 @@
                         <select name="office_id" id="office_id" class="select2js form-control" required>
                             <option value="">{{ __('messages.select_name', ['select' => __('messages.office')]) }}</option>
                             @foreach($offices as $office)
-                                <option value="{{ $office->id }}" 
+                                <option value="{{ $office->id }}"
                                     {{ old('office_id', $vehicledata->officeId ?? '') == $office->id ? 'selected' : '' }}>
                                     {{ $office->officeName }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
-            
+                    @endif
+
                     <!-- City -->
                     <div class="form-group col-md-6">
                         <label for="city" class="form-control-label">
@@ -48,7 +53,7 @@
                         <select name="city" id="city" class="select2js form-control" required>
                             <option value="">{{ __('messages.select_name', ['select' => __('messages.city')]) }}</option>
                             @foreach($cities as $city)
-                                <option value="{{ $city->name }}" 
+                                <option value="{{ $city->name }}"
                                     {{ old('city', $vehicledata->city ?? '') == $city->name ? 'selected' : '' }}>
                                     {{ $city->name }}
                                 </option>
@@ -57,7 +62,7 @@
                     </div>
 
 
-            
+
                     <style>
                         .loader {
                           display: inline-block;
@@ -76,7 +81,7 @@
                         </style>
 
 
-         
+
 @php
 $startYear = 2000;
 $endYear = date('Y');
@@ -86,14 +91,25 @@ $oldModel = old('model', $vehicledata->model ?? '');
 @endphp
 
 <div class="form-group col-md-4" style="position: relative;">
-<label for="make" class="form-control-label">
-    {{ __('messages.select_make') }} <span class="text-danger">*</span>
-</label>
-<select name="vehicle_brand" id="make" class="select2js form-control" required disabled>
-    <option disabled selected>{{ __('messages.loading_makes') }}</option>
-</select>
-<div id="loader-make" class="loader" style="display:none; position: absolute; top: 38px; right: 10px;"></div>
+    <label for="make" class="form-control-label">
+        {{ __('messages.select_make') }} <span class="text-danger">*</span>
+    </label>
+    <select name="vehicle_brand" id="make" class="select2js form-control" required disabled>
+        <option disabled selected>{{ __('messages.loading_makes') }}</option>
+    </select>
+    <div id="loader-make" class="loader" style="display:none; position: absolute; top: 38px; right: 10px;"></div>
+
+    @php
+        $oldBrand = old('vehicle_brand', $vehicledata->vehicle_brand ?? null);
+    @endphp
+
+    @if($oldBrand)
+        <small class="form-text text-muted">
+            {{ __('messages.current_brand_note', ['brand' => $oldBrand]) }}
+        </small>
+    @endif
 </div>
+
 
 <div class="form-group col-md-4">
 <label for="model_year" class="form-control-label">
@@ -194,7 +210,7 @@ $make.add($modelYear).on('change', function () {
 </script>
 
 
-                
+
 
 
                 <!-- License Number -->
@@ -202,7 +218,7 @@ $make.add($modelYear).on('change', function () {
                 <label for="license_number" class="form-control-label">
                     {{ __('messages.license_number') }}
                 </label>
-                <input type="text" name="license_number" id="license_number" class="form-control" 
+                <input type="text" name="license_number" id="license_number" class="form-control"
                         value="{{ old('license_number', $vehicledata->licenseNumber ?? '') }}">
                 @error('license_number')
                     <small class="text-danger">{{ $message }}</small>
@@ -213,7 +229,7 @@ $make.add($modelYear).on('change', function () {
                         <label for="plate" class="form-control-label">
                             {{ __('messages.plate') }} <span class="text-danger">*</span>
                         </label>
-                        <input type="text" name="plate" id="plate" class="form-control" required 
+                        <input type="text" name="plate" id="plate" class="form-control" required
                                value="{{ old('plate', $vehicledata->plate ?? '') }}">
                     </div>
                     <div class="form-group col-md-6">
@@ -223,13 +239,13 @@ $make.add($modelYear).on('change', function () {
                         <select name="color" id="color" class="select2js form-control" required>
                             <option value="">{{ __('messages.select_name', ['select' => __('messages.color')]) }}</option>
                             @foreach($colors as $color)
-                                <option value="{{ $color }}" {{ old('color', $vehicledata->color ?? '') == $color ? 'selected' : '' }}>
+                                <option value="{{ $color }}" {{ strtolower(old('color', $vehicledata->color ?? '')) == strtolower($color) ? 'selected' : '' }}>
                                     {{ ucfirst($color) }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
-            
+
                     <!-- Seats Count & Sub Services -->
                     <div class="form-group col-md-4">
                         <label for="seats_count" class="form-control-label">{{ __('messages.seats_count') }}</label>
@@ -243,18 +259,18 @@ $make.add($modelYear).on('change', function () {
                         <select name="serviceIds[]" class="select2js form-control" multiple="multiple" required
                                 data-placeholder="{{ __('messages.select_name', ['select' => __('messages.service')]) }}">
                             @foreach($subServices as $service)
-                                <option value="{{ $service->id }}" 
+                                <option value="{{ $service->id }}"
                                     {{ in_array($service->id, $selected_services) ? 'selected' : '' }}>
                                     {{ $service->name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
-            
+
                     <!-- Image Upload -->
                     <div class="form-group col-md-6">
                         <label class="form-control-label" for="banner_image">
-                            {{ __('messages.image') }} 
+                            {{ __('messages.image') }}
                         </label>
                         <div class="custom-file">
                             <input type="file" name="image" id="banner_image" class="custom-file-input" accept="image/*" onchange="previewImage(event)">
@@ -265,13 +281,13 @@ $make.add($modelYear).on('change', function () {
                     </div>
                     <div class="form-group col-md-6 d-flex justify-content-center align-items-center">
                         <div class="border p-2" style="height: 170px; width: 200px; border-radius: 10px; overflow: hidden;">
-                            <img id="imagePreview" 
-                                 src="{{ old('image', $vehicledata->photo ?? get_default_image('service')) }}" 
-                                 alt="Preview" 
+                            <img id="imagePreview"
+                                 src="{{ old('image', $vehicledata->photo ?? get_default_image('service')) }}"
+                                 alt="Preview"
                                  style="height: 100%; width: 100%; object-fit: cover;">
                         </div>
                     </div>
-            
+
                     <!-- Description -->
                     <div class="form-group col-md-12">
                         <label for="description" class="form-control-label">{{ trans('messages.description') }}</label>
@@ -282,14 +298,14 @@ $make.add($modelYear).on('change', function () {
                 </div>
                 <button type="submit" class="btn btn-md btn-primary float-right">{{ __('messages.save') }}</button>
             </form>
-            
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-        
+
+
 </x-master-layout>
 
     <script>
@@ -307,7 +323,7 @@ $(document).ready(function () {
                     driverSelect.html('<option value="">{{ __("messages.loading") }}</option>');
                 },
                 success: function (response) {
-                    console.log(response.results); 
+                    console.log(response.results);
                     driverSelect.empty();
                     driverSelect.empty().append('<option value="">{{ __("messages.select_name", ["select" => __("messages.driver")]) }}</option>');
 
@@ -340,11 +356,11 @@ $(document).ready(function () {
             const input = event.target;
             const reader = new FileReader();
             const preview = document.getElementById('imagePreview');
-    
+
             reader.onload = function(e) {
                 preview.src = e.target.result;
             };
-    
+
             if (input.files && input.files[0]) {
                 reader.readAsDataURL(input.files[0]);
             } else {

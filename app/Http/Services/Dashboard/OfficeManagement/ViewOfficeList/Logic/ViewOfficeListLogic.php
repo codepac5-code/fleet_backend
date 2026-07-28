@@ -3,6 +3,7 @@ namespace App\Http\Services\Dashboard\OfficeManagement\ViewOfficeList\Logic;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Models\FleetOffice;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Yajra\DataTables\DataTables;
@@ -67,7 +68,7 @@ class ViewOfficeListLogic implements Service {
          //     }
          // }
          //end jabu
-         
+
          return DataTables::of($query)
              ->addColumn('check', function ($row) {
                  return '<input type="checkbox" class="form-check-input select-table-row"  id="datatable-row-'.$row->id.'"  name="datatable_ids[]" value="'.$row->id.'" data-type="user" onclick="dataTableRowCheck('.$row->id.',this)">';
@@ -103,14 +104,23 @@ class ViewOfficeListLogic implements Service {
                  : $query->created_at;
                  return $formattedDate;
              })
-
             //  ->filterColumn('providertype_id',function($query,$keyword){
             //      $query->whereHas('providertype',function ($q) use($keyword){
             //          $q->where('name','like','%'.$keyword.'%');
             //      });
             //  })
              ->addColumn('action', function($office){
-                 return view('office.action',compact('office'))->render();
+               $auth_user= authSession();
+
+                $isCustom = false;
+                $officeCommission = FleetOffice::first()->office_commission_value;
+
+                if($office->isFleetCommissionCustom ){
+                    $isCustom= true;
+                    $officeCommission = $office->commissionCustomValue;
+                }
+
+                 return view('office.action',compact('office','officeCommission','isCustom'))->render();
              })
              ->editColumn('contactNumber', function($office){
                 return $office->contactNumber;
@@ -118,7 +128,5 @@ class ViewOfficeListLogic implements Service {
            //  ->addIndexColumn()
              ->rawColumns(['check','display_name','contactNumber','wallet','action','status'])
              ->toJson();
-
-      
    }
 }

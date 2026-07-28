@@ -29,5 +29,16 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <!--
+            Keep the suite hermetic. `.env` carries a real `sk_test_…` secret, so
+            without these AppServiceProvider binds StripeCardGateway and any test
+            touching cards/intents makes a LIVE HTTPS call to Stripe — slow,
+            flaky, and silently dependent on that key staying valid. Blanking them
+            selects NullCardGateway, which is the environment the tests assert
+            against. Tests that need a gateway bind a double explicitly.
+        -->
+        <env name="STRIPE_SECRET" value=""/>
+        <env name="STRIPE_PUBLIC" value=""/>
+        <env name="STRIPE_WEBHOOK_SECRET" value=""/>
     </php>
 </phpunit>

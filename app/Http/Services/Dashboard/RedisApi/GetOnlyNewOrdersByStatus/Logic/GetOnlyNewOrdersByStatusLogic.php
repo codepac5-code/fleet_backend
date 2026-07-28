@@ -4,12 +4,12 @@ namespace App\Http\Services\Dashboard\RedisApi\GetOnlyNewOrdersByStatus\Logic;
 use App\Http\Core\Const\Options\OrderStatus;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
+use App\Models\Booking;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order\OrderRedisModel;
-use App\Models\Booking;
 
 class GetOnlyNewOrdersByStatusLogic implements Service {
 
@@ -20,7 +20,8 @@ class GetOnlyNewOrdersByStatusLogic implements Service {
     private GetOnlyNewOrdersByStatusInput $input,  /*| Pass Request To Service*/
     //---------------------------------------------------------------------------------------
     ){
-        $this->repository = new RepositoryCaller(); // init repository object
+        $this->repository = new RepositoryCaller(); // init
+        // repository object
     }
 
 
@@ -28,40 +29,46 @@ class GetOnlyNewOrdersByStatusLogic implements Service {
 
         $canceled_order_Ids = [] ;
         switch($this->input->getStatus()){
-            case OrderStatus::$Pending : 
+            case OrderStatus::$Pending :
                 $status = OrderStatus::$Pending;
-                $canceled_order_Ids  = OrderRedisModel::getCancelOrderIds();
+                $canceled_order_Ids  = Booking::where('status', OrderStatus::$Cancelled)
+                                    ->latest()
+                                    ->limit(30)
+                                    ->pluck('id');
+                // OrderRedisModel::getCancelOrderIds();
             break;
 
+
             case OrderStatus::$OnGoing :  $status = OrderStatus::$OnGoing;
-                    $orders = Booking::where('id','>',$this->input->getLastId())
-                    ->where('status' , OrderStatus::$OnGoing)->get();
-                    $count = $orders->count();
             break;
 
             case OrderStatus::$Completed :  $status = OrderStatus::$Completed;
-                $orders = Booking::where('id','>',$this->input->getLastId())->get();
-                $count = $orders->count();
             break;
 
-            default : $status = null;
+
+            default : $status = '';
             break;
         }
 
-        
+
 
         // $orders   = OrderRedisModel::getByStatusAfterId(
         //     $status , $this->input->getLastId()
         // );
-     
-        // $count = OrderRedisModel::get_status_count($status);
+
+        $orders = $this->repository->BookingRepository()
+        ->readRepository()
+        ->getOrdersByStatusAfterId( $status ,  $this->input->getLastId());
 
 
-        
+        $count = count($orders);
+
+
+
         return response()->json([
             'orders' => $orders,
             'count'  => $count ?? 0,
-            'canceled_order_Ids'=> $canceled_order_Ids ?? [],
+            'canceled_order_Ids'=>$canceled_order_Ids ?? [],
         ]);
    }
 }

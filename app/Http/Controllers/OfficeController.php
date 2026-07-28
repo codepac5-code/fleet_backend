@@ -12,6 +12,30 @@ use Illuminate\Support\Facades\Validator;
 class OfficeController extends Controller
 {
 
+       public function resetCommission(Request $request)
+        {
+        $office = Office::find($request->office_id);
+        if (!$office) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.something_wrong')
+            ]);
+        }
+
+        $defaultOfficeCommission = 17;
+        $office->isFleetCommissionCustom = false;
+
+        // $office->office_commission = $defaultofficeCommission;
+        // $office->office_commission = 100 - $defaultofficeCommission;
+        $office->save();
+
+        return response()->json([
+            'success' => true,
+            'office_commission' => $defaultOfficeCommission,
+            'message' => __('messages.commission_reset_success')
+        ]);
+    }
+
     public function customersBookings($officeId, $userId)
     {
         $office = Office::findOrFail($officeId);
@@ -37,9 +61,9 @@ class OfficeController extends Controller
         // dd($request->all());
 
         $validator = Validator::make($request->all(), [
-            'officeId' => 'required|exists:offices,id',
+            'office_id' => 'required|exists:offices,id',
             'office_commission' => 'required|numeric|min:0|max:100',
-            'fleet_commission' => 'required|numeric|min:0|max:100',
+            // 'fleet_commission' => 'required|numeric|min:0|max:100',
         ]);
 
 
@@ -50,8 +74,8 @@ class OfficeController extends Controller
             ]);
         }
 
-
-        $total = $request->office_commission + $request->fleet_commission;
+        $fleet_commission = 100 - $request->office_commission;
+        $total = $request->office_commission + $fleet_commission;
         if ($total > 100) {
             return response()->json([
                 'success' => false,
@@ -66,19 +90,19 @@ class OfficeController extends Controller
             ]);
         }
 
-        Office::update(['id'=>$request->officeId],[ 
-                'isFleetCommissionCustom'       => true,
-                'FleetCommissionCustomValue'    =>$request->fleet_commission,
-                'commissionCustomValue'         =>$request->office_commission,
-                ]
-    );
+        $office = Office::find($request->office_id);
+        $office->update([
+            'isFleetCommissionCustom'    => true,
+            'commissionCustomValue'      => $request->office_commission,
+        ]);
+
 
 
 
     return response()->json([
         'success' => true,
         'message' => 'تم حفظ العمولة المخصصة بنجاح',
-        'data' => $request->office_commission
+        'office_commission'           => $request->office_commission,
     ]);
 
     }

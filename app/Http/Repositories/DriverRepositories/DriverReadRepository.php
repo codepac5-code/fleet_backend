@@ -48,7 +48,7 @@ class DriverReadRepository extends ReadRepository
 
         if ($filter != null) {
             if (isset($filter['column_status'])) {
-                $query->where('isConected', $filter['column_status']);
+                $query->where('is_online', $filter['column_status']);
             }
         }
 

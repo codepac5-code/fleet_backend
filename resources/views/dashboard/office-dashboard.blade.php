@@ -10,10 +10,10 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
             <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-          
 
-        
-       
+
+
+
             <script>
               document.addEventListener('DOMContentLoaded', () => {
                 const sampleData = {
@@ -23,7 +23,7 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                   officesOutstanding: [800, 900, 750, 700, 650, 600, 620],
                   driversOutstanding: [600, 650, 700, 720, 680, 630, 700]
                 };
-          
+
                 function createChart(ctx, data, color) {
                   return new Chart(ctx, {
                     type: 'line',
@@ -55,13 +55,13 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                     }
                   });
                 }
-          
+
                 createChart(document.getElementById('revenueChart').getContext('2d'), sampleData.revenue, '#28a745');
                 createChart(document.getElementById('withdrawalChart').getContext('2d'), sampleData.withdrawalAvailable, '#007bff');
                 createChart(document.getElementById('withdrawnChart').getContext('2d'), sampleData.withdrawn, '#ffc107');
                 createChart(document.getElementById('officesChart').getContext('2d'), sampleData.officesOutstanding, '#dc3545');
                 createChart(document.getElementById('driversChart').getContext('2d'), sampleData.driversOutstanding, '#e83e8c');
-          
+
                 document.getElementById('totalRevenue').textContent = '8,450.00 ر.س';
                 document.getElementById('availableWithdrawal').textContent = '5,200.00 ر.س';
                 document.getElementById('withdrawnAmount').textContent = '3,250.00 ر.س';
@@ -71,14 +71,14 @@ $datetime = $sitesetup ? json_decode($sitesetup->value) : null;
                 document.getElementById('valEPayments').textContent = '12,500.00 ر.س';
                 document.getElementById('numCashPayments').textContent = '120';
                 document.getElementById('valCashPayments').textContent = '7,800.00 ر.س';
-          
+
                 document.querySelectorAll('.btn[data-range]').forEach(btn => {
                   btn.addEventListener('click', () => {
                   });
                 });
               });
             </script>
-          
+
 
 <style>
     body {
@@ -137,12 +137,12 @@ body.dark-mode .dashboard-title {
         color: #333;
     }
   </style>
-  
-  
-       
-        
 
-        
+
+
+
+
+
         <style>
 .NewCard {
     padding: 30px 20px;
@@ -182,30 +182,30 @@ body.dark-mode .dashboard-title {
 
 
 
-/* 
-background: linear-gradient(135deg, #0f2027, #434020, #64602c); 
+/*
+background: linear-gradient(135deg, #0f2027, #434020, #64602c);
     color: #f0f0f0;  */
 
 
 
 .NewCard.electronic {
-    background: linear-gradient(100deg, rgba(158, 33, 62, 0.719), rgba(233, 84, 58, 0.945)); 
-    color: #f0f0f0; 
+    background: linear-gradient(100deg, rgba(158, 33, 62, 0.719), rgba(233, 84, 58, 0.945));
+    color: #f0f0f0;
 }
 
 .NewCard.cash {
-    background: linear-gradient(100deg, rgba(6, 71, 49, 0.836), rgba(61, 155, 95, 0.938)); 
-    color: #f0f0f0; 
+    background: linear-gradient(100deg, rgba(6, 71, 49, 0.836), rgba(61, 155, 95, 0.938));
+    color: #f0f0f0;
 }
 
 .NewCard.wallet {
-    background: linear-gradient(100deg, rgb(124, 85, 36), rgba(189, 116, 6, 0.959)); 
-    color: #f0f0f0; 
+    background: linear-gradient(100deg, rgb(124, 85, 36), rgba(189, 116, 6, 0.959));
+    color: #f0f0f0;
 }
 
 .NewCard.travel {
-    background: linear-gradient(100deg, rgba(30, 48, 131, 0.781), rgba(133, 79, 187, 0.849)); 
-    color: #f0f0f0; 
+    background: linear-gradient(100deg, rgba(30, 48, 131, 0.781), rgba(133, 79, 187, 0.849));
+    color: #f0f0f0;
 }
 
         </style>
@@ -472,8 +472,8 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                             .stat-card.offices-outstanding {
                               background: linear-gradient(135deg, #7e19ad, #8951d3);
                             }
-                        
-                          
+
+
                             canvas {
     position: absolute;
     bottom: 0;
@@ -497,35 +497,35 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
 
                                 <div class="card">
                                     <div class="card-body">
-                                        
-                                        <div class="d-flex justify-content-start align-items-center"> 
+
+                                        <div class="d-flex justify-content-start align-items-center">
                                             <div class="event-icon-wrapper">
                                                 <svg width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <circle cx="12" cy="12" r="11" stroke="white" stroke-width="2" fill="none"/>
                                                     <circle cx="12" cy="12" r="7" stroke="white" stroke-width="2" fill="none" stroke-dasharray="56,56" stroke-dashoffset="0">
                                                         <animate attributeName="stroke-dashoffset" from="0" to="112" dur="1.5s" repeatCount="indefinite"/>
                                                     </circle>
-                                                </svg>   
-                                                
-                                                
-                                                
+                                                </svg>
+
+
+
                                             </div>
-                                            <div class=" col-md-6 "> 
+                                            <div class=" col-md-6 ">
                                                 <h4 > {{__('messages.live_events')}}</h4>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                             
-                    
-                
-                
-                
-                
-                                    
-                
-                
-                
+
+
+
+
+
+
+
+
+
+
                 <div class="map-container">
                     <div class="map-header">
                         <div class="text-center p-1" style="color: #ffffff; font-size: 19px; font-weight: 700; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
@@ -540,7 +540,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         <span id="last-update">{{ __('messages.last_update').': ' }}  --/--/---- --:--:--</span>
                     </div>
                 </div>
-                
+
                 <style>
                     .map-container {
                         width: 100%;
@@ -548,11 +548,11 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         margin: 20px auto;
                         border-radius: 12px;
                         overflow: hidden;
-                        background: linear-gradient(135deg, #F8A609 , #ff9966); 
+                        background: linear-gradient(135deg, #F8A609 , #ff9966);
                         box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
                         border: 2px solid #F8A609 ;
                     }
-                
+
                     .map-header {
                         display: flex;
                         justify-content: space-between;
@@ -565,15 +565,15 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         border-bottom: 3px solid #F8A609 ;
                         border-radius: 10px 10px 0 0;
                     }
-                
+
                     .map-header h2 {
                         margin: 0;
                         font-size: 20px;
                         color: #333;
-                        font-family: 'Poppins', sans-serif; 
+                        font-family: 'Poppins', sans-serif;
                     }
-                
-                    
+
+
                     .refresh-container {
                         width: 40px;
                         height: 40px;
@@ -586,7 +586,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         box-shadow: 0px 4px 10px rgba(255, 204, 0, 0.4);
                         transition: 0.3s;
                     }
-                
+
                     .refresh-icon {
                         width: 20px;
                         height: 20px;
@@ -595,31 +595,31 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         border-radius: 50%;
                         animation: rotate 1.5s linear infinite;
                     }
-                
+
                     .refresh-container:active {
                         transform: scale(0.9);
                     }
-                
+
                     @keyframes rotate {
                         0% { transform: rotate(0deg); }
                         100% { transform: rotate(360deg); }
                     }
-                
+
                     #map{
                         width: 100%;
                         height: 500px;
                         border-radius: 0 0 10px 10px;
                     }
-                
+
                     .map-footer{
                         text-align: center;
                         padding: 8px;
                         font-size: 17px;
                         color: #fff;
-                        background: #ff9966; 
+                        background: #ff9966;
                         border-radius: 0 3 10px 10px;
                     }
-                
+
                     .driver-info {
                         font-size: 14px;
                         font-weight: bold;
@@ -629,34 +629,34 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         border-radius: 8px;
                         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
                     }
-                
+
                 </style>
-                
+
                 <script>
                     var map;
                     var markers = {};
-                
+
                     function initMap() {
                         map = new google.maps.Map(document.getElementById("map"), {
                             center: { lat: 33.51389 , lng: 36.27639 },
                             zoom: 10
                         });
-                
-                        fetchDriverLocations(); 
-                        setInterval(fetchDriverLocations, 300000); 
+
+                        fetchDriverLocations();
+                        setInterval(fetchDriverLocations, 300000);
                     }
-                
+
                     function fetchDriverLocations() {
                     fetch("{{ route('live-drivers-locations') }}")
                         .then(response => response.json())
                         .then(data => {
                             const updatedDriverIds = new Set();
-                
+
                             data.forEach(driver => {
                                 let driverId = driver.driver_id;
                                 let position = new google.maps.LatLng(parseFloat(driver.latitude), parseFloat(driver.longitude));
                                 updatedDriverIds.add(driverId);
-                
+
                                 if (markers[driverId]) {
                                     markers[driverId].setPosition(position);
                                 } else {
@@ -667,7 +667,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                             🚗 ${driver.carBrand} - ${driver.carNumber}
                                         </div>`,
                                     });
-                
+
                                     let marker = new google.maps.Marker({
                                         position: position,
                                         map: map,
@@ -677,38 +677,38 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                         },
                                         title: `🚖{{ __('messages.driver_number')}}: ${driverId}`,
                                     });
-                
+
                                     marker.addListener("mouseover", () => infoWindow.open(map, marker));
                                     marker.addListener("mouseout", () => infoWindow.close());
-                
+
                                     markers[driverId] = marker;
                                 }
                             });
-                
+
                             for (let id in markers) {
                                 if (!updatedDriverIds.has(id)) {
-                                    markers[id].setMap(null); 
-                                    delete markers[id];       
+                                    markers[id].setMap(null);
+                                    delete markers[id];
                                 }
                             }
-                
+
                             updateLastUpdatedTime();
                         })
                         .catch(error => console.error("error:", error));
                 }
-                
-                
-                
+
+
+
                     function refreshMap() {
                         fetchDriverLocations();
                     }
-                
+
                     function updateLastUpdatedTime() {
                         let now = new Date();
                         let formattedTime = now.toLocaleDateString() + " " + now.toLocaleTimeString();
                         document.getElementById("last-update").innerText = "{{ __('messages.last_update') }}" +':  '+ formattedTime;
                     }
-                
+
                 </script>
 
                         <div class="col-12">
@@ -725,8 +725,8 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                             <p id="pending-ride">{{ $data['system_pending_rides'] }} {{ __('messages.order') }}</p>
                                         </div>
                                     </div>
-                    
-                            
+
+
                                     <div class="trip-card ongoing">
                                         <div class="trip-icon">
                                             <i class="fas fa-car-side"></i>
@@ -736,8 +736,8 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                             <p id="ongoing-ride">{{ $data['system_ongoing_rides'] }} {{ __('messages.ride') }}</p>
                                         </div>
                                     </div>
-                            
-                    
+
+
                                     <div class="trip-card finished">
                                         <div class="trip-icon">
                                             <i class="fas fa-flag-checkered"></i>
@@ -749,20 +749,20 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                     </div>
                                 </div>
                             </div>
-                            
-                
-                
-                
+
+
+
+
 
 
             <div class="col-md-12 mt-3">
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-start align-items-center"> 
+                        <div class="d-flex justify-content-start align-items-center">
                             <div class="event-icon-wrapper">
                                 <i class="fas fa-chart-line" style="font-size: 24px; color: white; animation: bounceUp 2s infinite;"></i>
                             </div>
-                            <div class="col-md-6"> 
+                            <div class="col-md-6">
                                 <h4> {{ __('messages.wallet_status_and_dues') }}</h4>
                             </div>
                         </div>
@@ -781,10 +781,10 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                     </div>
                 </div>
             </div>
-            
+
             <div class="dashboard-section">
                 <div class="dashboard-title">{{ __('messages.wallet') }}</div>
-            
+
                 <div class="row">
                     <div class="col-md-6">
                         <article class="stat-card withdrawal-available">
@@ -798,7 +798,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                             <canvas id="withdrawalChart"></canvas>
                         </article>
                     </div>
-            
+
                     <div class="col-md-6">
                         <article class="stat-card cash-payments">
                             <div class="stat-icon">
@@ -814,15 +814,15 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                 </div>
             </div>
 
- 
-            
+
+
             <div class="col-12">
                 <div class="horizontal-separator"></div>
             </div>
-            
+
             <div class="dashboard-section">
                 <div class="dashboard-title">{{ __('messages.dues') }}</div>
-            
+
                 <div class="row g-4">
                     <div class="col-md-6">
                         <div class="new-stat-card driver-card">
@@ -835,9 +835,9 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                             <div class="value" id="driverDues">{{ getPriceFormat($driverDues) }}</div>
                         </div>
                     </div>
-            
 
-                    
+
+
                     <div class="col-md-6">
                         <div class="new-stat-card office-card">
                             <span class="top-line"></span>
@@ -850,20 +850,20 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         </div>
                     </div>
 
-                    
+
 
 
                 </div>
             </div>
-            
-              
+
+
               <script>
                 function fetchWalletStats() {
                   fetch('/api/wallet-stats')
                     .then(res => res.json())
                     .then(data => {
                     //   const formatCurrency = value => value;
-              
+
                       document.getElementById("availableWithdrawal").textContent = data.walletBalance;
                       document.getElementById("withdrawnAmount").textContent = data.pendingAmount;
                       document.getElementById("driverDues").textContent = data.driverDues;
@@ -873,13 +873,13 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                       console.error("error :", error);
                     });
                 }
-              
+
                 document.addEventListener("DOMContentLoaded", () => {
                   fetchWalletStats();
                   setInterval(fetchWalletStats, 30000);
                 });
               </script>
-              
+
               <div class="col-12">
                 <div class="horizontal-separator"></div>
             </div>
@@ -892,7 +892,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                     <button onclick="setDateRange('month')" id="btn-month">{{ __('messages.this_month') }}</button>
                     <button onclick="setDateRange('year')" id="btn-year">{{ __('messages.this_year') }}</button>
                 </div>
-                  
+
                 <div class="filter-section">
                     <label for="startDate">{{ __('messages.from_date') }}</label>
                     <input type="date" id="startDate" />
@@ -901,12 +901,12 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                     <button onclick="applyCustomFilter()">{{ __('messages.apply_filter') }}</button>
                     <button class="reset-filter" onclick="resetFilter()">{{ __('messages.reset_filter') }}</button>
                 </div>
-            
+
                 <div id="filterMessage" style="display:none; position: relative; color: #571515; background-color: #edd4d4; border: 1px solid #e6c3c3; padding: 10px 40px 10px 10px; border-radius: 5px; margin-top: 10px; font-weight: bold;">
                     <span id="filterMessageText"></span>
                     <button id="closeFilterMessage" style="padding-bottom: 80px; position: absolute; top: 5px; right: 5px; background: transparent; border: none; font-size: 17px; font-weight: bold; color: #571515; cursor: pointer;">×</button>
                 </div>
-            
+
                 <div class="dashboard-section">
                     <div class="dashboard-title mb-4 fs-4 fw-bold">{{ __('messages.overview') }}</div>
                     <div class="row g-4">
@@ -948,14 +948,14 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="col-12">
                     <div class="horizontal-separator"></div>
                 </div>
-            
+
                 <div class="dashboard-section">
                     <div class="dashboard-title">{{ __('messages.financial_data') }}</div>
-            
+
                     <div class="row">
                         <div class="col-md-6">
                             <article class="stat-card revenue">
@@ -969,7 +969,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                                 <canvas id="revenueChart"></canvas>
                             </article>
                         </div>
-            
+
                         <div class="col-md-6">
                             <article class="stat-card offices-outstanding">
                                 <div class="stat-icon">
@@ -984,9 +984,9 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
                         </div>
                     </div>
                 </div>
-            
+
             </div>
-            
+
 
 <div class="col-12">
     <div class="horizontal-separator"></div>
@@ -994,7 +994,7 @@ background: linear-gradient(to right, transparent, #dc3545, transparent);
 
 <script>
 
-    
+
 function applyCustomFilter() {
     const start = document.getElementById("startDate").value;
     const end = document.getElementById("endDate").value;
@@ -1070,10 +1070,10 @@ function fetchDashboardStats(startDate, endDate) {
     headers: {
         'Accept': 'application/json'
     }
-}) 
+})
         .then(res => res.json())
         .then(data => {
-            
+
             document.querySelector(".electronic .text-number").textContent = data.electronicPayments;
             document.querySelector(".cash .text-number").textContent = data.cashPayments;
             document.querySelector(".wallet .text-number").textContent = data.walletPayments;
@@ -1091,19 +1091,19 @@ function resetFilter() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    setDateRange('today'); 
-    applyCustomFilter();  
+    setDateRange('today');
+    applyCustomFilter();
 });
 </script>
 
-    
+
 
 
 <script>
     function filterBy(period) {
         const today = new Date();
         let startDate, endDate;
-    
+
         switch (period) {
             case 'today':
                 startDate = endDate = today.toISOString().split('T')[0];
@@ -1124,11 +1124,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 endDate = new Date().toISOString().split('T')[0];
                 break;
         }
-    
+
         fetchDashboardStats(startDate, endDate);
     }
     </script>
-    
 
 
 
@@ -1139,11 +1138,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-       
+
+
             <div class="col-12">
                 <div class="horizontal-separator"></div>
                     </div>
-            
 
 
 
@@ -1159,7 +1158,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-            
+
+
 
 
 
@@ -1204,7 +1204,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="col-md-4 col-sm-6">
                     <div class="card top-providers">
                         <div class="card-header d-flex justify-content-between gap-10">
@@ -1213,7 +1213,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="card-body p-0">
                             <ul class="common-list list-unstyled">
-                                @foreach($users as $customer) 
+                                @foreach($users as $customer)
                                 <li style="pointer-events:none;">
                                     <div class="media gap-3">
                                         <div class="h-avatar is-medium h-5">
@@ -1229,12 +1229,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                         </div>
                                     </div>
                                 </li>
-                                @endforeach 
+                                @endforeach
                             </ul>
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="col-md-4 col-sm-6">
                     <div class="card recent-activities">
                         <div class="card-header d-flex justify-content-between gap-10">
@@ -1255,7 +1255,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                                 optional($datetime)->date_format && optional($datetime)->time_format
                                                 ? date(optional($datetime)->date_format, strtotime($booking->date)) . ' / ' . date(optional($datetime)->time_format, strtotime($booking->start))
                                                 : ''
-                                            }}</span>    
+                                            }}</span>
                                         </div>
                                     </div>
                                     <span class="badge rounded-pill py-2 px-3 badge-pending text-capitalize">{{$booking->status}}</span>
@@ -1267,8 +1267,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
 
-            
-   
+
+
 <div id="data-container" data-revenue='<?php echo json_encode($data['revenueData']); ?>'></div>
 
 <div id="monthly-revenue"></div>
@@ -1277,7 +1277,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('data-container');
         var revenueData = JSON.parse(container.getAttribute('data-revenue'));
-        
+
         var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
         if (document.querySelector('#monthly-revenue')) {
@@ -1301,7 +1301,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 stroke: {
                     curve: 'smooth',
                     width: 3,
-                    colors: ['#f5b041'] 
+                    colors: ['#f5b041']
                 },
                 markers: {
                     size: 5,
@@ -1319,8 +1319,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 tooltip: {
                     theme: 'dark',
-                    y: { formatter: function(val) { return 'ل.س' + val.toLocaleString(); } }
-                },
+                    y: {
+                            formatter: function(val) {
+                                @if(app()->getLocale() == 'ar')
+                                    return val.toLocaleString() + ' {{ getPriceSymbol() }}';
+                                @else
+                                    return '{{ getPriceSymbol() }} ' + val.toLocaleString();
+                                @endif
+                            }
+                        }
+             },
                 grid: { borderColor: '#ddd', strokeDashArray: 5 }
             };
 
@@ -1331,7 +1339,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
-    
+
 {{-- <script>
     document.addEventListener("DOMContentLoaded", function () {
         function fetchStatistics() {
@@ -1343,30 +1351,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById("users").textContent    = data.count_total_user;
                     document.getElementById("services").textContent = data.count_total_service;
                     document.getElementById("drivers").textContent  = data.count_total_driver;
-    
+
                     document.getElementById("withdrawn-amount").textContent = data["withdrawn-amount"];
                     document.getElementById("available-amount").textContent = data["available-amount"];
                     document.getElementById("pending-amount").textContent   = data["pending-amount"] ?? "0.00";
                     document.getElementById("total-amount").textContent     = data["total-amount"];
-    
+
                     document.getElementById("office-due-amount").textContent = data["offices-due-amount"];
                     document.getElementById("driver-due-amount").textContent = data["drivers-due-amount"];
-    
+
                     document.getElementById("completed-ride").textContent = `${data.system_completed_rides} {{ __('messages.ride') }}`;
                     document.getElementById("ongoing-ride").textContent   = `${data.system_ongoing_rides} {{ __('messages.ride') }}`;
                     document.getElementById("pending-ride").textContent   = `${data.system_pending_rides} {{ __('messages.order') }}`;
                 })
                 .catch(error => console.error("Error fetching statistics:", error));
         }
-    
+
         // fetchStatistics();
-    
+
         // setInterval(fetchStatistics, 5 * 60 * 1000);
         setInterval(fetchStatistics, 6* 1000);
 
     });
     </script> --}}
-    
+
 
 
 <style>
@@ -1399,7 +1407,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentAmount = currentAmountElement.textContent.replace('$', '').replace(',', '');
    currentAmount = parseFloat(currentAmount);
 
-    
+
     const newAmount = parseFloat(data.value);
 
     const updatedAmount = newAmount;

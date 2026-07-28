@@ -62,8 +62,14 @@ use App\Http\Repositories\ReplyRepositories\ReplyRepositoryCaller;
 use App\Http\Repositories\HelpSuggestionRepositories\HelpSuggestionRepositoryCaller; 
 use App\Http\Repositories\DepartmentRepositories\DepartmentRepositoryCaller; 
 use App\Http\Repositories\IssueLogRepositories\IssueLogRepositoryCaller; 
+use App\Http\Repositories\DriverJobApplicationRepositories\DriverJobApplicationRepositoryCaller; 
+use App\Http\Repositories\TravelRoutesRepositories\TravelRoutesRepositoryCaller; 
+use App\Http\Repositories\OfficeSubServicePriceRepositories\OfficeSubServicePriceRepositoryCaller; 
 class RepositoryCaller {
 
+	static public function OfficeSubServicePriceRepository(){return (new OfficeSubServicePriceRepositoryCaller);}
+	static public function TravelRoutesRepository(){return (new TravelRoutesRepositoryCaller);}
+	static public function DriverJobApplicationRepository(){return (new DriverJobApplicationRepositoryCaller);}
 	static public function IssueLogRepository(){return (new IssueLogRepositoryCaller);}
 	static public function DepartmentRepository(){return (new DepartmentRepositoryCaller);}
 	static public function HelpSuggestionRepository(){return (new HelpSuggestionRepositoryCaller);}

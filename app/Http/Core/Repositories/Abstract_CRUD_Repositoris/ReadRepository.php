@@ -24,7 +24,7 @@ abstract class ReadRepository
     public function getByConditions( $conditions =[] , array $selected = ["*"] ) {
         return $this->model->select($selected)
         ->where($conditions)->get();
-      
+
     }
 
     public function getFirstByConditions( $conditions , array $selected = ["*"]  ) {
@@ -86,7 +86,6 @@ abstract class ReadRepository
 
             default:
             return $model;
-            break;
          }
 
     }

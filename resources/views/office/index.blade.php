@@ -116,7 +116,7 @@
                         orderable: false,
                     },
 
-                   
+
                     // {
                     //   data:'providertype_id',
                     //   name:'providertype_id',
@@ -213,141 +213,253 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
     document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.edit-commission-btn');
+        const btn = e.target.closest('.edit-office-commission-btn');
         if (!btn) return;
 
         const officeId = btn.getAttribute('data-office-id');
-        
-        openCommissionModal(officeId);
-        
+        let hasCustom = btn.getAttribute('data-has-custom-commission') === 'yes';
+        let defaultOfficeCommission = btn.getAttribute('data-office-commission');
+
+        if (!hasCustom) {
+            Swal.fire({
+                title: "{{ __('messages.office_commission') }}",
+                html: `
+                    <p style="font-size:16px; color:#312873; font-weight:600;">
+                        {{ __('messages.general_commission_info') }}
+                    </p>
+                    <button id="customizeBtn" class="swal2-confirm" style="margin-top:15px;">
+                        {{ __('messages.customize_commission') }}
+                    </button>
+                `,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: "{{ __('messages.cancel') }}",
+                didOpen: () => {
+                    document.getElementById('customizeBtn').addEventListener('click', () => {
+                        Swal.close();
+                        btn.setAttribute('data-has-custom-commission', 'yes');
+                        hasCustom = true;
+                        openCommissionModal(officeId);
+                    });
+                }
+            });
+        } else {
+            openCommissionModal(officeId);
+        }
+
         function openCommissionModal(officeId) {
             Swal.fire({
-                title: "{{ __('messages.edit_commission') }}",
+                title: "{{ __('messages.edit_office_commission') }}",
                 width: 450,
                 padding: '2rem',
                 background: '#fefefe',
                 color: '#312873',
                 customClass: { popup: 'custom-swal-popup' },
                 html: `
-                <div style="text-align:center; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:16px;">
-                    <div style="margin-bottom:20px;">
-                        <label style="font-weight:600; display:block; margin-bottom:5px; color:#312873;">
-                            {{ __('messages.office_commission') }} (%)
-                        </label>
-                        <input id="officeCommission${officeId}" type="number" min="0" max="100" 
-                               class="swal2-input" placeholder="{{ __('messages.example_value', ['value' => 20]) }}" 
-                               style="width:90%; font-size:16px; border-radius:6px;">
-                    </div>
-                    <div style="margin-bottom:20px;">
-                        <label style="font-weight:600; display:block; margin-bottom:5px; color:#312873;">
-                            {{ __('messages.fleet_commission') }} (%)
-                        </label>
-                        <input id="fleetCommission${officeId}" type="number" min="0" max="100" 
-                               class="swal2-input" placeholder="{{ __('messages.example_value', ['value' => 80]) }}" 
-                               style="width:90%; font-size:16px; border-radius:6px;">
-                    </div>
-                    <div style="margin-bottom:10px;">
-                        <label style="font-weight:600; display:block; margin-bottom:5px; color:#312873;">
-                            {{ __('messages.percentage') }}
-                        </label>
-                        <div style="position:relative; height:25px; background:#eee; border-radius:8px; overflow:hidden; width:90%; margin:auto;">
-                            <div id="officeBar${officeId}" style="height:100%; background:#312873; width:0%; float:left;"></div>
-                            <div id="fleetBar${officeId}" style="height:100%; background:#F8A609; width:0%; float:left;"></div>
-                            <span id="progressText${officeId}" 
-                                  style="position:absolute; top:0; left:50%; transform:translateX(-50%); font-weight:bold; line-height:25px; color:black;">
-                                100% {{ __('messages.remaining') }}
-                            </span>
+                    <div style="text-align:center; font-size:16px;">
+                        <div style="margin-bottom:20px;">
+                            <label style="font-weight:600; display:block; margin-bottom:5px; color:#312873;">
+                                {{ __('messages.office_commission') }} (%)
+                            </label>
+                            <input id="officeCommission${officeId}" type="number" min="0" max="100"
+                                class="swal2-input"
+                                style="width:90%; font-size:16px; border-radius:6px;">
                         </div>
-                        <div id="warningText${officeId}" style="color:red; font-weight:600; margin-top:5px; display:none;">
-                            {{ __('messages.over_100_warning') }}
+
+                        <div style="margin-bottom:10px;">
+                            <div id="commissionLabels${officeId}" style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:600;">
+                                <span id="fleetLabel${officeId}">{{ __('messages.fleet_commission') }}: 100%</span>
+                                <span id="officeLabel${officeId}">{{ __('messages.office_commission') }}: 0%</span>
+                            </div>
+                            <div style="position:relative; height:25px; background:#eee; border-radius:8px; overflow:hidden; width:90%; margin:auto;">
+                                <div id="fleetBar${officeId}" style="height:100%; background:#312873; width:100%; float:left;"></div>
+                                <div id="officeBar${officeId}" style="height:100%; background:#F8A609; width:0%; float:left;"></div>
+                            </div>
+                            <div id="warningText${officeId}" style="color:red; font-weight:600; margin-top:5px; display:none;">
+                                {{ __('messages.over_100_warning') }}
+                            </div>
                         </div>
+
+                        <button id="resetBtn${officeId}" style="margin-top:15px; background:#312873; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-weight:600;">
+                            {{ __('messages.reset_commission_to_default') }}
+                        </button>
                     </div>
-                </div>
-                <div class="col-12">
-                <div class="horizontal-separator"></div>
-            </div>
                 `,
                 showCancelButton: true,
                 confirmButtonText: "{{ __('messages.save') }}",
                 cancelButtonText: "{{ __('messages.cancel') }}",
+
                 didOpen: () => {
-                    const officeInput = document.getElementById(`officeCommission${officeId}`);
-                    const fleetInput = document.getElementById(`fleetCommission${officeId}`);
-                    const officeBar = document.getElementById(`officeBar${officeId}`);
-                    const fleetBar = document.getElementById(`fleetBar${officeId}`);
-                    const progressText = document.getElementById(`progressText${officeId}`);
-                    const warningText = document.getElementById(`warningText${officeId}`);
+                    const popup = Swal.getPopup();
+                    const officeInput = popup.querySelector(`#officeCommission${officeId}`);
+                    const fleetBar = popup.querySelector(`#fleetBar${officeId}`);
+                    const officeBar = popup.querySelector(`#officeBar${officeId}`);
+                    const fleetLabel = popup.querySelector(`#fleetLabel${officeId}`);
+                    const officeLabel = popup.querySelector(`#officeLabel${officeId}`);
+                    const warningText = popup.querySelector(`#warningText${officeId}`);
+                    const resetBtn = popup.querySelector(`#resetBtn${officeId}`);
+                    const saveBtn = popup.querySelector('.swal2-confirm.swal2-styled');
+
+                    officeInput.value = hasCustom ? btn.getAttribute('data-office-commission') : defaultOfficeCommission;
 
                     function updateProgress() {
                         let office = parseInt(officeInput.value) || 0;
-                        let fleet = parseInt(fleetInput.value) || 0;
-                        const total = office + fleet;
-                        const remaining = 100 - total;
+                        if (office > 100) office = 100;
+                        if (office < 0) office = 0;
 
-                        officeBar.style.width = office + '%';
+                        const fleet = 100 - office;
                         fleetBar.style.width = fleet + '%';
-                        progressText.textContent = remaining + '% {{ __('messages.remaining') }}';
+                        officeBar.style.width = office + '%';
+                        fleetLabel.textContent = `{{ __('messages.fleet_commission') }}: ${fleet}%`;
+                        officeLabel.textContent = `{{ __('messages.office_commission') }}: ${office}%`;
 
-                        if (total > 100) {
-                            progressText.style.color = 'red'; 
-                            warningText.style.display = 'block';
-                        } else if (total >= 50) {
-                            progressText.style.color = 'white'; 
-                            warningText.style.display = 'none';
-                        } else {
-                            progressText.style.color = 'black'; 
-                            warningText.style.display = 'none';
-                        }
+                        warningText.style.display = (office > 100 || office < 0) ? 'block' : 'none';
+                        saveBtn.disabled = (office > 100 || office < 0);
                     }
 
                     officeInput.addEventListener('input', updateProgress);
-                    fleetInput.addEventListener('input', updateProgress);
+
+                    resetBtn.addEventListener('click', () => {
+                        fetch("{{ route('office.resetCommission') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ office_id: officeId })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                officeInput.value = data.office_commission;
+                                updateProgress();
+                                btn.setAttribute('data-has-custom-commission', 'no');
+                                btn.setAttribute('data-office-commission', data.office_commission);
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: "{{ __('messages.updated') }}",
+                                    text: "{{ __('messages.commission_reset_success') }}"
+                                }).then(() => Swal.close());
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: "{{ __('messages.failed_update') }}",
+                                    text: data.message || 'حدث خطأ'
+                                });
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: "{{ __('messages.failed_update') }}",
+                                text: "{{ __('messages.connection_error') }}"
+                            });
+                        });
+                    });
+
                     updateProgress();
                 },
-                preConfirm: () => {
-                    const office = parseInt(document.getElementById(`officeCommission${officeId}`).value);
-                    const fleet = parseInt(document.getElementById(`fleetCommission${officeId}`).value);
 
-                    if (isNaN(office) || isNaN(fleet)) {
+                preConfirm: () => {
+                    const popup = Swal.getPopup();
+                    const officeInput = popup.querySelector(`#officeCommission${officeId}`);
+                    let office = parseInt(officeInput.value);
+                    if (isNaN(office)) {
                         Swal.showValidationMessage("{{ __('messages.validation_empty') }}");
                         return false;
                     }
-                    if (office + fleet > 100) {
-                        Swal.showValidationMessage("{{ __('messages.validation_over_100') }}");
-                        return false;
-                    }
-
-                    return { office, fleet };
+                    if (office < 0) office = 0;
+                    if (office > 100) office = 100;
+                    return { office };
                 }
+
             }).then(result => {
                 if (result.isConfirmed) {
-                    fetch(`/office/update-commission`, {
+                    const popup = Swal.getPopup();
+                    const officeInput = popup.querySelector(`#officeCommission${officeId}`);
+                    const fleetBar = popup.querySelector(`#fleetBar${officeId}`);
+                    const officeBar = popup.querySelector(`#officeBar${officeId}`);
+                    const fleetLabel = popup.querySelector(`#fleetLabel${officeId}`);
+                    const officeLabel = popup.querySelector(`#officeLabel${officeId}`);
+
+                    fetch("{{ route('office.updateCommission') }}", {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Accept': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                          officeId: officeId,
-                          office_commission: result.value.office,
-                          fleet_commission: result.value.fleet,
-                            
+                            office_id: officeId,
+                            office_commission: result.value.office
                         })
                     })
                     .then(res => res.json())
                     .then(data => {
-                        Swal.fire({
-                            icon: data.success ? 'success' : 'error',
-                            title: data.success ? "{{ __('messages.updated') }}" : "{{ __('messages.failed_update') }}",
-                            text: data.message || (data.success ? "{{ __('messages.updated_success') }}" : "{{ __('messages.update_failed') }}")
-                        });
+                        if (data.success) {
+                            officeInput.value = result.value.office;
+                            const office = parseInt(officeInput.value) || 0;
+                            const fleet = 100 - office;
+                            fleetBar.style.width = fleet + '%';
+                            officeBar.style.width = office + '%';
+                            fleetLabel.textContent = `{{ __('messages.fleet_commission') }}: ${fleet}%`;
+                            officeLabel.textContent = `{{ __('messages.office_commission') }}: ${office}%`;
+
+                            btn.setAttribute('data-has-custom-commission', 'yes');
+                            btn.setAttribute('data-office-commission', result.value.office);
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: "{{ __('messages.updated') }}",
+                                text: data.message
+                            }).then(() => Swal.close());
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: "{{ __('messages.failed_update') }}",
+                                text: data.message
+                            });
+                        }
                     })
                     .catch(() => {
                         Swal.fire({
@@ -362,19 +474,33 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <style>
 .custom-swal-popup {
-    border: 3px solid #F8A609; 
+    border: 3px solid #F8A609;
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    background-color: rgba(255, 255, 255, 0.95); 
+    background-color: rgba(255, 255, 255, 0.95);
     font-family: "Helvetica Neue", Helvetica;
     font-size: 18px;
     padding: 20px;
 }
 
 .swal2-confirm {
-    background-color: #312873 !important; 
+    background-color: #312873 !important;
     color: white !important;
     font-weight: bold;
     font-size: 18px;

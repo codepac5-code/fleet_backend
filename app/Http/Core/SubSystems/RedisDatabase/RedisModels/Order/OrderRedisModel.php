@@ -1,36 +1,62 @@
 <?php
 namespace App\Http\Core\SubSystems\RedisDatabase\RedisModels\Order;
 
+use App\Events\Panel\OrderBoardUpdated;
 use App\Http\Core\Classes\RedisManagerData;
 use App\Http\Core\Const\Options\OrderStatus;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\RedisModel;
+use App\Http\Services\Panel\Bookings\Logic\LiveTripPresenter;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\SubService;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 abstract class OrderRedisModel  {
 
+    /**
+     * The active country's Redis namespace (db-name based, e.g. `fleet_sy:`), so
+     * the order board is isolated per country — SY orders never land in the key
+     * QA reads. Empty (no prefix) outside a shard context, preserving the legacy
+     * single-country behavior.
+     */
+    protected static function shardPrefix(): string
+    {
+        $key = \App\Http\Core\GeoServices\ShardManager::shardKey();
+
+        return $key !== '' ? $key . ':' : '';
+    }
+
+    protected static function orderKey($orderId): string
+    {
+        return self::shardPrefix() . OrderRedisKeies::ORDER->generateKey(['orderId' => $orderId]);
+    }
+
+    protected static function statusKey($status): string
+    {
+        return self::shardPrefix() . OrderRedisKeies::ORDER_STATUS->generateKey(['status' => $status]);
+    }
+
     public static function store(Booking $order  ): void
     {
-        $order_key = OrderRedisKeies::ORDER->generateKey(['orderId'=>$order->id]);
-        $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status'=>$order->status]);
+        $order_key = self::orderKey($order->id);
+        $order_status_key = self::statusKey($order->status);
         Redis::set($order_key, serialize($order));
         Redis::sadd($order_status_key , $order->id);
     }
 
     public static function storeWithPagenationService(Booking $order): void
     {
-      
+
         if ($order->driverId != null) {
             $driver = Driver::select(['firstName', 'lastName', 'photo', 'vehicleId','phoneNumber'])
                 ->where(['id' => $order->driverId])
-                ->with('vehicle')  
-                ->first(); 
-            
+                ->with('vehicle')
+                ->first();
+
                 $order->driver = $driver;
-  // $value = 
+  // $value =
         // [
         //     "id"=> $order->id,
         //     "startAt"=> $order->startAt,
@@ -77,10 +103,10 @@ abstract class OrderRedisModel  {
             //         'plate'=>$driver->vehicle->plate,
             //         'vehicleBrand'=>$driver->vehicle->vehicleBrand,
             //     ],
-            // ]; 
+            // ];
 
         }
-        
+
         $user = User::select(['firstName','lastName','photo',
         'phoneNumber'])->find($order->userId);
 
@@ -90,11 +116,11 @@ abstract class OrderRedisModel  {
         //     'lastName'=>$user->lastName,
         //     'photo'=>$user->photo,
         //     'phoneNumber'=> $user->phoneNumber
-        // ]; 
-        
+        // ];
+
         switch(app()->getLocale())
         {
-            case 'en': 
+            case 'en':
                 $sub_service = SubService::select([
                     'name_en as name'
                 ]);
@@ -122,14 +148,15 @@ abstract class OrderRedisModel  {
             // $value['withOffice'] = true;
             // $value['officeName'] = $order->office->officeName;
 
-        }else{
+        }
+        else {
             $order->withOffice = false;
             // $value['withOffice'] = false;
         }
 
-        $order_key = OrderRedisKeies::ORDER->generateKey(['orderId' => $order->id]);
-        $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status' => $order->status]);
-    
+        $order_key = self::orderKey($order->id);
+        $order_status_key = self::statusKey($order->status);
+
         // $score = $order->created_at ? strtotime($order->created_at) : time();
         $score = $order->id;
         Redis::zadd($order_status_key, $score, $order->id);
@@ -147,26 +174,72 @@ abstract class OrderRedisModel  {
         else {
             Redis::set($order_key , serialize($order) ); //json_encode($value)
         }
-        
+
+        self::pushBoard($order, 'upsert');
+
         // Redis::set($order_key, serialize($order));
+    }
+
+    protected static function pushBoard($order, string $action): void
+    {
+        try {
+            if (! config('services.realtime.order_board')) {
+                return;
+            }
+
+            if (! empty($order->is_scheduled)) {
+                return;
+            }
+
+            $payload  = LiveTripPresenter::fromOrder($order);
+            $channels = [self::shardPrefix() . 'panel-orders-admins'];
+
+            if (! empty($order->officeId)) {
+                $channels[] = self::shardPrefix() . 'panel-orders-office-' . $order->officeId;
+            }
+
+            event(new OrderBoardUpdated($channels, $action, $payload));
+        } catch (\Throwable $e) {
+            Log::warning('OrderBoard broadcast failed: ' . $e->getMessage());
+        }
+    }
+
+    protected static function pushBoardRemove($orderId, $officeId): void
+    {
+        try {
+            if (! config('services.realtime.order_board')) {
+                return;
+            }
+
+            $payload  = ['id' => (int) $orderId];
+            $channels = [self::shardPrefix() . 'panel-orders-admins'];
+
+            if (! empty($officeId)) {
+                $channels[] = self::shardPrefix() . 'panel-orders-office-' . $officeId;
+            }
+
+            event(new OrderBoardUpdated($channels, 'remove', $payload));
+        } catch (\Throwable $e) {
+            Log::warning('OrderBoard remove broadcast failed: ' . $e->getMessage());
+        }
     }
 
 
     public static function storeCancelOrderId($orderId): void
     {
         $key = 'cancelled-orderIds';
-        $expireAfterSeconds = 90 * 60; 
-        $score = time() + $expireAfterSeconds; 
+        $expireAfterSeconds = 90 * 60;
+        $score = time() + $expireAfterSeconds;
         Redis::zadd($key, [$orderId => $score]);
     }
-    
+
     public static function getCancelOrderIds(): array
     {
         $key = 'cancelled-orderIds';
         $now = time();
-        
+
         Redis::zremrangebyscore($key, '-inf', $now - 1);
-    
+
         return Redis::zrange($key, 0, -1);
     }
 
@@ -175,36 +248,42 @@ abstract class OrderRedisModel  {
 
     public static function getOrder(int $orderId)
     {
-        $order_key = OrderRedisKeies::ORDER->generateKey(['orderId'=>$orderId]);
+        $order_key = self::orderKey($orderId);
         $data = Redis::get($order_key);
         return $data ? unserialize($data) : null; //json_decode($data)
     }
 
     public static function delete( $orderId , $status ): void
     {
-        $order_key = OrderRedisKeies::ORDER->generateKey(['orderId'=>$orderId]);
+        $cached = self::getOrder($orderId);
+
+        $order_key = self::orderKey($orderId);
         Redis::del($order_key);
-        $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status'=>$status]);
+        $order_status_key = self::statusKey($status);
         Redis::zrem($order_status_key, $orderId);
 
         if($status == OrderStatus::$Pending){
             OrderRedisModel::storeCancelOrderId($orderId);
         }
+
+        if ($cached && empty($cached->is_scheduled)) {
+            self::pushBoardRemove($orderId, $cached->officeId ?? null);
+        }
     }
 
     public static function deleteCompletely(int $orderId, string $status): void
     {
-        $status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status' => $status]);
+        $status_key = self::statusKey($status);
 
-        $order_key = OrderRedisKeies::ORDER->generateKey(['orderId' => $orderId]);
+        $order_key = self::orderKey($orderId);
 
         // Redis::zrem($status_key, $orderId);
-        
+
         if (Redis::type($status_key) !== 'zset') {
             Redis::del($status_key);
         }
         Redis::zrem($status_key, $orderId);
-        
+
         RedisManagerData::delete($order_key);
     }
 
@@ -212,7 +291,7 @@ abstract class OrderRedisModel  {
 
     public static function get_status_count($status): int
     {
-    $status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status' => $status]);
+    $status_key = self::statusKey($status);
     $count = Redis::zcard($status_key);
 
     return $count;
@@ -221,7 +300,7 @@ abstract class OrderRedisModel  {
 
     public static function getByStatus(string $status)
     {
-        $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey([ 'status'=> $status ]);
+        $order_status_key = self::statusKey($status);
         $ids = Redis::smembers($order_status_key);
         // return collect($ids)->map(fn($id) => self::getOrder($id))->filter();
         return collect($ids)->map(function ($id) use ($order_status_key) {
@@ -236,9 +315,9 @@ abstract class OrderRedisModel  {
 
     public static function getByStatusAfterId(string $status, int $afterId)
 {
-    $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status' => $status]);
+    $order_status_key = self::statusKey($status);
 
-    $ids = Redis::zrevrangebyscore($order_status_key, '+inf', "($afterId"); 
+    $ids = Redis::zrevrangebyscore($order_status_key, '+inf', "($afterId");
 
     return collect($ids)->map(function ($id) use ($order_status_key) {
         $order = self::getOrder($id);
@@ -251,7 +330,7 @@ abstract class OrderRedisModel  {
 }
 
     public static function getByStatusPaginated(string $status, int $offset = 0, int $limit = 20){
-    $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status' => $status]);
+    $order_status_key = self::statusKey($status);
 
     $ids = Redis::zrevrange($order_status_key, $offset, $offset + $limit - 1);
 
@@ -261,7 +340,7 @@ abstract class OrderRedisModel  {
     return collect($ids)->map(function ($id) use ($order_status_key) {
         $order = self::getOrder($id);
         if (!$order) {
-            Redis::zrem($order_status_key, $id); 
+            Redis::zrem($order_status_key, $id);
             return null;
         }
         return $order;
@@ -271,23 +350,23 @@ abstract class OrderRedisModel  {
 
     // public static function updateStatus(Booking $order , string $oldStatus): void
     // {
-    //     $order_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status'=>$oldStatus]);
+    //     $order_status_key = self::statusKey($oldStatus);
     //     Redis::srem($order_status_key, $order->id);
     //     self::store($order);
     // }
 
 
     public static function updateStatus(Booking $order, string $oldStatus, string $newStatus): void {
-        $old_status_key = OrderRedisKeies::ORDER_STATUS->generateKey(['status' => $oldStatus]);
+        $old_status_key = self::statusKey($oldStatus);
 
         Redis::zrem($old_status_key, $order->id);
 
         $order->status = $newStatus;
 
-        self::storeWithPagenationService($order); 
+        self::storeWithPagenationService($order);
 
         if ($newStatus === OrderStatus::$Completed) {
-            Redis::expire(OrderRedisKeies::ORDER->generateKey(['orderId' => $order->id]), 86400);
+            Redis::expire(self::orderKey($order->id), 86400);
         }
     }
 
@@ -417,7 +496,7 @@ abstract class OrderRedisModel  {
     // ----------
 
     public static function get_completed_count($officeId = null){
-        
+
         if($officeId == null){ $officeId = 000 ;}
         $key  = OrderRedisKeies::ORDER_COMPLETED_COUNT->generateKey(['officeId' => $officeId]);
         return Redis::get($key);
@@ -427,7 +506,7 @@ abstract class OrderRedisModel  {
     // public static function add_completed_count($officeId = null , $plus = true){
 
     //     $value = $plus ? 1 : -1;
-    //     if($officeId != null){ 
+    //     if($officeId != null){
     //         $key  = OrderRedisKeies::ORDER_COMPLETED_COUNT->generateKey(['officeId' => $officeId]);
     //         $count =  Redis::get($key) + $value;
     //         Redis::set($key , $count);
@@ -440,7 +519,7 @@ abstract class OrderRedisModel  {
     //---------------
 
     public static function get_ongoing_count($officeId = null){
-        
+
         if($officeId == null){ $officeId = 000 ;}
         $key  = OrderRedisKeies::ORDER_ONGOING_COUNT->generateKey(['officeId' => $officeId]);
         return Redis::get($key);
@@ -449,7 +528,7 @@ abstract class OrderRedisModel  {
     // public static function add_ongoing_count($officeId = null , $plus = true){
 
     //     $value = $plus ? 1 : -1;
-    //     if($officeId == null){ 
+    //     if($officeId == null){
     //         $key  = OrderRedisKeies::ORDER_ONGOING_COUNT->generateKey(['officeId' => $officeId]);
     //         $count =  Redis::get($key) + $value;
     //         Redis::set($key , $count);

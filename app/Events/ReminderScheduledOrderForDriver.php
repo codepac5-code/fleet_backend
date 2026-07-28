@@ -14,12 +14,14 @@ use Illuminate\Queue\SerializesModels;
 class ReminderScheduledOrderForDriver implements ShouldBroadcast , ShouldQueue
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-    public $queue = 'events';
+    public $queue = 'reminders';
     /**
      * Create a new event instance.
      */
     public function __construct(private $data , private $driverId)
-    {}
+    {
+        info('reminder driver event fired');
+    }
 
     public function broadcastOn()
     {
@@ -31,6 +33,9 @@ class ReminderScheduledOrderForDriver implements ShouldBroadcast , ShouldQueue
     }
 
     public function broadcastWith(){
+        info('dddddddddddddddddiu');
+
+        // info($this->data);
         return $this->data;
     }
 }

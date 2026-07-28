@@ -14,10 +14,9 @@ return [
     */
 
     'commands' => [
-        \App\Console\Commands\ListenToAllRedisChannels::class, 
-        \App\Console\Commands\makeServices::class, 
-        \App\Console\Commands\makeRepository::class, 
-        ],
+        \App\Console\Commands\makeServices::class,
+        \App\Console\Commands\makeRepository::class,
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -15,7 +15,7 @@ $auth_user= authSession();
     <a class="mr-2" href="{{ route('office.create-page',['id' => $office->id]) }}" title="{{ __('messages.update_form_title',['form' => __('messages.office') ]) }}"><i class="fas fa-pen text-secondary"></i></a>
     @endif
     @if(auth()->user()->can('delete office'))
-    <a class="mr-2 text-danger" href="{{ route('office.destroy', $office->id) }}" data--submit="office{{$office->id}}" 
+    <a class="mr-2 text-danger" href="{{ route('office.destroy', $office->id) }}" data--submit="office{{$office->id}}"
         data--confirmation='true'
         data--ajax="true"
         data-datatable="reload"
@@ -53,12 +53,16 @@ $auth_user= authSession();
 
 @if(auth()->user()->can('office change custom commission'))
 
-<a class="edit-commission-btn text-primary d-flex align-items-center" 
-   href="javascript:void(0);" 
+<a class="edit-office-commission-btn text-primary d-flex align-items-center"
+   href="javascript:void(0);"
+   data-has-custom-commission={{$isCustom? 'yes':'no'}}
+   data-office-commission="{{$officeCommission}}"
+   data-office-id="{{ $office->id }}"
    title="{{ __('messages.edit_commission') }}"
    style="margin-{{ app()->getLocale() === 'ar' ? 'left' : 'right' }}:5px; gap:0.3rem;">
    <i class="fas fa-percentage"></i>
 </a>
+
 @endif
 </div>
 </form>

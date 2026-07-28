@@ -23,62 +23,56 @@ class UpdateOfficeCommissionsLogic implements Service {
 
 
     public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
+    
+        // if(!check_auth_user_has_role([Roles::Office->value])){
+        //     return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
+        // }
 
-        if(!check_auth_user_has_role([Roles::Office->value])){
-            return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
-        }
+        $officeId = getOfficeIdByAuthUser();
+        $office = $this->repository->OfficeRepository()->updateRepository();
 
-        $office_info = $this->repository->OfficeRepository()->updateRepository();
-        
-        if(demoUserPermission()){
-            return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
-        }
+        // if(demoUserPermission()){
+        //     return  redirect()->back()->withErrors(trans('messages.demo_permission_denied'));
+        // }
 
         switch($this->input->getType())
         {
             case 'office_car' :
-                $office_commission  = $this->input->getCommissionWithOfficeCar();
                 $driver_commission = $this->input->getDriverCommissionPrecentage();
+                $office_commission  = 100 -  $driver_commission;
 
-                if(($driver_commission + $driver_commission) != 100){
-                    $message = 'مجموع نسب العمولات لا يساي الـ 100 ';
-                    return redirect(route('driver.index'))->withErrors(['completed_value'=>$message]);
-                }
-           
-                $office_info->updateFirst([],[
+
+                $office->updateFirst(['id'=>$officeId],[
                     'commission_with_office_car' => $office_commission,
                     'driver_commission_precentage' => $driver_commission,
                 ]);
                 $message = ' تم تحديث عمولات السائقين بنجاح ';
-                return redirect(route('commissions.free-driver'))->withSuccess($message);
+                // return redirect(route('commissions.free-driver'))->withSuccess($message);
                 break;
 
             case 'driver_car':
-                $office_commission  = $this->input->getCommissionWithDriverCar();
                 $driver_commission = $this->input->getDriverCarCommissionPrecentage();
+                $office_commission  = 100 -  $driver_commission;
 
-                if(($driver_commission + $office_commission) != 100){
-                    $message = 'مجموع نسب العمولات لا يساي الـ 100 ';
-                    return redirect(route('commissions.free-driver'))->withErrors(['completed_value'=>$message]);
-                }
-
-                $office_info->updateFirst([],[
+                $office->updateFirst(['id'=>$officeId],[
                     'commission_with_driver_car' =>$office_commission,
                     'driver_car_commission_precentage' => $driver_commission,
                 ]);
                 $message = ' تم تحديث عمولات السائقين بنجاح ';
-                return redirect(route('commissions.free-driver'))->withSuccess($message);
+                // return redirect(route('commissions.free-driver'))->withSuccess($message);
                 break;
-            
+
             default :
             $message = 'نوع العمولات المطلوب غير مدعوم';
-            return redirect()->back()->withErrors($message);
-            break;
-            // case 'fleet_office_driver':
-            //     break;
-
-            // case 'fleet_office_driver_owner':
-            //     break;
+            return response()->json([
+                        'success' => false,
+                        'message' =>  $message
+                    ]);
         }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
    }
 }

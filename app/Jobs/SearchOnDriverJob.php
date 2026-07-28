@@ -75,8 +75,8 @@ class SearchOnDriverJob implements ShouldQueue
 
                 
                 //-----------------
-                $drivers = Driver::select('id', 'isConected')->whereIn('id', $driverIds)
-                 ->where('isConected', true)
+                $drivers = Driver::select('id', 'is_online')->whereIn('id', $driverIds)
+                 ->where('is_online', true)
                  ->get();
                 
                 $notified_drivers =[];

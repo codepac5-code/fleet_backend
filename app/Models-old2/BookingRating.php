@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\BelongsToOffice;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Booking;
+use BookingRating;
+use Service;
+use User;
+
+class BookingRating extends Model
+{
+    use HasFactory,SoftDeletes;
+    use BelongsToOffice;
+    protected $table = 'booking_ratings';
+    protected $fillable = [
+        'booking_id', 'customer_id', 'service_id' , 'rating', 'review'
+    ];
+
+    protected $casts = [
+        'booking_id'    => 'integer',
+        'service_id'    => 'integer',
+        'customer_id'   => 'integer',
+        'rating'        => 'double',
+    ];
+
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id', 'id');
+    }
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+    }
+
+    public function service(){
+        return $this->belongsTo(Service::class, 'service_id', 'id');
+    }
+
+    protected static function boot(){
+        parent::boot();
+        static::deleted(function ($row) {
+            if($row->forceDeleting === true)
+            {
+                $row->forceDelete();
+            }
+        });
+        static::restoring(function($row) {
+            $row->withTrashed()->restore();
+        });
+    }
+
+    public function scopeForCurrentUser()
+    {
+        $query = $this->query();
+
+        if (Auth::guard('admin')->check()) {
+            return $query;
+        }
+
+        if (Auth::guard('office')->check()) {
+            $office = Auth::guard('office')->user();
+            return $query->where('officeId', $office->id);
+        }
+
+        if (Auth::guard('employee')->check()) {
+            $employee = Auth::guard('employee')->user();
+            if ($employee->office_id) {
+                return $query->where('officeId', $employee->officeId);
+            } else {
+                return $query;
+            }
+        }
+
+        return $query;
+    }
+
+    // public function scopeMyRating($query){
+    //     $user = auth()->user();
+    //     if($user->hasRole('admin') || $user->hasRole('demo_admin')) {
+    //         $query =  $query;
+    //     }
+
+    //     if($user->hasRole('provider')) {
+    //         $query = $query->whereHas('service',function ($q) use($user) {
+    //             $q->where('provider_id',$user->id);
+    //         });
+    //     }
+
+    //     return  $query;
+    // }
+}

@@ -22,10 +22,10 @@ class CreateOrUpdateVehicleRequest extends BaseRequest {
     public function rules(): array
     {
 
-        $id = $this->id ?? 0; 
+        $id = $this->id ?? 0;
         return [
 
-            'office_id'         => 'required|exists:offices,id',
+            'office_id'         => 'somtimes|exists:offices,id',
             'vehicle_brand'     => 'required|string',
             'plate'             => 'required|string|max:255|unique:vehicles,plate,'.$id,
             'model_year'        => 'required|numeric|min:1900|max:'. date('Y'),
@@ -34,7 +34,7 @@ class CreateOrUpdateVehicleRequest extends BaseRequest {
             'seats_count'       => 'nullable|numeric|min:1',
             'serviceIds'      => 'required',
             'model'             =>'required',
-            'city'              => 'nullable',   
+            'city'              => 'nullable',
             'image'             => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'id'            =>'sometimes|numeric',
             'license_number'=>'required|numeric',

@@ -17,7 +17,7 @@
                 <div class="card">
                     <div class="card-body">
                         {{-- ($office->id != null) ? route('office.update', $office->id) : route('office.store') --}}
-                  
+
                             @if(isset($officedata->id))
                             <form method="POST" action="{{ route('office.update') }}" enctype="multipart/form-data" id="provider">
                                 @csrf
@@ -55,7 +55,7 @@
                                     </div>
                                     @error('password') <small class="text-danger">{{ $message }}</small> @enderror
                                 </div>
-                                
+
                                 <div class="form-group col-md-6">
                                     <label for="password_confirmation" class="form-control-label">
                                         {{ __('messages.confirm_password') }} <span class="text-danger">*</span>
@@ -73,12 +73,12 @@
                                     <label for="contact_number" class="form-control-label">
                                         {{ __('messages.contact_number') }}
                                     </label>
-                                    <input type="text" name="contact_number" id="contact_number" class="form-control" placeholder="{{ __('messages.contact_number') }}" value="{{ old('contact_number', $officedata->contact_number ?? '') }}">
+                                    <input type="text" name="contact_number" id="contact_number" class="form-control" placeholder="{{ __('messages.contact_number') }}" value="{{ old('contact_number', $officedata->contactNumber ?? '') }}">
                                     @error('contact_number') <small class="text-danger">{{ $message }}</small> @enderror
                                 </div>
-                            
+
                             @php
-                                $selected_services = isset($officedata) ? $officedata->services->pluck('serviceId')->toArray() : [];
+                                $selected_services = isset($officedata) ? $officedata->services->pluck('id')->toArray() : [];
                             @endphp
                                 <div class="form-group col-md-8">
                                     <label for="services" class="form-control-label">
@@ -87,14 +87,14 @@
                                     <select name="serviceIds[]" class="select2js form-control" multiple="multiple" required
                                             data-placeholder="{{ __('messages.select_name', ['select' => __('messages.service')]) }}">
                                         @foreach($services as $service)
-                                            <option value="{{ $service->id }}" 
+                                            <option value="{{ $service->id }}"
                                                 {{ in_array($service->id, $selected_services) ? 'selected' : '' }}>
                                                 {{ $service->title }}
                                             </option>
                                         @endforeach
                                     </select>
                                 </div>
-                                
+
 
                                 <div class="form-group col-md-6">
                                     <label for="country" class="form-control-label">
@@ -136,7 +136,7 @@
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label class="form-control-label" for="banner_image">
-                                        {{ __('messages.image') }} 
+                                        {{ __('messages.image') }}
                                     </label>
                                     <div class="custom-file">
                                         <input type="file" name="logo" id="banner_image" class="custom-file-input" accept="image/*" onchange="previewImage(event)">
@@ -147,11 +147,11 @@
                                     @error('logo') <small class="text-danger">{{ $message }}</small> @enderror
                                 </div>
                                 <div class="col-md-6 text-center">
-                                    <div class="border p-2 d-flex justify-content-center align-items-center" 
+                                    <div class="border p-2 d-flex justify-content-center align-items-center"
                                          style="height: 150px; width: 150px; max-width: 150px; margin: 0 auto; border-radius: 50%; overflow: hidden;">
-                                        <img id="imagePreview" 
-                                             src="{{ $officedata->logo ? $officedata->logo : '/storage/images/system/caver_no_photo.png' }}" 
-                                             alt="Preview" 
+                                        <img id="imagePreview"
+                                             src="{{ $officedata->logo ? $officedata->logo : '/storage/images/system/caver_no_photo.png' }}"
+                                             alt="Preview"
                                              style="height: 100%; width: 100%; object-fit: cover;">
                                     </div>
                                 </div>
@@ -169,18 +169,18 @@
             </div>
         </div>
     </div>
-    
+
 
     <script>
         function previewImage(event) {
             const input = event.target;
             const reader = new FileReader();
             const preview = document.getElementById('imagePreview');
-    
+
             reader.onload = function(e) {
                 preview.src = e.target.result;
             };
-    
+
             if (input.files && input.files[0]) {
                 reader.readAsDataURL(input.files[0]);
             } else {

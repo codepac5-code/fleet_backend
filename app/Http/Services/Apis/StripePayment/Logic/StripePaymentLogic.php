@@ -1,12 +1,12 @@
 <?php
 namespace App\Http\Services\Apis\StripePayment\Logic;
+use App\Http\Core\Classes\Integration\Stripe\StripeService;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
-use App\Services\StripeService;
 
 class StripePaymentLogic implements Service {
 
@@ -24,9 +24,33 @@ class StripePaymentLogic implements Service {
     public function execute (): ResponseModel | JsonResponse | View | RedirectResponse {
 
         $stripe_service = new StripeService();
+
         $intent = $stripe_service->createPaymentIntent($this->input->getAmount());
 
-        $response  = new StripePaymentOutput([] , $intent);
+                if($intent->status !== "success"){
+            info('stripe intent error');
+        }
+        $order = $this->repository->BookingRepository()->
+        readRepository()->find($this->input->getOrderId());
+
+        $message = $stripe_service->getPaymentStatusMessage($order);
+
+        //         $order = $this->repository->BookingRepository()->
+        // readRepository()->find($this->input->getOrderId());
+
+        if($order->status  != 'success'){
+            info('stripe intent error');
+            make_exception('error payment not pending');
+        }
+
+
+
+        $response  = new StripePaymentOutput([
+                'client_secret' => $intent->client_secret,
+                'payment_intent_id' => $intent->id,
+                'status' => 'success'
+            ] , $message);
+
         return $response->send_as_object();
    }
 }

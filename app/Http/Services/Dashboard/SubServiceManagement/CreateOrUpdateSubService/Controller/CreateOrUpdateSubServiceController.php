@@ -15,7 +15,7 @@ class CreateOrUpdateSubServiceController extends Controller
     public function __invoke(CreateOrUpdateSubServiceRequest $request)
     {
 
-        return $request->validated();
+        // return $request->validated();
         $input_data = $request->validated();
         $input_data['has_image'] = $request->hasFile('image');
 

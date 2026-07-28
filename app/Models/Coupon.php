@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ResolvesTenantConnection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Coupon extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, ResolvesTenantConnection;
 
     protected $table = 'coupons';
     protected $dates = ['deleted_at'];
