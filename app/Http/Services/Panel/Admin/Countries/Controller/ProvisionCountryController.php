@@ -23,14 +23,24 @@ class ProvisionCountryController extends Controller
             ], 422);
         }
 
+        // Cloning a full reference schema (150+ tables) + seeding takes longer
+        // than PHP's default max_execution_time, which silently killed the request
+        // mid-clone and surfaced as "Provisioning failed" even though the shard
+        // was created. Let it run to completion and survive a client disconnect.
+        @set_time_limit(0);
+        @ignore_user_abort(true);
+
         try {
-            $exit   = Artisan::call('fleet:shard-provision', ['--id' => $country->id]);
+            // `--seed` is REQUIRED: without the catalog (roles/permissions, services,
+            // documents, cancellation reasons, rating tags) the new country's offices
+            // and employees resolve to zero permissions and no services.
+            $exit   = Artisan::call('fleet:shard-provision', ['--id' => $country->id, '--seed' => true]);
             $output = trim(Artisan::output());
 
             return response()->json([
                 'ok'      => $exit === 0,
                 'message' => $exit === 0
-                    ? textByLanguage('تم تجهيز مخطط قاعدة البيانات', 'Database schema provisioned')
+                    ? textByLanguage('تم تجهيز قاعدة بيانات الدولة بالكامل', 'Country database fully provisioned')
                     : textByLanguage('فشل تجهيز المخطط', 'Provisioning failed'),
                 'data'    => ['output' => $output],
             ]);

@@ -32,11 +32,16 @@ class TestConnectionController extends Controller
             ], 422);
         }
 
+        // Probe at the SERVER level (no database selected). A brand-new country's
+        // database usually does not exist yet — it is created at provisioning time
+        // — so selecting it here would fail with "Unknown database" and read as a
+        // connection failure. We connect to the server, then just CHECK whether the
+        // database already exists.
         config(['database.connections.' . self::PROBE => [
             'driver'   => 'mysql',
             'host'     => $host,
             'port'     => $port,
-            'database' => $name,
+            'database' => '',
             'username' => $user,
             'password' => $pass,
             'charset'  => 'utf8mb4',
@@ -47,17 +52,24 @@ class TestConnectionController extends Controller
         DB::purge(self::PROBE);
 
         try {
-            $version = DB::connection(self::PROBE)->select('select version() as v')[0]->v ?? null;
-            $tables  = DB::connection(self::PROBE)->select('select count(*) as c from information_schema.tables where table_schema = ?', [$name])[0]->c ?? 0;
+            $conn    = DB::connection(self::PROBE);
+            $version = $conn->select('select version() as v')[0]->v ?? null;
+            $exists  = $conn->select('select schema_name from information_schema.schemata where schema_name = ?', [$name]) !== [];
+            $tables  = $exists
+                ? ($conn->select('select count(*) as c from information_schema.tables where table_schema = ?', [$name])[0]->c ?? 0)
+                : 0;
 
             DB::purge(self::PROBE);
 
             return response()->json([
                 'ok'      => true,
-                'message' => textByLanguage('تم الاتصال بنجاح', 'Connection successful'),
+                'message' => $exists
+                    ? textByLanguage('تم الاتصال بنجاح', 'Connection successful')
+                    : textByLanguage('الخادم متصل — سيتم إنشاء القاعدة تلقائياً عند التجهيز', 'Server reachable — the database will be created automatically on provisioning'),
                 'data'    => [
-                    'server' => $version,
-                    'tables' => (int) $tables,
+                    'server'          => $version,
+                    'tables'          => (int) $tables,
+                    'database_exists' => $exists,
                 ],
             ]);
         } catch (\Throwable $e) {

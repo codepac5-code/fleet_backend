@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToOffice;
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Support\Arr;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,7 @@ class Driver extends Authenticatable implements HasMedia
 {
     use HasFactory, Notifiable , HasApiTokens , HasRoles ,  InteractsWithMedia  , SoftDeletes  ;
     use BelongsToOffice;
+    use ResolvesTenantConnection;
     protected $table = 'drivers';
     // protected $primaryKey = 'id';
 
@@ -63,6 +65,7 @@ class Driver extends Authenticatable implements HasMedia
         'isOfficeCommissionCustom',
         'isFleetCommissionCustom',
         'dialCode',
+        'commission_rate_override',
     ];
 
     protected $hidden = [

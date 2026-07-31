@@ -6,6 +6,7 @@
     'placeholder' => null,
     'required' => false,
     'options' => null,
+    'suggestions' => null,
     'full' => false,
 ])
 
@@ -23,7 +24,15 @@
             @endforeach
         </select>
     @else
-        <input type="{{ $type }}" name="{{ $name }}" id="{{ $name }}" value="{{ old($name, $value) }}" placeholder="{{ $placeholder }}" @if($required) required @endif>
+        {{-- `suggestions` keeps the field free text (legacy values still save) while
+             offering the managed catalog as a datalist. --}}
+        <input type="{{ $type }}" name="{{ $name }}" id="{{ $name }}" value="{{ old($name, $value) }}" placeholder="{{ $placeholder }}"
+            @if($suggestions) list="{{ $name }}-options" @endif @if($required) required @endif>
+        @if($suggestions)
+            <datalist id="{{ $name }}-options">
+                @foreach($suggestions as $suggestion)<option value="{{ $suggestion }}"></option>@endforeach
+            </datalist>
+        @endif
     @endif
 
     @error($name)<small class="p-field__error">{{ $message }}</small>@enderror

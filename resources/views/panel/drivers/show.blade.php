@@ -133,6 +133,69 @@
         </div>
     </div>
 
+    @if(isset($finance))
+        @php $fmt = fn ($minor) => number_format(((int) $minor) / 100, 2) . ' ' . $finance['currency']; @endphp
+        <div class="p-card" style="margin-top:18px;">
+            <div class="p-card__head">
+                <h3 class="p-card__title" style="margin:0;"><i class="bi bi-wallet2"></i> {{ textByLanguage('المحفظة والعمولة', 'Wallet & commission') }}</h3>
+            </div>
+
+            @if(session('error'))<div class="p-flash p-flash--err"><i class="bi bi-exclamation-triangle"></i> {{ session('error') }}</div>@endif
+
+            <div class="p-grid p-grid--3" style="margin-bottom:16px;">
+                <x-panel.stat :label="textByLanguage('رصيد المحفظة', 'Wallet balance')" :value="$fmt($finance['walletMinor'])" icon="bi-wallet2" />
+                <x-panel.stat :label="textByLanguage('مستحقات على السائق', 'Owed to the fleet')" :value="$fmt($finance['duesMinor'])"
+                              icon="bi-exclamation-diamond" :variant="$finance['duesMinor'] > 0 ? 'danger' : null" />
+                <x-panel.stat :label="textByLanguage('العمولة المطبَّقة', 'Commission applied')"
+                              :value="number_format($finance['effectiveRate'], 2) . '%'" icon="bi-percent"
+                              :variant="$finance['override'] !== null ? 'primary' : null" />
+            </div>
+
+            <p style="font-size:.83rem;color:var(--p-text-muted);margin:0 0 14px;">
+                @if($finance['override'] !== null)
+                    <i class="bi bi-pin-angle"></i>
+                    {{ textByLanguage('عمولة خاصة بهذا السائق — عمولة المكتب هي', 'Driver-specific rate — the office rate is') }}
+                    {{ number_format($finance['officeRate'], 2) }}%
+                @else
+                    <i class="bi bi-building"></i>
+                    {{ textByLanguage('يتبع عمولة المكتب', 'Following the office rate') }}
+                    ({{ number_format($finance['officeRate'], 2) }}%{{ $finance['plan'] ? ' · ' . $finance['plan'] : '' }})
+                @endif
+            </p>
+
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                @if(\Illuminate\Support\Facades\Route::has($r('driver.commission')))
+                    <form method="POST" action="{{ route($r('driver.commission'), $driver->id) }}" style="display:flex;gap:8px;align-items:end;">
+                        @csrf
+                        <div>
+                            <label style="display:block;font-size:.78rem;font-weight:600;margin-bottom:4px;">{{ textByLanguage('عمولة خاصة %', 'Driver rate %') }}</label>
+                            <input name="commission_percent" type="number" step="0.01" min="0" max="100" style="width:110px;padding:8px 10px;border:1.5px solid var(--p-border);border-radius:var(--p-radius-sm);"
+                                   value="{{ $finance['override'] !== null ? number_format($finance['override'], 2, '.', '') : '' }}"
+                                   placeholder="{{ number_format($finance['officeRate'], 2) }}">
+                        </div>
+                        <button type="submit" class="p-btn p-btn--primary"><i class="bi bi-check-lg"></i> {{ textByLanguage('حفظ', 'Save') }}</button>
+                        @if($finance['override'] !== null)
+                            <button type="submit" name="commission_percent" value="" class="p-btn p-btn--soft">{{ textByLanguage('إلغاء التخصيص', 'Clear') }}</button>
+                        @endif
+                    </form>
+                @endif
+
+                @if($finance['duesMinor'] > 0 && \Illuminate\Support\Facades\Route::has($r('driver.dues.settle')))
+                    <form method="POST" action="{{ route($r('driver.dues.settle'), $driver->id) }}" style="display:flex;gap:8px;align-items:end;"
+                          onsubmit="return confirm('{{ textByLanguage('خصم المستحقات من محفظة السائق؟', 'Settle the dues from the driver wallet?') }}');">
+                        @csrf
+                        <div>
+                            <label style="display:block;font-size:.78rem;font-weight:600;margin-bottom:4px;">{{ textByLanguage('تسوية مبلغ (فارغ = الكل)', 'Settle amount (blank = all)') }}</label>
+                            <input name="amount" type="number" step="0.01" min="0.01" style="width:130px;padding:8px 10px;border:1.5px solid var(--p-border);border-radius:var(--p-radius-sm);"
+                                   placeholder="{{ number_format($finance['duesMinor'] / 100, 2) }}">
+                        </div>
+                        <button type="submit" class="p-btn p-btn--primary"><i class="bi bi-cash-coin"></i> {{ textByLanguage('تسوية من المحفظة', 'Settle from wallet') }}</button>
+                    </form>
+                @endif
+            </div>
+        </div>
+    @endif
+
     <div class="p-card" style="margin-top:18px;">
         <div class="p-card__head">
             <h3 class="p-card__title" style="margin:0;"><i class="bi bi-chat-quote"></i> {{ textByLanguage('آراء العملاء', 'Customer reviews') }} <span class="svc-count" id="ratingsCount"></span></h3>

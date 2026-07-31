@@ -26,6 +26,21 @@
             $rtChannels = [$rtShard . '.office.' . $rtOfficeId];
             $rtReady = $rtShard !== '' && $rtOfficeId > 0;
         }
+
+        // Where a live item leads, resolved server-side (routes are permission-
+        // gated). Built HERE, not inside @json(...): Blade's directive-argument
+        // parser mishandles a closure with nested arrays and truncates it.
+        $rtRoutes = collect([
+            'bookings.live' => 'booking.live',
+            'subscriptions.index' => 'subscriptions.index',
+            'payouts.index' => 'payouts.index',
+            'wallet.transactions' => 'wallet.transactions',
+            'ride-ratings.index' => 'ride-ratings.index',
+        ])->mapWithKeys(function ($name, $key) use ($rtEntity) {
+            $route = 'panel.' . $rtEntity . '.' . $name;
+
+            return [$key => \Illuminate\Support\Facades\Route::has($route) ? route($route) : null];
+        })->filter()->all();
     }
 @endphp
 
@@ -37,7 +52,11 @@
         country: @json($rtCountry),
         channels: @json($rtChannels)
     };
+
+    {{-- Where a live item leads (built in the @php block above). --}}
+    window.FLEET_PANEL_ROUTES = @json($rtRoutes ?? []);
 </script>
 <script src="{{ asset('js/socket.io.min.js') }}"></script>
 <script src="{{ asset('panel/js/panel-realtime.js') }}"></script>
+<script src="{{ asset('panel/js/panel-live-feed.js') }}"></script>
 @endif

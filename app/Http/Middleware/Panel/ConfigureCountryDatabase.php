@@ -61,6 +61,15 @@ class ConfigureCountryDatabase
         DB::purge(TenantConnection::NAME);
         DB::reconnect(TenantConnection::NAME);
 
+        // Drop any guard resolved on the PREVIOUS connection. Laravel's auth
+        // middleware can run before this one (its Authenticate isn't in the
+        // middleware-priority list, so route-group order isn't guaranteed), which
+        // would resolve the office/employee from `dynamic` while it still pointed
+        // at the default shard — and since every shard has an office id=1, cache
+        // the WRONG office. Forgetting the guards forces a fresh resolve on the
+        // shard we just activated.
+        \Illuminate\Support\Facades\Auth::forgetGuards();
+
         // Bind the same shard namespace the APP sets on ShardManager::activate, so
         // the panel reads Redis (order board) under the identical prefix the app
         // wrote it with. Without this the panel's shardKey() is empty while the
@@ -77,6 +86,7 @@ class ConfigureCountryDatabase
                 ->where('id', $id)
                 ->where('type', 'country')
                 ->where('is_active', true)
+                ->whereNotNull('provisioned_at')
                 ->first();
         } catch (\Throwable $e) {
             return null;
@@ -86,10 +96,15 @@ class ConfigureCountryDatabase
     private function resolveNode(): ?InfrastructureNode
     {
         try {
+            // Only a PROVISIONED shard may be activated. A country created but not
+            // yet provisioned has no database — activating it would crash every
+            // tenant query with "Unknown database". So an unprovisioned session
+            // shard is ignored and we fall back to the first provisioned country.
             if (session()->has('active_shard_id')) {
                 $node = InfrastructureNode::query()
                     ->where('id', session('active_shard_id'))
                     ->where('is_active', true)
+                    ->whereNotNull('provisioned_at')
                     ->first();
 
                 if ($node) {
@@ -100,6 +115,7 @@ class ConfigureCountryDatabase
             return InfrastructureNode::query()
                 ->where('type', 'country')
                 ->where('is_active', true)
+                ->whereNotNull('provisioned_at')
                 ->first();
         } catch (\Throwable $e) {
             return null;

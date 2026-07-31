@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
 
 class TravelRoutes extends Model
 {
+    use ResolvesTenantConnection;
+
     protected $fillable = [
         'sub_service_id',
         'departure_city_id',

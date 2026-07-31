@@ -12,3 +12,7 @@ Route::get('content/legal', PublicLegalController::class)->name('public.legal');
 
 // App maintenance + version gates, polled by the apps on launch.
 Route::get('content/app-status', \App\Http\Controllers\PublicAppStatusController::class)->name('public.app-status');
+
+// Real per-country cities + services for the public office-application form
+// (cascades off the chosen country). Read-only, best-effort.
+Route::get('content/office-form', \App\Http\Controllers\PublicOfficeFormController::class)->name('public.office-form');

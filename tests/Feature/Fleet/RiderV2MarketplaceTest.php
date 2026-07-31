@@ -23,6 +23,7 @@ class RiderV2MarketplaceTest extends FleetTestCase
         '2024_10_26_104402_create_services_table.php',
         '2024_10_26_104427_create_sub_services_table.php',
         '2026_01_03_025343_create_office_sub_service_prices_table.php',
+        '2026_07_29_000001_add_enabled_to_office_sub_service_prices.php',
         '2026_06_25_000012_create_favorite_offices_table.php',
         '2026_07_15_000001_add_rider_api_missing_columns.php',
         // Office search quotes each office through the tariff engine.

@@ -7,6 +7,36 @@ use App\Models\OfficeSubServicePrice;
 use App\Models\ServiceTariff;
 use App\Models\SubService;
 
+/**
+ * Resolves an office's pricing for a ride. There are THREE stores, with a
+ * defined hierarchy — kept explicit here because they were drifting:
+ *
+ *  1. `sub_services`            — base meter rates (open/km/minute) per class.
+ *  2. `office_sub_service_prices` — an office's override of (1). This pair is the
+ *     SOURCE OF TRUTH for the rider marketplace + booking pipeline (meter cards
+ *     price through {@see \App\Http\Core\Classes\Ride\MeterService}, and
+ *     {@see forOfficeSubService} bridges it into the tariff shape). Edited on the
+ *     legacy "my-services" screen.
+ *  3. `service_tariffs` (ServiceTariff) — a LEGACY per-(office, service_class)
+ *     store, now only a FALLBACK: it prices a path when the office has NOT
+ *     published a matching sub-service price. It is also still what marketplace
+ *     discovery ({@see offeringOfficeIds}) reads.
+ *
+ * UNIFIED PRECEDENCE (operator decision): `office_sub_service_prices` (an
+ * office's own price, falling back to the `sub_services` catalog base) is the
+ * SOURCE OF TRUTH for meter pricing on EVERY booking path — the office controls
+ * its prices. {@see forOfficeServiceOrSub} resolves the sub-service even when the
+ * caller passes only a `service_class` string (mapping it to a sub-service the
+ * office actually offers), and falls back to ServiceTariff only when the office
+ * publishes no matching sub-service price. So an office that set a price on its
+ * "my services" screen is billed from THAT everywhere (marketplace, booking,
+ * manual booking, change-office, live meter, end-trip reconcile).
+ *
+ * FIXED (Travel) corridor pricing is separate again: the flat city-to-city price
+ * lives in `travel_routes` and is read by
+ * {@see \App\Http\Core\Classes\Ride\FixedTripService}, NOT here. It is edited on
+ * the new-panel "Fixed corridors" screen.
+ */
 class TariffResolver
 {
     /**
@@ -33,6 +63,12 @@ class TariffResolver
                 ->first()
             : null;
 
+        // An enabled row with no rates means "offer it at the catalog price",
+        // not "charge zero".
+        if ($override !== null && ! $override->isPriceOverride()) {
+            $override = null;
+        }
+
         $src = $override ?? $sub;
 
         return [
@@ -47,12 +83,18 @@ class TariffResolver
     }
 
     /**
-     * Resolve the tariff for a booking: prefer the sub-service catalog when the
-     * booking is tied to a sub-service, otherwise fall back to the per-office
-     * ServiceTariff (backward compatible).
+     * Resolve the tariff for a booking. The office's own sub-service price is the
+     * truth: use the explicit sub-service when the caller carries its id, else
+     * map the `service_class` to a sub-service the office actually offers. Only
+     * when the office publishes no matching sub-service price does this fall back
+     * to the legacy per-office ServiceTariff.
      */
     public function forOfficeServiceOrSub(int $officeId, ?int $subServiceId, ?string $service, string $serviceClass): ?array
     {
+        if ($subServiceId === null || $subServiceId <= 0) {
+            $subServiceId = $this->offeredSubServiceId($officeId, $service, $serviceClass);
+        }
+
         if ($subServiceId !== null && $subServiceId > 0) {
             $tariff = $this->forOfficeSubService($officeId, $subServiceId);
 
@@ -62,6 +104,55 @@ class TariffResolver
         }
 
         return $this->forOfficeService($officeId, $service, $serviceClass);
+    }
+
+    /**
+     * The sub-service the office OFFERS for a `service_class` string, or null.
+     *
+     * `service_class` is the sub-service itself — sent as its numeric id or its
+     * (localized) name — so map it to candidate sub-services, then keep only one
+     * the office actually publishes a price for. Returning null means "the office
+     * has no price for this class", which is what lets ServiceTariff stay a
+     * genuine fallback for offices that never used the "my services" screen.
+     */
+    private function offeredSubServiceId(int $officeId, ?string $service, string $serviceClass): ?int
+    {
+        if ($officeId <= 0 || $serviceClass === '') {
+            return null;
+        }
+
+        // Best-effort: on a shard (or a test) where the catalog tables are not
+        // provisioned, resolving nothing here just means ServiceTariff prices the
+        // ride — never a crash on the booking path.
+        try {
+            $subIds = SubService::query()
+                ->where('status', 1)
+                ->when(
+                    is_numeric($serviceClass),
+                    fn ($q) => $q->where('id', (int) $serviceClass),
+                    fn ($q) => $q->where(fn ($w) => $w->where('name', $serviceClass)->orWhere('name_en', $serviceClass))
+                )
+                ->when(
+                    $service !== null && $service !== '' && is_numeric($service),
+                    fn ($q) => $q->where('serviceId', (int) $service)
+                )
+                ->pluck('id')
+                ->all();
+
+            if ($subIds === []) {
+                return null;
+            }
+
+            $id = OfficeSubServicePrice::query()
+                ->offered()
+                ->where('office_id', $officeId)
+                ->whereIn('sub_service_id', $subIds)
+                ->value('sub_service_id');
+
+            return $id !== null ? (int) $id : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private static function styleMeter(): string
@@ -94,16 +185,60 @@ class TariffResolver
 
     public function offeringOfficeIds(string $service, string $serviceClass): array
     {
-        return ServiceTariff::query()
+        $fromTariff = ServiceTariff::query()
             ->where('service_class', $serviceClass)
             ->where('is_active', true)
             ->where(fn ($w) => $w->where('service', $service)->orWhereNull('service'))
-            ->orderBy('office_id')
             ->pluck('office_id')
             ->map(fn ($id) => (int) $id)
+            ->all();
+
+        // Discovery follows the same truth as pricing: an office that published a
+        // price for the sub-service on its "my services" screen offers the class
+        // even with no ServiceTariff. Union, so this never DROPS an office that
+        // used to appear — it only adds the catalog-only ones.
+        return collect(array_merge($fromTariff, $this->officesPublishing($service, $serviceClass)))
             ->unique()
+            ->sort()
             ->values()
             ->all();
+    }
+
+    /** Offices that publish a price for a sub-service matching (service, class). */
+    private function officesPublishing(string $service, string $serviceClass): array
+    {
+        if ($serviceClass === '') {
+            return [];
+        }
+
+        try {
+            $subIds = SubService::query()
+                ->where('status', 1)
+                ->when(
+                    is_numeric($serviceClass),
+                    fn ($q) => $q->where('id', (int) $serviceClass),
+                    fn ($q) => $q->where(fn ($w) => $w->where('name', $serviceClass)->orWhere('name_en', $serviceClass))
+                )
+                ->when(
+                    $service !== '' && is_numeric($service),
+                    fn ($q) => $q->where('serviceId', (int) $service)
+                )
+                ->pluck('id')
+                ->all();
+
+            if ($subIds === []) {
+                return [];
+            }
+
+            return OfficeSubServicePrice::query()
+                ->offered()
+                ->whereIn('sub_service_id', $subIds)
+                ->pluck('office_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     public function officesForService(string $service): array

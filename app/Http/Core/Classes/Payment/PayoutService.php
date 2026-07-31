@@ -86,9 +86,12 @@ class PayoutService
                     ? Channel::office((int) $request->owner_id)
                     : Channel::driver((int) $request->owner_id);
 
+                // A payout REQUEST is an admin queue item; telling only the
+                // requester meant the desk that has to approve it learnt
+                // nothing until someone refreshed the payouts page.
                 $this->events->emit(new DomainEvent(
                     EventType::WALLET_PAYOUT,
-                    [$channel],
+                    [$channel, Channel::admin()],
                     [
                         'payout_id' => (int) $request->id,
                         'amount' => (int) $request->amount_minor,

@@ -8,10 +8,11 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\ResolvesTenantConnection;
 
 class Service extends  Model implements HasMedia
 {
-    use InteractsWithMedia  , SoftDeletes , HasFactory;
+    use InteractsWithMedia  , SoftDeletes , HasFactory, ResolvesTenantConnection;
 
 
     protected $table = 'services';

@@ -2,7 +2,7 @@
 
 namespace App\Http\Services\Panel\Drivers\Logic;
 
-use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\Const\Ride\BookingStatus;
 use App\Http\Services\Panel\Shared\Tenant\TenantConnection;
 use App\Models\Driver;
 use App\Models\Office;
@@ -26,50 +26,52 @@ class DriverProfile
 
     public function overview(Driver $driver): array
     {
-        $done = OrderStatus::$Completed;
+        // App-era trips live in `ride_bookings` (the legacy `bookings` table
+        // stopped filling). Money is stored in MINOR units → ÷100 for display.
+        $done = BookingStatus::COMPLETED;
         $today = Carbon::today();
         $week = Carbon::now()->startOfWeek();
         $month = Carbon::now()->startOfMonth();
 
-        $row = $this->db()->table('bookings')
-            ->where('driverId', $driver->id)
-            ->whereNull('deleted_at')
+        $row = $this->db()->table('ride_bookings')
+            ->where('driver_id', $driver->id)
             ->selectRaw(
                 'COUNT(*) AS all_trips,
                  SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS total_trips,
-                 SUM(CASE WHEN status = ? THEN totalAmount ELSE 0 END) AS total_revenue,
+                 SUM(CASE WHEN status = ? THEN total_minor ELSE 0 END) AS total_revenue,
                  SUM(CASE WHEN status = ? AND created_at >= ? THEN 1 ELSE 0 END) AS trips_today,
-                 SUM(CASE WHEN status = ? AND created_at >= ? THEN totalAmount ELSE 0 END) AS rev_today,
+                 SUM(CASE WHEN status = ? AND created_at >= ? THEN total_minor ELSE 0 END) AS rev_today,
                  SUM(CASE WHEN status = ? AND created_at >= ? THEN 1 ELSE 0 END) AS trips_week,
-                 SUM(CASE WHEN status = ? AND created_at >= ? THEN totalAmount ELSE 0 END) AS rev_week,
+                 SUM(CASE WHEN status = ? AND created_at >= ? THEN total_minor ELSE 0 END) AS rev_week,
                  SUM(CASE WHEN status = ? AND created_at >= ? THEN 1 ELSE 0 END) AS trips_month,
-                 SUM(CASE WHEN status = ? AND created_at >= ? THEN totalAmount ELSE 0 END) AS rev_month',
+                 SUM(CASE WHEN status = ? AND created_at >= ? THEN total_minor ELSE 0 END) AS rev_month',
                 [$done, $done, $done, $today, $done, $today, $done, $week, $done, $week, $done, $month, $done, $month]
             )->first();
+
+        $money = fn ($minor) => (float) ($minor ?? 0) / 100;
 
         return [
             'allTrips'     => (int) ($row->all_trips ?? 0),
             'totalTrips'   => (int) ($row->total_trips ?? 0),
-            'totalRevenue' => (float) ($row->total_revenue ?? 0),
+            'totalRevenue' => $money($row->total_revenue ?? 0),
             'periods'      => [
-                'today' => ['trips' => (int) ($row->trips_today ?? 0), 'revenue' => (float) ($row->rev_today ?? 0)],
-                'week'  => ['trips' => (int) ($row->trips_week ?? 0), 'revenue' => (float) ($row->rev_week ?? 0)],
-                'month' => ['trips' => (int) ($row->trips_month ?? 0), 'revenue' => (float) ($row->rev_month ?? 0)],
+                'today' => ['trips' => (int) ($row->trips_today ?? 0), 'revenue' => $money($row->rev_today ?? 0)],
+                'week'  => ['trips' => (int) ($row->trips_week ?? 0), 'revenue' => $money($row->rev_week ?? 0)],
+                'month' => ['trips' => (int) ($row->trips_month ?? 0), 'revenue' => $money($row->rev_month ?? 0)],
             ],
         ];
     }
 
     public function statsForDate(Driver $driver, Carbon $date): array
     {
-        $row = $this->db()->table('bookings')
-            ->where('driverId', $driver->id)
-            ->whereNull('deleted_at')
-            ->where('status', OrderStatus::$Completed)
+        $row = $this->db()->table('ride_bookings')
+            ->where('driver_id', $driver->id)
+            ->where('status', BookingStatus::COMPLETED)
             ->whereBetween('created_at', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
-            ->selectRaw('COUNT(*) AS trips, COALESCE(SUM(totalAmount), 0) AS revenue')
+            ->selectRaw('COUNT(*) AS trips, COALESCE(SUM(total_minor), 0) AS revenue')
             ->first();
 
-        return ['trips' => (int) $row->trips, 'revenue' => (float) $row->revenue];
+        return ['trips' => (int) $row->trips, 'revenue' => (float) $row->revenue / 100];
     }
 
     public function vehicle(Driver $driver): ?Vehicle
@@ -83,17 +85,18 @@ class DriverProfile
 
     public function ratingSummary(Driver $driver): array
     {
-        $row = $this->db()->table('ratings')
-            ->where('rated_person_type', Driver::class)
-            ->where('rated_person_id', $driver->id)
-            ->whereNull('deleted_at')
+        // App ratings live in `ride_ratings` (ratee_type/ratee_id + integer stars),
+        // not the legacy `ratings` table (rated_person_type/rating).
+        $row = $this->db()->table('ride_ratings')
+            ->where('ratee_type', 'driver')
+            ->where('ratee_id', $driver->id)
             ->selectRaw(
-                'COUNT(*) AS cnt, COALESCE(AVG(rating), 0) AS avg,
-                 SUM(CASE WHEN rating >= 4.5 THEN 1 ELSE 0 END) AS s5,
-                 SUM(CASE WHEN rating >= 3.5 AND rating < 4.5 THEN 1 ELSE 0 END) AS s4,
-                 SUM(CASE WHEN rating >= 2.5 AND rating < 3.5 THEN 1 ELSE 0 END) AS s3,
-                 SUM(CASE WHEN rating >= 1.5 AND rating < 2.5 THEN 1 ELSE 0 END) AS s2,
-                 SUM(CASE WHEN rating < 1.5 THEN 1 ELSE 0 END) AS s1'
+                'COUNT(*) AS cnt, COALESCE(AVG(stars), 0) AS avg,
+                 SUM(CASE WHEN stars >= 5 THEN 1 ELSE 0 END) AS s5,
+                 SUM(CASE WHEN stars = 4 THEN 1 ELSE 0 END) AS s4,
+                 SUM(CASE WHEN stars = 3 THEN 1 ELSE 0 END) AS s3,
+                 SUM(CASE WHEN stars = 2 THEN 1 ELSE 0 END) AS s2,
+                 SUM(CASE WHEN stars <= 1 THEN 1 ELSE 0 END) AS s1'
             )->first();
 
         $cnt = (int) $row->cnt;
@@ -113,11 +116,10 @@ class DriverProfile
 
     public function ratingsFeed(Driver $driver, int $perPage = 8): LengthAwarePaginator
     {
-        $page = $this->db()->table('ratings')
-            ->where('rated_person_type', Driver::class)
-            ->where('rated_person_id', $driver->id)
-            ->whereNull('deleted_at')
-            ->select(['id', 'rating', 'description', 'rater_type', 'rater_id', 'orderId', 'created_at'])
+        $page = $this->db()->table('ride_ratings')
+            ->where('ratee_type', 'driver')
+            ->where('ratee_id', $driver->id)
+            ->select(['id', 'stars AS rating', 'comment AS description', 'rater_type', 'rater_id', 'booking_id AS orderId', 'created_at'])
             ->orderByDesc('id')
             ->paginate($perPage);
 
@@ -153,10 +155,14 @@ class DriverProfile
 
         $conn = $this->connection();
 
+        // ride_ratings stores rater_type as a short string ('user'/'office'/
+        // 'driver'); the legacy table used class names — handle both.
         return match ($type) {
-            User::class => User::query()->whereIn('id', $ids)->get(['id', 'firstName', 'lastName'])
+            'user', User::class => User::query()->whereIn('id', $ids)->get(['id', 'firstName', 'lastName'])
                 ->mapWithKeys(fn ($u) => [$u->id => trim($u->firstName . ' ' . $u->lastName)])->all(),
-            Office::class => Office::on($conn)->whereIn('id', $ids)->pluck('officeName', 'id')->all(),
+            'office', Office::class => Office::on($conn)->whereIn('id', $ids)->pluck('officeName', 'id')->all(),
+            'driver', Driver::class => Driver::on($conn)->whereIn('id', $ids)->get(['id', 'firstName', 'lastName'])
+                ->mapWithKeys(fn ($d) => [$d->id => trim($d->firstName . ' ' . $d->lastName)])->all(),
             default => [],
         };
     }

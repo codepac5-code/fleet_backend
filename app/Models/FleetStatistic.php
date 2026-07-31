@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Per-country fleet counters.
+ */
 class FleetStatistic extends Model
 {
+    use ResolvesTenantConnection;
+
     use HasFactory;
 
     protected $table = 'fleet_statistics'; 

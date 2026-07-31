@@ -36,7 +36,7 @@ class DriverPlacesController extends Controller
     public function index(Request $request): JsonResponse
     {
         $items = SavedPlace::query()
-            ->where('driver_id', $request->user()->id)
+            ->forDriver((int) $request->user()->id)
             ->orderByDesc('id')
             ->get()
             ->map(fn (SavedPlace $p) => $this->present($p))
@@ -107,7 +107,7 @@ class DriverPlacesController extends Controller
 
     private function owned(Request $request, int $id): SavedPlace
     {
-        $place = SavedPlace::query()->where('id', $id)->where('driver_id', $request->user()->id)->first();
+        $place = SavedPlace::query()->where('id', $id)->forDriver((int) $request->user()->id)->first();
 
         if ($place === null) {
             throw DomainException::notFound();

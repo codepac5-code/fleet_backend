@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Core\Const\Options\Roles;
+use App\Http\Services\Panel\Shared\ViewComposers\BillingStatusComposer;
 use App\Http\Services\Panel\Shared\ViewComposers\CountrySwitcherComposer;
 use App\Http\Services\Panel\Shared\ViewComposers\NotificationComposer;
 use Illuminate\Support\Facades\Gate;
@@ -23,5 +24,6 @@ class PanelServiceProvider extends ServiceProvider
 
         View::composer('panel.partials.topbar', CountrySwitcherComposer::class);
         View::composer('panel.partials.topbar', NotificationComposer::class);
+        View::composer('panel.partials.topbar', BillingStatusComposer::class);
     }
 }

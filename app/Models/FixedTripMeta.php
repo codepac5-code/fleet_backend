@@ -2,14 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Office-acceptance / locked-fare / context / escalation bookkeeping for a
- * FIXED ride_booking. One row per fixed trip; per-shard (country connection).
+ * FIXED ride_booking. One row per fixed trip; per-shard (country connection)
+ * — which it claimed to be while the routing trait was missing, so the rows
+ * landed on the platform beside bookings that lived on the shard.
  */
 class FixedTripMeta extends Model
 {
+    use ResolvesTenantConnection;
+
     protected $table = 'fixed_trip_meta';
 
     protected $fillable = [

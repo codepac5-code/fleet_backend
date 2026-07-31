@@ -15,7 +15,7 @@ class UpdateOfficePricingController extends Controller
     {
         $model = $offices->findOrFail($office);
 
-        $pricing->syncPrices($model->id, $request->rows());
+        $pricing->syncPrices($model->id, $request->rows(), $model->serviceIds());
 
         return redirect()
             ->route('panel.admin.office.index')

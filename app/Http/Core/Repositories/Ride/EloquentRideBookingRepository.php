@@ -113,8 +113,17 @@ class EloquentRideBookingRepository implements RideBookingRepository
         // SCHEDULED belongs here: it matched none of the three filters, so a
         // booked-ahead ride was invisible in every history tab — the rider
         // scheduled a trip and then could not find it anywhere.
+        // PENDING_ACCEPTANCE + CONFIRMED belong here too: a booked-ahead FIXED
+        // corridor trip sits in those states until a driver is assigned, so
+        // without them the rider's upcoming list hid every fixed scheduled trip.
         $query->whereIn('status', array_merge(
-            [BookingStatus::SCHEDULED, BookingStatus::MATCHING, BookingStatus::ASSIGNED],
+            [
+                BookingStatus::SCHEDULED,
+                BookingStatus::PENDING_ACCEPTANCE,
+                BookingStatus::CONFIRMED,
+                BookingStatus::MATCHING,
+                BookingStatus::ASSIGNED,
+            ],
             BookingStatus::LIVE_SUB,
         ))
             ->whereNotExists(fn ($s) => $s->from('commission_snapshots')->whereColumn('commission_snapshots.booking_id', 'ride_bookings.id'));

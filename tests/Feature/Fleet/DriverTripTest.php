@@ -181,7 +181,7 @@ class DriverTripTest extends FleetTestCase
         $this->asDriver()->postJson('driver/trips/900/end', ['distance_m' => 4800, 'duration_s' => 720])
             ->assertStatus(200)->assertJsonPath('data.status', 'completed');
 
-        $this->assertSame(8200, $this->wallet()->walletBalanceMinor('driver', 9, 'USD'));
+        $this->assertSame(9500, $this->wallet()->walletBalanceMinor('driver', 9, 'USD'));
         $this->assertSame('completed', RideBooking::query()->find(900)->status);
     }
 
@@ -276,9 +276,9 @@ class DriverTripTest extends FleetTestCase
 
         $e = $this->asDriver()->getJson('driver/earnings?period=today')->assertStatus(200);
         $this->assertSame(1, $e->json('data.trips'));
-        $this->assertSame(8200, $e->json('data.digital_earnings_minor'));
-        $this->assertSame(8200, $e->json('data.wallet_balance_minor'));
-        $this->assertSame(8200, $e->json('data.net_expected_payout_minor'));
+        $this->assertSame(9500, $e->json('data.digital_earnings_minor'));
+        $this->assertSame(9500, $e->json('data.wallet_balance_minor'));
+        $this->assertSame(9500, $e->json('data.net_expected_payout_minor'));
 
         $this->asDriver()->getJson('driver/trips/history')
             ->assertStatus(200)
@@ -292,7 +292,7 @@ class DriverTripTest extends FleetTestCase
         $this->asDriver()->getJson('driver/home')
             ->assertStatus(200)
             ->assertJsonPath('data.trips_today', 1)
-            ->assertJsonPath('data.today_earned_minor', 8200)
+            ->assertJsonPath('data.today_earned_minor', 9500)
             ->assertJsonPath('data.active_trip', null);
     }
 

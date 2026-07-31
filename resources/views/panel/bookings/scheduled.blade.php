@@ -29,6 +29,7 @@
     $i18n = [
         'assign'       => textByLanguage('إسناد سائق', 'Assign driver'),
         'change'       => textByLanguage('تغيير السائق', 'Change driver'),
+        'accept'       => textByLanguage('قبول', 'Accept'),
         'cancel'       => textByLanguage('إلغاء', 'Cancel'),
         'details'      => textByLanguage('التفاصيل', 'Details'),
         'unassigned'   => textByLanguage('غير مُسنَد', 'Unassigned'),
@@ -255,9 +256,14 @@
             : '<span class="trip-driverline__off"><i class="bi bi-person-dash"></i> ' + esc(CFG.t.unassigned) + '</span>';
 
         let actions = '<a href="' + t.urls.show + '" class="p-btn p-btn--ghost p-btn--sm"><i class="bi bi-eye"></i> ' + esc(CFG.t.details) + '</a>';
-        if (CFG.canEdit && t.editable) {
-            actions += '<button type="button" class="p-btn p-btn--primary p-btn--sm" data-assign="' + t.id + '"><i class="bi bi-person-plus"></i> ' + esc(hasDriver ? CFG.t.change : CFG.t.assign) + '</button>'
-                + '<button type="button" class="p-btn p-btn--danger p-btn--sm" data-cancel="' + t.id + '"><i class="bi bi-x-circle"></i> ' + esc(CFG.t.cancel) + '</button>';
+        if (CFG.canEdit && t.urls.accept) {
+            actions += '<button type="button" class="p-btn p-btn--success p-btn--sm" data-accept="' + t.id + '"><i class="bi bi-check2-circle"></i> ' + esc(CFG.t.accept) + '</button>';
+        }
+        if (CFG.canEdit && t.urls.assign) {
+            actions += '<button type="button" class="p-btn p-btn--primary p-btn--sm" data-assign="' + t.id + '"><i class="bi bi-person-plus"></i> ' + esc(hasDriver ? CFG.t.change : CFG.t.assign) + '</button>';
+        }
+        if (CFG.canEdit && t.urls.cancel) {
+            actions += '<button type="button" class="p-btn p-btn--danger p-btn--sm" data-cancel="' + t.id + '"><i class="bi bi-x-circle"></i> ' + esc(CFG.t.cancel) + '</button>';
         }
 
         const driverBlock = hasDriver
@@ -387,6 +393,26 @@
         }
     }
 
+    let accepting = false;
+
+    async function acceptTrip(id) {
+        const trip = state.trips.find(t => t.id === id);
+        if (!trip || !trip.urls.accept || accepting) return;
+        accepting = true;
+        try {
+            const res = await fetch(trip.urls.accept, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CFG.csrf },
+            });
+            const json = await res.json();
+            if (json.ok) applyUpdate(json.trip);
+        } catch (e) {
+            console.error('accept error', e);
+        } finally {
+            accepting = false;
+        }
+    }
+
     function openCancel(id) {
         cancelTripId = id;
         document.getElementById('cancelTripRef').textContent = '#' + id;
@@ -442,6 +468,8 @@
     container.addEventListener('click', e => {
         const head = e.target.closest('[data-toggle]');
         if (head) { head.closest('.trip-card').classList.toggle('is-open'); return; }
+        const ac = e.target.closest('[data-accept]');
+        if (ac) { acceptTrip(parseInt(ac.dataset.accept, 10)); return; }
         const a = e.target.closest('[data-assign]');
         if (a) { openAssign(parseInt(a.dataset.assign, 10)); return; }
         const c = e.target.closest('[data-cancel]');

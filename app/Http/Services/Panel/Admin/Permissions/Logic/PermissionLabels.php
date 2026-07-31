@@ -18,6 +18,7 @@ class PermissionLabels
         'department'  => ['ar' => 'الأقسام', 'en' => 'Departments'],
         'banners'     => ['ar' => 'اللافتات', 'en' => 'Banners'],
         'issues'      => ['ar' => 'البلاغات', 'en' => 'Issues'],
+        'other'       => ['ar' => 'أخرى', 'en' => 'Other'],
     ];
 
     private const PERMISSIONS = [

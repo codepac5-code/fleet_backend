@@ -3,11 +3,13 @@
 namespace App\Http\Services\Panel\OfficeBookings\Controller;
 
 use App\Http\Controllers\Controller;
+use App\Http\Core\Classes\Catalog\LocalizedName;
 use App\Http\Core\GeoServices\ShardManager;
 use App\Http\Services\Panel\Admin\Offices\Logic\OfficeRepository;
 use App\Http\Services\Panel\Drivers\Logic\DriverRepository;
 use App\Http\Services\Panel\Shared\Scoping\EntityScope;
-use App\Models\ServiceTariff;
+use App\Models\OfficeSubServicePrice;
+use App\Models\SubService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
@@ -37,17 +39,44 @@ class CreateOfficeBookingPageController extends Controller
         ]);
     }
 
+    /**
+     * The classes this office can book by hand — the ones it actually offers.
+     *
+     * They were read from `service_tariffs`, a legacy store the office has no
+     * screen for any more, so a class it ticked on "My services" never reached
+     * this picker while a seeded row it had never heard of did. The pair
+     * (`sub_services`, `office_sub_service_prices`) is the source of truth for
+     * what an office sells, and a booking's `service_class` is the sub-service
+     * name — so read it from there and the picker and the price agree.
+     */
     private function tariffs(int $officeId): array
     {
-        return ServiceTariff::query()
+        $offered = OfficeSubServicePrice::query()
             ->where('office_id', $officeId)
-            ->where('is_active', true)
-            ->orderBy('service')
-            ->get(['service', 'service_class', 'pricing_style', 'currency_code'])
-            ->map(fn ($t) => [
-                'service' => $t->service ?: 'ride',
-                'service_class' => $t->service_class,
-                'currency' => $t->currency_code,
+            ->where(fn ($q) => $q->where('is_enabled', true)->orWhereNull('is_enabled'))
+            ->pluck('sub_service_id')
+            ->all();
+
+        if ($offered === []) {
+            return [];
+        }
+
+        $currency = ShardManager::currency();
+
+        return SubService::query()
+            ->whereIn('id', $offered)
+            ->where('status', 1)
+            ->with('service:id,title,title_en,travel_service')
+            ->orderBy('serviceId')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($sub) => [
+                // Travel is booked as a corridor, not by the metre; the chip
+                // says so, and the manual booking stores it the same way.
+                'service' => ($sub->service?->travel_service) ? 'travel' : 'ride',
+                'service_class' => $sub->name_en ?: $sub->name,
+                'label' => LocalizedName::of($sub) ?? ('#' . $sub->id),
+                'currency' => $currency,
             ])
             ->values()
             ->all();

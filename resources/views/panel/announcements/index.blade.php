@@ -27,15 +27,22 @@
     @if(session('error'))<div class="p-flash p-flash--err"><i class="bi bi-exclamation-triangle"></i> {{ session('error') }}</div>@endif
     @if($errors->any())<div class="p-flash p-flash--err"><i class="bi bi-exclamation-triangle"></i> {{ $errors->first() }}</div>@endif
 
-    @if(shardIsAll())
-        <div class="p-flash p-flash--err"><i class="bi bi-exclamation-octagon"></i>
-            {{ textByLanguage('أنت في وضع «كل الدول» — اختر دولة محدّدة لإرسال إشعار (لمنع الإرسال لكل البلدان).', 'You are in "All countries" mode — pick a specific country to send (prevents blasting every country).') }}
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route($r('announcements.send')) }}" @if(shardIsAll()) onsubmit="return false;" style="opacity:.5;pointer-events:none;" @endif>
+    <form method="POST" action="{{ route($r('announcements.send')) }}">
         @csrf
         <div class="p-card">
+            @if($isAdmin && ($countries ?? collect())->count())
+                <div class="an-fld">
+                    <label>{{ $t('Country', 'الدولة') }}</label>
+                    {{-- Reloading on change re-counts the devices for the chosen
+                         country, so the numbers below always describe the target. --}}
+                    <select name="country_id" required
+                            onchange="window.location = '{{ route($r('announcements.index')) }}?country=' + this.value">
+                        @foreach($countries as $country)
+                            <option value="{{ $country->id }}" @selected(($targetCountry->id ?? null) === $country->id)>{{ $country->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             <div class="an-fld">
                 <label>{{ $t('Audience', 'الجمهور') }}</label>
                 <select name="audience" required>

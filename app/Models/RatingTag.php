@@ -11,7 +11,10 @@ class RatingTag extends Model
 
     public const AUDIENCE_RIDER = 'rider';
     public const AUDIENCE_DRIVER = 'driver';
+    public const AUDIENCE_OFFICE = 'office';
     public const AUDIENCE_BOTH = 'both';
+
+    public const AUDIENCES = [self::AUDIENCE_RIDER, self::AUDIENCE_DRIVER, self::AUDIENCE_OFFICE, self::AUDIENCE_BOTH];
 
     protected $table = 'rating_tags';
 
@@ -28,13 +31,16 @@ class RatingTag extends Model
 
     /**
      * Active tags offered to an audience (its own + shared 'both'), narrowed to
-     * the star rating being given when one is known.
+     * the star rating being given when one is known. Takes a list when one
+     * screen rates more than one party — the rider rates driver AND office.
      */
-    public function scopeForAudience($query, string $audience, ?int $stars = null)
+    public function scopeForAudience($query, string|array $audience, ?int $stars = null)
     {
+        $audiences = array_values(array_unique(array_merge((array) $audience, [self::AUDIENCE_BOTH])));
+
         return $query
             ->where('is_active', true)
-            ->whereIn('audience', [$audience, self::AUDIENCE_BOTH])
+            ->whereIn('audience', $audiences)
             ->when($stars !== null, fn ($q) => $q->where('stars_min', '<=', $stars)->where('stars_max', '>=', $stars))
             ->orderBy('sort')
             ->orderBy('id');

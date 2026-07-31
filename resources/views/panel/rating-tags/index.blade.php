@@ -5,8 +5,13 @@
 
 @php
     $r = fn ($n) => "panel.admin.{$n}";
-    $audiences = ['rider', 'driver', 'both'];
-    $audienceLabel = ['rider' => textByLanguage('راكب يقيّم سائقاً', 'Rider rates driver'), 'driver' => textByLanguage('سائق يقيّم راكباً', 'Driver rates rider'), 'both' => textByLanguage('كلاهما', 'Both')];
+    $audiences = \App\Models\RatingTag::AUDIENCES;
+    $audienceLabel = [
+        'rider' => textByLanguage('راكب يقيّم سائقاً', 'Rider rates driver'),
+        'driver' => textByLanguage('سائق يقيّم راكباً', 'Driver rates rider'),
+        'office' => textByLanguage('راكب يقيّم مكتباً', 'Rider rates office'),
+        'both' => textByLanguage('الجميع', 'Everyone'),
+    ];
 @endphp
 
 @section('content')

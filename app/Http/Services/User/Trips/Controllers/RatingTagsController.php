@@ -16,8 +16,10 @@ class RatingTagsController extends Controller
         $stars = $request->query('stars');
         $stars = is_numeric($stars) ? (int) $stars : null;
 
+        // The rider screen rates the driver AND the office, so it needs both
+        // groups in one call; each tag carries the audience it belongs to.
         return Reply::ok([
-            'tags' => RatingTagPresenter::forAudience(RatingTag::AUDIENCE_RIDER, $stars),
+            'tags' => RatingTagPresenter::forAudience([RatingTag::AUDIENCE_RIDER, RatingTag::AUDIENCE_OFFICE], $stars),
         ]);
     }
 }

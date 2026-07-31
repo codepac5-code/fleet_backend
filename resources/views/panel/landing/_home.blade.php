@@ -96,8 +96,41 @@
         </div>
     </div>
 
+    <!-- APP SHOWCASE -->
+    <div class="pad showcase">
+        <div class="showcase-bg"></div>
+        <div class="wrap" style="position:relative; z-index:1">
+            <div class="center reveal" style="margin-bottom:1.4rem">
+                <span class="eyebrow"><i class="fa-solid fa-mobile-screen-button"></i> {{ $t('The rider app', 'تطبيق الراكب') }}</span>
+                <h2 class="h-sec" style="margin:.8rem 0">{{ $t('A rider experience your brand can be proud of', 'تجربة راكب تفخر بها علامتك') }}</h2>
+                <p class="sub-sec">{{ $t('Real screens from the Fleet Ride app — pick an office, set your route, track live, and rate the trip.', 'شاشات حقيقية من تطبيق Fleet Ride — اختر مكتباً، حدّد مسارك، تتبّع الرحلة حيّاً، وقيّمها.') }}</p>
+            </div>
+            <div class="shots reveal">
+                @php
+                    $shots = [
+                        ['04-home', $t('Marketplace', 'السوق')],
+                        ['07-office', $t('Pick an office', 'اختر مكتباً')],
+                        ['05-route', $t('Set your route', 'حدّد مسارك')],
+                        ['11-arriving', $t('Live tracking', 'تتبّع حيّ')],
+                        ['16-rating', $t('Rate the trip', 'قيّم الرحلة')],
+                    ];
+                    $suffix = $arLoc ? '-ar' : '';
+                @endphp
+                @foreach($shots as $i => $sh)
+                    <div class="device {{ in_array($i, [1, 3]) ? 'raise' : '' }}">
+                        <img src="{{ asset('assets/img/app-shots/' . $sh[0] . $suffix . '.png') }}" alt="{{ $sh[1] }}" loading="lazy">
+                        <span class="cap">{{ $sh[1] }}</span>
+                    </div>
+                @endforeach
+            </div>
+            <div class="center" style="margin-top:3.2rem">
+                <button class="btn btn-primary" onclick="showPage('offices')"><i class="fa-solid fa-rocket"></i> {{ $t('Launch your office', 'أطلق مكتبك') }}</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TESTIMONIALS -->
-    <div class="pad">
+    <div class="pad" style="background:#fff">
         <div class="wrap">
             <div class="center reveal" style="margin-bottom:2.6rem">
                 <span class="eyebrow">{{ $t('Loved by operators', 'محبوب من المشغّلين') }}</span>

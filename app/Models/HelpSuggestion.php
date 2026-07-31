@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Help content is per country — each shard carries its own wording.
+ */
 class HelpSuggestion extends Model
 {
+    use ResolvesTenantConnection;
+
     use HasFactory;
 
     protected $fillable = [

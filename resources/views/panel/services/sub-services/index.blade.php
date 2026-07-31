@@ -24,9 +24,35 @@
         </x-slot:actions>
     </x-panel.page-toolbar>
 
+    @if($isTravel ?? false)
+        <div class="p-flash p-flash--warn" style="align-items:flex-start;">
+            <i class="bi bi-signpost-split"></i>
+            <div>
+                <strong>{{ textByLanguage('هذه خدمة سفر — تُسعَّر بخطوط ثابتة', 'This is a Travel service — it is priced by fixed corridors') }}</strong>
+                <div style="font-size:.83rem;margin-top:3px;">
+                    {{ textByLanguage(
+                        'السعر الذي يُعرض على الراكب هو سعر الخط (مدينة ← مدينة)، وليس سعر الفتح/الكيلومتر/الدقيقة. خدمة فرعية بلا خطوط لا تظهر للراكب إطلاقاً.',
+                        'The rider is quoted the corridor price (city → city), not open/per-km/per-minute. A sub-service with no corridors is never offered to riders at all.'
+                    ) }}
+                </div>
+                @if(\Illuminate\Support\Facades\Route::has('panel.admin.pricing.corridors.index'))
+                    <a href="{{ route('panel.admin.pricing.corridors.index') }}" class="p-btn p-btn--soft" style="margin-top:9px;">
+                        <i class="bi bi-sliders"></i> {{ textByLanguage('إدارة أسعار الخطوط', 'Manage corridor prices') }}
+                    </a>
+                @endif
+            </div>
+        </div>
+    @endif
+
     <div class="p-card">
         @if($subServices->count())
-            <x-panel.table :headers="[
+            <x-panel.table :headers="($isTravel ?? false) ? [
+                textByLanguage('الخدمة الفرعية', 'Sub-service'),
+                textByLanguage('الخطوط المسعَّرة', 'Priced corridors'),
+                textByLanguage('نطاق السعر', 'Price range'),
+                textByLanguage('الحالة', 'Status'),
+                '',
+            ] : [
                 textByLanguage('الخدمة الفرعية', 'Sub-service'),
                 textByLanguage('سعر الفتح', 'Open price'),
                 textByLanguage('سعر الكيلومتر', 'Per km'),
@@ -50,9 +76,29 @@
                                 </div>
                             </div>
                         </td>
-                        <td>{{ getPriceFormat($sub->openPrice) }}</td>
-                        <td>{{ getPriceFormat($sub->kmPrice) }}</td>
-                        <td>{{ getPriceFormat($sub->minutePrice) }}</td>
+                        @if($isTravel ?? false)
+                            @php $stat = ($corridors ?? [])[$sub->id] ?? null; @endphp
+                            <td>
+                                @if($stat)
+                                    <x-panel.badge tone="success">{{ $stat['count'] }} {{ textByLanguage('خط', 'corridors') }}</x-panel.badge>
+                                @else
+                                    <x-panel.badge tone="danger"><i class="bi bi-exclamation-triangle"></i> {{ textByLanguage('بلا خطوط — لا تُعرض', 'No corridors — never offered') }}</x-panel.badge>
+                                @endif
+                            </td>
+                            <td>
+                                @if($stat)
+                                    <strong>{{ number_format($stat['min'], 2) }}</strong>
+                                    @if($stat['max'] > $stat['min']) – <strong>{{ number_format($stat['max'], 2) }}</strong>@endif
+                                    <span style="color:var(--p-text-muted);font-size:.8rem;">{{ $currency ?? '' }}</span>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                        @else
+                            <td>{{ getPriceFormat($sub->openPrice) }}</td>
+                            <td>{{ getPriceFormat($sub->kmPrice) }}</td>
+                            <td>{{ getPriceFormat($sub->minutePrice) }}</td>
+                        @endif
                         <td>
                             <x-panel.badge :tone="$sub->status ? 'success' : 'danger'">
                                 {{ $sub->status ? textByLanguage('مفعّلة', 'Active') : textByLanguage('معطّلة', 'Inactive') }}

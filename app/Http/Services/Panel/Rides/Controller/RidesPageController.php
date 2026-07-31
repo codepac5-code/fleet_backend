@@ -17,6 +17,7 @@ class RidesPageController extends Controller
     {
         $conn = TenantConnection::current();
         $status = trim((string) $request->query('status', ''));
+        $search = trim((string) $request->query('q', ''));
 
         // RideBooking is per-country (ResolvesTenantConnection). Office guards are
         // further limited to their own office. This is the marketplace/rider ride
@@ -30,6 +31,16 @@ class RidesPageController extends Controller
 
         if ($status !== '') {
             $query->where('status', $status);
+        }
+
+        // This is now the panel's primary Orders screen, so it has to be
+        // searchable: by ride id, or by either end of the route.
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('id', $search)
+                    ->orWhere('pickup_title', 'like', "%{$search}%")
+                    ->orWhere('dropoff_title', 'like', "%{$search}%");
+            });
         }
 
         $bookings = $query->limit(200)->get();
@@ -62,6 +73,7 @@ class RidesPageController extends Controller
             'isAdmin' => $scope->isAdmin(),
             'rows' => $rows,
             'statusFilter' => $status,
+            'search' => $search,
             'statuses' => ['scheduled', 'matching', 'assigned', 'arriving', 'arrived', 'on_trip', 'completed', 'cancelled'],
             'counts' => [
                 'total' => $rows->count(),

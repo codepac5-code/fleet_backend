@@ -211,3 +211,19 @@ In dev, the OTP code is written to the cache under `rider:challenge:{challengeId
 - Everything is enveloped `{status, statusCode, message, data, error, meta, locale}`; money is `*_minor` + `currency_code`.
 - Auth = OTP challenge → verify → Bearer token (+ rotating refresh).
 - Live trip = REST writes + Socket.IO notifications on `user.{id}` / `booking.{id}`.
+
+## Platform gates (both apps)
+
+`GET /content/app-status` (public, no auth, platform-wide — NOT under `/user`):
+
+```json
+{ "maintenance": false, "maintenance_message": "",
+  "android": { "min_version": "1.0.0", "latest_version": "1.2.0" },
+  "ios":     { "min_version": "1.0.0", "latest_version": "1.2.0" } }
+```
+
+Both apps fetch it once at launch and block on two conditions only: `maintenance`
+true, or the running build older than the platform's `min_version` (compared
+numerically, so 1.10.0 > 1.9.0). A newer `latest_version` is informational. Any
+failure to reach the probe resolves to "all clear" — it must never be the reason
+somebody cannot book or drive. Edited from the admin panel at `panel/admin/app-status`.

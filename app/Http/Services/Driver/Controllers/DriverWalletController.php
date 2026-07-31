@@ -4,6 +4,7 @@ namespace App\Http\Services\Driver\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Core\Classes\Ledger\DriverCurrency;
+use App\Http\Core\Classes\Ledger\DriverDuesService;
 use App\Http\Core\Classes\Ledger\DriverEarningsService;
 use App\Http\Core\Classes\Ledger\FleetWalletService;
 use App\Http\Core\Classes\Ledger\WalletStatementService;
@@ -28,6 +29,7 @@ class DriverWalletController extends Controller
         private WalletStatementService $statement,
         private DriverEarningsService $earnings,
         private PayoutService $payouts,
+        private DriverDuesService $dues,
     ) {
     }
 
@@ -107,6 +109,53 @@ class DriverWalletController extends Controller
             'items' => $items,
             'nextCursor' => $next !== null ? Cursor::encode((int) $next) : null,
         ]);
+    }
+
+    public function dues(Request $request): JsonResponse
+    {
+        $driverId = (int) $request->user()->id;
+        $requested = $request->filled('currency_code') ? (string) $request->query('currency_code') : null;
+        $currencyMeta = MoneyPresenter::currency($requested ?? DriverCurrency::resolve($request->user(), $request->header('X-Country')));
+        $currency = $currencyMeta['code'];
+
+        $duesMinor = $this->dues->outstanding($driverId, $currency);
+        $balanceMinor = $this->wallet->walletBalanceMinor(OwnerType::DRIVER, $driverId, $currency);
+
+        return Reply::ok([
+            'dues_minor' => $duesMinor,
+            'dues' => MoneyPresenter::decimal($duesMinor, $currencyMeta['decimals']),
+            'wallet_balance_minor' => $balanceMinor,
+            'settleable_minor' => min($duesMinor, $balanceMinor),
+            'currency_code' => $currency,
+            'symbol' => $currencyMeta['symbol'],
+            'decimals' => $currencyMeta['decimals'],
+        ]);
+    }
+
+    public function settleDues(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'amount_minor' => ['nullable', 'integer', 'min:1'],
+            'currency_code' => ['nullable', 'string', 'max:4'],
+        ]);
+
+        $driverId = (int) $request->user()->id;
+        $currency = MoneyPresenter::currency($data['currency_code'] ?? DriverCurrency::resolve($request->user(), $request->header('X-Country')))['code'];
+        // Without a client key, derive one from the CURRENT dues level so two
+        // rapid taps against the same debt share a key and settle once — after
+        // which dues=0 makes any retry a safe 422 no_dues.
+        $key = $request->header('Idempotency-Key')
+            ?: 'dues_settle:' . $driverId . ':' . $currency . ':' . $this->dues->outstanding($driverId, $currency);
+
+        try {
+            $result = $this->dues->settleFromWallet($driverId, $data['amount_minor'] ?? null, $currency, $key);
+        } catch (\RuntimeException $e) {
+            $code = $e->getMessage();
+
+            return Reply::fail($code, $code, 422);
+        }
+
+        return Reply::ok($result);
     }
 
     public function payout(Request $request): JsonResponse

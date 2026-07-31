@@ -43,6 +43,7 @@ class ProvisionShard extends Command
             $this->line(sprintf('Provisioning shard %s (%s) → %s@%s', $node->name ?? $node->id, $node->country_code, $node->db_name, $node->db_host));
 
             try {
+                $this->ensureDatabase($node);
                 ShardManager::activate($node);
 
                 if ($this->isReferenceItself($node)) {
@@ -50,7 +51,8 @@ class ProvisionShard extends Command
                 } else {
                     $created = $this->cloneSchema();
                     $this->copyMigrationLedger();
-                    $this->info(sprintf('[%s] schema cloned (%d tables created).', $node->name ?? $node->id, $created));
+                    $added = $this->syncMissingColumns();
+                    $this->info(sprintf('[%s] schema cloned (%d tables created, %d columns added).', $node->name ?? $node->id, $created, $added));
                 }
 
                 $this->applyNewerMigrations();
@@ -58,6 +60,23 @@ class ProvisionShard extends Command
                 if ($this->option('seed')) {
                     Artisan::call('db:seed', ['--database' => TenantConnection::NAME, '--force' => true], $this->output);
                 }
+
+                // Make the country fully supported the moment its shard is ready:
+                // register its currency (global) and seed its provinces (shard),
+                // both from the bundled CountryProfiles. Idempotent — safe to
+                // re-run on an existing shard.
+                $support = app(\App\Http\Core\GeoServices\CountrySupportService::class);
+                $support->registerCurrency($node);
+                $seededProvinces = $support->seedProvinces($node);
+                if ($seededProvinces > 0) {
+                    $this->info(sprintf('[%s] seeded %d provinces.', $node->name ?? $node->id, $seededProvinces));
+                }
+
+                // Mark provisioned so the panel is allowed to activate this shard;
+                // until now it was created but its DB may not have existed, and
+                // activating it would crash every tenant query with "Unknown
+                // database". Written on the GLOBAL registry, not the shard.
+                InfrastructureNode::query()->whereKey($node->id)->update(['provisioned_at' => now()]);
 
                 $this->info(sprintf('[%s] shard ready.', $node->name ?? $node->id));
             } catch (Throwable $e) {
@@ -67,6 +86,31 @@ class ProvisionShard extends Command
         }
 
         return $failures === 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    private function ensureDatabase(InfrastructureNode $node): void
+    {
+        $probe = 'shard_provision_probe';
+
+        config(['database.connections.' . $probe => [
+            'driver'    => 'mysql',
+            'host'      => $node->db_host,
+            'port'      => (int) ($node->db_port ?: 3306),
+            'database'  => '',
+            'username'  => $node->db_user,
+            'password'  => $node->db_pass,
+            'charset'   => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+        ]]);
+
+        DB::purge($probe);
+
+        $db = str_replace('`', '``', (string) $node->db_name);
+        DB::connection($probe)->statement(
+            "CREATE DATABASE IF NOT EXISTS `{$db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+        );
+
+        DB::purge($probe);
     }
 
     private function isReferenceItself(InfrastructureNode $node): bool
@@ -111,6 +155,97 @@ class ProvisionShard extends Command
         }
 
         return $created;
+    }
+
+    /**
+     * Adds columns the reference has and the shard does not.
+     *
+     * Cloning only creates MISSING TABLES, and copying the migration ledger then
+     * marks every reference migration as applied — so a migration that ALTERs an
+     * existing table (adds a column) was silently skipped on shards provisioned
+     * earlier, and only showed up as a "no such column" error at runtime. This
+     * closes that gap deterministically. Additive only: it never drops, renames
+     * or retypes a column.
+     */
+    private function syncMissingColumns(): int
+    {
+        $reference = DB::connection(self::REFERENCE);
+        $shard = DB::connection(TenantConnection::NAME);
+        $refDb = $reference->getDatabaseName();
+        $shardDb = $shard->getDatabaseName();
+
+        $columns = $reference->select(
+            'select table_name as tbl, column_name as col, column_type as type, is_nullable as nullable,
+                    column_default as dflt, extra, ordinal_position as pos
+             from information_schema.columns
+             where table_schema = ? order by table_name, ordinal_position',
+            [$refDb]
+        );
+
+        $existing = [];
+        foreach ($shard->select('select table_name as tbl, column_name as col from information_schema.columns where table_schema = ?', [$shardDb]) as $row) {
+            $existing[$row->tbl][$row->col] = true;
+        }
+
+        $byTable = [];
+        foreach ($columns as $column) {
+            $byTable[$column->tbl][] = $column;
+        }
+
+        $added = 0;
+
+        foreach ($byTable as $table => $tableColumns) {
+            if (! isset($existing[$table])) {
+                continue;
+            }
+
+            $previous = null;
+
+            foreach ($tableColumns as $column) {
+                if (isset($existing[$table][$column->col])) {
+                    $previous = $column->col;
+                    continue;
+                }
+
+                $sql = sprintf(
+                    'ALTER TABLE `%s` ADD COLUMN `%s` %s %s %s %s',
+                    $table,
+                    $column->col,
+                    $column->type,
+                    $column->nullable === 'YES' ? 'NULL' : 'NOT NULL',
+                    $this->defaultClause($column),
+                    $previous !== null ? 'AFTER `' . $previous . '`' : 'FIRST'
+                );
+
+                try {
+                    $shard->statement($sql);
+                    $added++;
+                    $this->line(sprintf('  + %s.%s', $table, $column->col));
+                } catch (Throwable $e) {
+                    $this->warn(sprintf('  ! %s.%s could not be added: %s', $table, $column->col, $e->getMessage()));
+                }
+
+                $previous = $column->col;
+            }
+        }
+
+        return $added;
+    }
+
+    private function defaultClause(object $column): string
+    {
+        // information_schema reports "no default" as either a real null or the
+        // literal string NULL depending on the server — both mean the same thing,
+        // and quoting the literal produces the invalid `DEFAULT 'NULL'`.
+        $default = $column->dflt;
+
+        if ($default === null || strtoupper((string) $default) === 'NULL') {
+            return $column->nullable === 'YES' ? 'DEFAULT NULL' : '';
+        }
+
+        $isExpression = in_array(strtoupper((string) $default), ['CURRENT_TIMESTAMP', 'NOW()'], true);
+
+        return 'DEFAULT ' . ($isExpression ? $default : "'" . addslashes((string) $default) . "'");
     }
 
     private function copyMigrationLedger(): void

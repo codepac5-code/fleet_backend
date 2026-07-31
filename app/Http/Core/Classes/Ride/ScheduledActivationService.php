@@ -22,12 +22,27 @@ class ScheduledActivationService
     ) {
     }
 
+    /**
+     * A ride a driver has ALREADY committed to needs no lead time — it becomes
+     * live at its pickup minute. Only an unclaimed one needs the head start to
+     * go looking for somebody.
+     */
+    private const CLAIMED_LEAD_SECONDS = 300;
+
     public function activateDue(int $leadSeconds, int $limit = 100): int
     {
-        $before = Carbon::now()->addSeconds($leadSeconds)->toDateTimeString();
         $count = 0;
 
-        foreach ($this->bookings->dueScheduled($before, $limit) as $booking) {
+        foreach ($this->bookings->dueScheduled(Carbon::now()->addSeconds($leadSeconds)->toDateTimeString(), $limit) as $booking) {
+            // Activating a claimed ride two hours early turned it into the
+            // rider's LIVE trip for those two hours: the app adopted it, the
+            // live-trip screen took over, and the rider could not book, browse
+            // or do anything else until the ride was over. A booking for later
+            // stays a scheduled booking until it is nearly time.
+            if ($booking->driver_id !== null && Carbon::parse($booking->scheduled_at)->gt(Carbon::now()->addSeconds(self::CLAIMED_LEAD_SECONDS))) {
+                continue;
+            }
+
             $this->activate($booking);
             $count++;
         }

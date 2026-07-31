@@ -13,20 +13,22 @@
                 $cur = fn($minor, $code) => $minor === null ? $t('Custom', 'مخصّص') : ($code === 'USD' || !$code ? '$' : $code . ' ') . number_format(((int) $minor) / 100, ((int) $minor) % 100 === 0 ? 0 : 2);
                 if (isset($plans) && count($plans)) {
                     $rows = collect($plans)->map(fn($p) => [
+                        'key' => $p->key,
                         'name' => $p->name,
                         'price' => $cur($p->price_minor, $p->currency_code),
                         'rate' => $p->fleet_commission_rate !== null ? rtrim(rtrim(number_format((float) $p->fleet_commission_rate, 2), '0'), '.') . '%' : $t('Custom', 'مخصّص'),
                         'limit' => $p->driver_limit !== null ? $p->driver_limit . ' ' . $t('drivers', 'سائقاً') : $t('Unlimited', 'غير محدود'),
                         'pop' => (bool) ($p->is_popular ?? false),
+                        'custom' => $p->price_minor === null,
                         'features' => is_array($p->features ?? null) ? $p->features : null,
                     ])->all();
                 } else {
                     $rows = [
-                        ['name' => $t('Free', 'مجّاني'), 'price' => '$0', 'rate' => '18%', 'limit' => $t('5 drivers', '٥ سائقين'), 'pop' => false, 'features' => null],
-                        ['name' => $t('Starter', 'المبتدئ'), 'price' => '$20', 'rate' => '13%', 'limit' => $t('25 drivers', '٢٥ سائقاً'), 'pop' => false, 'features' => null],
-                        ['name' => $t('Business', 'الأعمال'), 'price' => '$35', 'rate' => '12%', 'limit' => $t('50 drivers', '٥٠ سائقاً'), 'pop' => true, 'features' => null],
-                        ['name' => $t('Scale', 'التوسّع'), 'price' => '$50', 'rate' => '11%', 'limit' => $t('150 drivers', '١٥٠ سائقاً'), 'pop' => false, 'features' => null],
-                        ['name' => $t('Enterprise', 'المؤسّسات'), 'price' => $t('Custom', 'مخصّص'), 'rate' => $t('Custom', 'مخصّص'), 'limit' => $t('Unlimited', 'غير محدود'), 'pop' => false, 'features' => null],
+                        ['key' => 'free', 'name' => $t('Free', 'مجّاني'), 'price' => '$0', 'rate' => '18%', 'limit' => $t('5 drivers', '٥ سائقين'), 'pop' => false, 'custom' => false, 'features' => null],
+                        ['key' => 'starter', 'name' => $t('Starter', 'المبتدئ'), 'price' => '$20', 'rate' => '13%', 'limit' => $t('25 drivers', '٢٥ سائقاً'), 'pop' => false, 'custom' => false, 'features' => null],
+                        ['key' => 'business', 'name' => $t('Business', 'الأعمال'), 'price' => '$35', 'rate' => '12%', 'limit' => $t('50 drivers', '٥٠ سائقاً'), 'pop' => true, 'custom' => false, 'features' => null],
+                        ['key' => 'scale', 'name' => $t('Scale', 'التوسّع'), 'price' => '$50', 'rate' => '11%', 'limit' => $t('150 drivers', '١٥٠ سائقاً'), 'pop' => false, 'custom' => false, 'features' => null],
+                        ['key' => 'enterprise', 'name' => $t('Enterprise', 'المؤسّسات'), 'price' => $t('Custom', 'مخصّص'), 'rate' => $t('Custom', 'مخصّص'), 'limit' => $t('Unlimited', 'غير محدود'), 'pop' => false, 'custom' => true, 'features' => null],
                     ];
                 }
             @endphp
@@ -46,7 +48,11 @@
                                 <li><i class="fa-solid fa-check"></i>{{ $t('Wallets & payouts', 'محافظ وسحوبات') }}</li>
                             @endif
                         </ul>
-                        <button class="btn {{ $p['pop'] ? 'btn-primary' : 'btn-ghost' }} btn-block" onclick="showPage('offices')">{{ $t('Choose', 'اختر') }}</button>
+                        @if($p['custom'])
+                            <button class="btn {{ $p['pop'] ? 'btn-primary' : 'btn-ghost' }} btn-block" onclick="showPage('offices')">{{ $t('Contact sales', 'تواصل معنا') }}</button>
+                        @else
+                            <a class="btn {{ $p['pop'] ? 'btn-primary' : 'btn-ghost' }} btn-block" href="{{ route('office.register', ['plan' => $p['key']]) }}">{{ $t('Start free', 'ابدأ مجاناً') }}</a>
+                        @endif
                     </div>
                 @endforeach
             </div>

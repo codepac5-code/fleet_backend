@@ -51,6 +51,19 @@ class RatingTagTest extends FleetTestCase
         $this->assertCount(2, RatingTag::query()->forAudience('rider')->get(), 'no star filter offers the whole list');
     }
 
+    public function test_rider_screen_gets_driver_and_office_chips_in_one_call(): void
+    {
+        $this->makeTag('safe_driving', 'rider');
+        $this->makeTag('fair_price', 'office');
+        $this->makeTag('polite', 'both');
+        $this->makeTag('rider_no_show', 'driver');
+
+        $codes = array_column(RatingTagPresenter::forAudience(['rider', 'office']), 'code');
+
+        sort($codes);
+        $this->assertSame(['fair_price', 'polite', 'safe_driving'], $codes, 'driver-only chips never reach the rider screen');
+    }
+
     public function test_presenter_localizes_by_locale(): void
     {
         $this->makeTag('clean_car', 'rider');

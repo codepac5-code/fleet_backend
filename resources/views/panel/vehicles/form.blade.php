@@ -29,12 +29,25 @@
         <div class="p-card" style="margin-bottom:18px;">
             <h3 class="p-card__title">{{ textByLanguage('بيانات المركبة', 'Vehicle information') }}</h3>
             <div class="p-form-grid">
-                <x-panel.field name="vehicleBrand" :label="textByLanguage('الماركة', 'Brand')" :value="$vehicle?->vehicleBrand" required />
-                <x-panel.field name="model" :label="textByLanguage('الطراز', 'Model')" :value="$vehicle?->model" required />
+                <x-panel.field name="vehicleBrand" :label="textByLanguage('الماركة', 'Brand')" :value="$vehicle?->vehicleBrand" :suggestions="$catalog['brands'] ?? []" required />
+                <x-panel.field name="model" :label="textByLanguage('الطراز', 'Model')" :value="$vehicle?->model" :suggestions="$catalog['models'] ?? []" required />
                 <x-panel.field name="plate" :label="textByLanguage('رقم اللوحة', 'Plate')" :value="$vehicle?->plate" required />
-                <x-panel.field name="modelYear" :label="textByLanguage('سنة الصنع', 'Year')" :value="$vehicle?->modelYear" placeholder="2024" required />
-                <x-panel.field name="color" :label="textByLanguage('اللون', 'Color')" :value="$vehicle?->color" required />
-                <x-panel.field name="city" :label="textByLanguage('المدينة', 'City')" :value="$vehicle?->city" required />
+                <x-panel.field name="modelYear" type="select" :label="textByLanguage('سنة الصنع', 'Year')" :value="$vehicle?->modelYear"
+                    :options="array_combine($catalog['years'] ?? [], $catalog['years'] ?? [])" required />
+                @php $colorOptions = collect($catalog['colors'] ?? [])->mapWithKeys(fn ($c) => [$c => $c])->all(); @endphp
+                @if($colorOptions !== [])
+                    <x-panel.field name="color" type="select" :label="textByLanguage('اللون', 'Color')" :value="$vehicle?->color"
+                        :options="$colorOptions" required />
+                @else
+                    <x-panel.field name="color" :label="textByLanguage('اللون', 'Color')" :value="$vehicle?->color" required />
+                @endif
+                @php $cityOptions = collect($catalog['cities'] ?? [])->mapWithKeys(fn ($c) => [$c => $c])->all(); @endphp
+                @if($cityOptions !== [])
+                    <x-panel.field name="city" type="select" :label="textByLanguage('المدينة', 'City')" :value="$vehicle?->city"
+                        :options="$cityOptions" required />
+                @else
+                    <x-panel.field name="city" :label="textByLanguage('المدينة', 'City')" :value="$vehicle?->city" required />
+                @endif
                 <x-panel.field name="licenseNumber" :label="textByLanguage('رقم الترخيص', 'License number')" :value="$vehicle?->licenseNumber" />
                 <x-panel.field name="seatsCount" type="number" :label="textByLanguage('عدد المقاعد', 'Seats')" :value="$vehicle?->seatsCount" />
             </div>

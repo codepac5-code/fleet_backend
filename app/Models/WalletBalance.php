@@ -2,11 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * A balance belongs to the country whose ledger produced it.
+ */
 class WalletBalance extends Model
 {
+    use ResolvesTenantConnection;
+
     protected $table = 'wallet_balances';
 
     protected $fillable = [

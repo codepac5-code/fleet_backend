@@ -25,7 +25,8 @@
                     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="20 60"/>
                 </svg>
             </span>
-            <span class="panel-brand__name">fleet<i>.</i></span>
+            {{-- The platform is fleetOS; an office signs into fleet.Office. --}}
+            <x-panel.wordmark :product="$entity === 'admin' ? 'os' : 'office'" tone="dark" :tagline="$entity === 'admin'" />
         </div>
 
         <div class="panel-brand__account">
@@ -49,8 +50,11 @@
         </li>
 
         @can(Perm::ORDER_HISTORY)
-            @if($has('booking.index'))
-                <li><a class="panel-nav__link {{ request()->routeIs($r('booking.index')) || request()->routeIs($r('booking.show')) ? 'is-active' : '' }}" href="{{ route($r('booking.index')) }}">
+            {{-- Rides created by the apps are THE orders; the legacy `bookings`
+                 table below is the old dashboard's archive and stopped filling
+                 up, so it is no longer the headline entry. --}}
+            @if($has('rides.index'))
+                <li><a class="panel-nav__link {{ request()->routeIs($r('rides.index')) || request()->routeIs($r('rides.show')) ? 'is-active' : '' }}" href="{{ route($r('rides.index')) }}">
                     <i class="bi bi-card-checklist"></i><span>{{ __('messages.orders') }}</span></a></li>
             @endif
             @if($has('booking.scheduled'))
@@ -66,9 +70,9 @@
                 <li><a class="panel-nav__link {{ request()->routeIs($r('office-bookings.index')) ? 'is-active' : '' }}" href="{{ route($r('office-bookings.index')) }}">
                     <i class="bi bi-clipboard-plus"></i><span>{{ textByLanguage('حجز مكتبي', 'Manual booking') }}</span></a></li>
             @endif
-            @if($has('rides.index'))
-                <li><a class="panel-nav__link {{ request()->routeIs($r('rides.index')) || request()->routeIs($r('rides.show')) ? 'is-active' : '' }}" href="{{ route($r('rides.index')) }}">
-                    <i class="bi bi-signpost-2"></i><span>{{ textByLanguage('رحلات الركّاب', 'Rider rides') }}</span></a></li>
+            @if($has('booking.index'))
+                <li><a class="panel-nav__link {{ request()->routeIs($r('booking.index')) || request()->routeIs($r('booking.show')) ? 'is-active' : '' }}" href="{{ route($r('booking.index')) }}">
+                    <i class="bi bi-archive"></i><span>{{ textByLanguage('أرشيف الطلبات القديم', 'Legacy order archive') }}</span></a></li>
             @endif
         @endcan
 
@@ -123,10 +127,6 @@
                     <li><a class="panel-nav__link {{ request()->routeIs($reportsRoute) ? 'is-active' : '' }}" href="{{ route($reportsRoute) }}">
                         <i class="bi bi-graph-up"></i><span>{{ textByLanguage('التقارير', 'Reports') }}</span></a></li>
                 @endif
-                @if($has('subscription.show'))
-                    <li><a class="panel-nav__link {{ request()->routeIs($r('subscription.show')) ? 'is-active' : '' }}" href="{{ route($r('subscription.show')) }}">
-                        <i class="bi bi-award"></i><span>{{ textByLanguage('الاشتراك', 'Subscription') }}</span></a></li>
-                @endif
                 @if($has('corporate.invoices'))
                     <li><a class="panel-nav__link {{ request()->routeIs($r('corporate.invoices')) ? 'is-active' : '' }}" href="{{ route($r('corporate.invoices')) }}">
                         <i class="bi bi-briefcase"></i><span>{{ textByLanguage('حسابات الأعمال', 'Business accounts') }}</span></a></li>
@@ -134,10 +134,32 @@
             @endif
         @endcan
 
+        {{-- An office's own subscription is its ACCOUNT, not a commission
+             report. It used to sit inside the Finance block, behind
+             `view commission` and behind the Transactions route — so an office
+             that holds neither (which is every office set up from the
+             permission matrix) had no way at all to reach the one page that
+             asks it to pay before its trial runs out. --}}
+        @if($has('subscription.show') || $has('commission.index'))
+            <li class="panel-nav__section">{{ textByLanguage('حساب المكتب', 'Office account') }}</li>
+            @if($has('subscription.show'))
+                <li><a class="panel-nav__link {{ request()->routeIs($r('subscription.show')) ? 'is-active' : '' }}" href="{{ route($r('subscription.show')) }}">
+                    <i class="bi bi-award"></i><span>{{ textByLanguage('الاشتراك', 'Subscription') }}</span></a></li>
+            @endif
+            @if($has('commission.index'))
+                <li><a class="panel-nav__link {{ request()->routeIs($r('commission.index')) ? 'is-active' : '' }}" href="{{ route($r('commission.index')) }}">
+                    <i class="bi bi-percent"></i><span>{{ textByLanguage('العمولات', 'Commissions') }}</span></a></li>
+            @endif
+        @endif
+
         @can(Perm::VIEW_SUB_SERVICE_LIST)
-            @if($has('tariffs.index'))
-                <li><a class="panel-nav__link {{ request()->routeIs($r('tariffs.index')) ? 'is-active' : '' }}" href="{{ route($r('tariffs.index')) }}">
-                    <i class="bi bi-cash-coin"></i><span>{{ textByLanguage('التعرفات', 'Tariffs') }}</span></a></li>
+            @if($has('services.mine'))
+                <li><a class="panel-nav__link {{ request()->routeIs($r('services.mine')) ? 'is-active' : '' }}" href="{{ route($r('services.mine')) }}">
+                    <i class="bi bi-grid-1x2"></i><span>{{ textByLanguage('خدماتي', 'My services') }}</span></a></li>
+            @endif
+            @if($has('pricing.corridors.index'))
+                <li><a class="panel-nav__link {{ request()->routeIs($r('pricing.corridors.index')) ? 'is-active' : '' }}" href="{{ route($r('pricing.corridors.index')) }}">
+                    <i class="bi bi-signpost-split"></i><span>{{ textByLanguage('أسعار الخطوط', 'Fixed corridors') }}</span></a></li>
             @endif
         @endcan
 
@@ -190,7 +212,7 @@
                 $adminHubActive = request()->routeIs(
                     'panel.admin.settings.*', 'panel.admin.currencies.*', 'panel.admin.countries.*',
                     'panel.admin.document.*', 'panel.admin.faqs.*', 'panel.admin.subscriptions.*',
-                    'panel.admin.regions.*', 'panel.admin.service.*', 'panel.admin.leads.*'
+                    'panel.admin.regions.*', 'panel.admin.service.*'
                 );
             @endphp
             <li class="panel-nav__section">{{ textByLanguage('الإدارة', 'Administration') }}</li>
@@ -212,6 +234,37 @@
                     </a>
                 </li>
             @endif
+            @if($has('leads.offices'))
+                <li>
+                    <a class="panel-nav__link {{ request()->routeIs('panel.admin.leads.offices') ? 'is-active' : '' }}"
+                       href="{{ route('panel.admin.leads.offices') }}">
+                        <i class="bi bi-building-add"></i>
+                        <span>{{ textByLanguage('طلبات المكاتب', 'Office requests') }}</span>
+                    </a>
+                </li>
+            @endif
+            @if($has('leads.drivers'))
+                {{-- Website driver LEADS (DriverJobApplication from the landing form) —
+                     deliberately distinct from the in-app "Driver applications"
+                     (driver-applications.index / DriverApplication) so the two
+                     never get confused. --}}
+                <li>
+                    <a class="panel-nav__link {{ request()->routeIs('panel.admin.leads.drivers') ? 'is-active' : '' }}"
+                       href="{{ route('panel.admin.leads.drivers') }}">
+                        <i class="bi bi-globe"></i>
+                        <span>{{ textByLanguage('طلبات السائقين (الموقع)', 'Driver leads (website)') }}</span>
+                    </a>
+                </li>
+            @endif
+        @endif
+
+        @if($has('security.index'))
+            <li class="panel-nav__section">{{ textByLanguage('حسابي', 'My account') }}</li>
+            <li>
+                <a class="panel-nav__link {{ request()->routeIs($r('security.index')) ? 'is-active' : '' }}" href="{{ route($r('security.index')) }}">
+                    <i class="bi bi-shield-lock"></i><span>{{ textByLanguage('أمان الحساب', 'Account security') }}</span>
+                </a>
+            </li>
         @endif
     </ul>
 </aside>

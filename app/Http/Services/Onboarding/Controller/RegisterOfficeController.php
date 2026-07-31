@@ -4,6 +4,7 @@ namespace App\Http\Services\Onboarding\Controller;
 
 use App\Http\Controllers\Controller;
 use App\Http\Core\Classes\Billing\RegionBilling;
+use App\Http\Core\Const\Subscription\PlanKey;
 use App\Http\Core\GeoServices\ShardManager;
 use App\Http\Services\Panel\Admin\Offices\Logic\OfficeRepository;
 use App\Http\Services\Panel\Shared\Tenant\TenantConnection;
@@ -25,6 +26,7 @@ class RegisterOfficeController extends Controller
             'city' => ['nullable', 'string', 'max:120'],
             'country_id' => ['required'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'plan' => ['nullable', 'string', 'max:40'],
         ]);
 
         $node = InfrastructureNode::query()
@@ -65,7 +67,14 @@ class RegisterOfficeController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('panel.office.subscription.show')
-            ->with('status', textByLanguage('تم إنشاء حسابك! اختر خطة لبدء تجربتك المجانية.', 'Account created! Choose a plan to start your free trial.'));
+        // Carry the plan chosen on the website's pricing grid into the
+        // subscription page so it lands pre-selected on the exact plan the office
+        // signed up for — the free trial / checkout still runs there, but the
+        // office doesn't have to re-pick.
+        $plan = $data['plan'] ?? null;
+        $planParam = ($plan !== null && PlanKey::exists($plan)) ? ['plan' => $plan] : [];
+
+        return redirect()->route('panel.office.subscription.show', $planParam)
+            ->with('status', textByLanguage('تم إنشاء حسابك! أكمل تفعيل خطتك لبدء تجربتك المجانية.', 'Account created! Confirm your plan to start your free trial.'));
     }
 }

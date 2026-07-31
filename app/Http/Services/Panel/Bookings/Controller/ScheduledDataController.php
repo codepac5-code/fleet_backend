@@ -21,7 +21,7 @@ class ScheduledDataController extends Controller
         $date     = $request->query('date') ?: null;
         $driver   = (int) $request->query('driver') ?: null;
         $page     = max(1, (int) $request->query('page', 1));
-        $officeId = $scope->isAdmin() ? ((int) $request->query('office') ?: null) : null;
+        $officeId = $scope->isAdmin() ? ((int) $request->query('office') ?: null) : $scope->officeId();
 
         $paginator = $bookings->scheduledData($group, $date, $driver, $officeId, $page);
         $entity    = $scope->guard();

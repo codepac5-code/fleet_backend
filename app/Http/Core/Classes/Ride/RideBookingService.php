@@ -164,7 +164,10 @@ class RideBookingService
                 'idempotency_key' => $idempotencyKey !== '' ? $idempotencyKey : null,
             ]);
 
-            if ($paymentMethod !== 'cash' && $total > 0) {
+            // Prepaid rails (wallet / office wallet) hold the fare in escrow at
+            // booking. `card` is charged at trip END (nothing is held now), and
+            // `cash` is collected in the car — neither pre-funds escrow.
+            if (in_array($paymentMethod, ['wallet', 'office_wallet'], true) && $total > 0) {
                 $balance = $this->wallet->lockWalletBalanceMinor(OwnerType::USER, $userId, $currency);
 
                 if ($total > $balance) {
@@ -173,6 +176,15 @@ class RideBookingService
 
                 $this->wallet->holdRide($booking->id, $userId, $total, $currency, 'hold:' . $booking->id);
                 $booking->held_minor = $total;
+                $this->repository->save($booking);
+            }
+
+            // `card` is pre-authorised on the rider's card at booking: bind the
+            // confirmed hold to the booking (throws — rolling back the whole
+            // booking — if it is missing, unconfirmed, or too small).
+            if ($paymentMethod === 'card' && $total > 0) {
+                app(\App\Http\Services\User\Payments\Logic\RideCardPaymentService::class)
+                    ->attachAuthorization($userId, $booking, (string) ($in['card_authorization_id'] ?? ''));
                 $this->repository->save($booking);
             }
 
@@ -224,6 +236,12 @@ class RideBookingService
             }
         }
 
+        // A card ride holds nothing in escrow — its fare was authorised on the
+        // card, so cancelling must VOID that hold instead.
+        if (strtolower((string) $booking->payment_method) === 'card') {
+            app(\App\Http\Services\User\Payments\Logic\RideCardPaymentService::class)->release($booking);
+        }
+
         $this->dispatch->cancelJob($bookingId);
 
         $booking->status = BookingStatus::CANCELLED;
@@ -246,7 +264,7 @@ class RideBookingService
             throw DomainException::conflict('already_assigned');
         }
 
-        $tariff = $this->tariffs->forOfficeService($newOfficeId, $booking->service, $booking->service_class);
+        $tariff = $this->tariffs->forOfficeServiceOrSub($newOfficeId, (int) $booking->sub_service_id ?: null, $booking->service, $booking->service_class);
 
         if ($tariff === null) {
             throw DomainException::notFound('tariff_not_found');

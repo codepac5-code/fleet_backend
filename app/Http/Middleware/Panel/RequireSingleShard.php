@@ -14,8 +14,15 @@ use Closure;
  */
 class RequireSingleShard
 {
+    /** Reads are exactly what aggregate mode exists for. */
+    private const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+
     public function handle($request, Closure $next)
     {
+        if (in_array($request->getMethod(), self::SAFE_METHODS, true)) {
+            return $next($request);
+        }
+
         if (ShardAggregator::isActive()) {
             $message = textByLanguage(
                 'اختر دولة محدّدة أولاً لتنفيذ هذا الإجراء (وضع «كل الدول» للعرض فقط).',

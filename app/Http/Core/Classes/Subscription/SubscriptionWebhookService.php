@@ -31,7 +31,8 @@ class SubscriptionWebhookService
     public function __construct(
         private ?EventBus $events = null,
         private ?OfficeSubscriptionService $subscriptions = null,
-        private ?PlanOverageService $overage = null
+        private ?PlanOverageService $overage = null,
+        private ?SubscriptionRevenueService $revenue = null
     ) {
     }
 
@@ -61,6 +62,12 @@ class SubscriptionWebhookService
 
         $subscription->status = $newStatus;
 
+        if (array_key_exists('trial_end', $event)) {
+            $subscription->trial_ends_at = $event['trial_end'] === null
+                ? null
+                : Carbon::createFromTimestamp((int) $event['trial_end'], config('app.timezone', 'UTC'));
+        }
+
         if (isset($event['current_period_end']) && $event['current_period_end'] !== null) {
             $subscription->current_period_end = Carbon::createFromTimestamp(
                 (int) $event['current_period_end'],
@@ -83,8 +90,24 @@ class SubscriptionWebhookService
         // A paid renewal closes the billing cycle → roll every fully-elapsed
         // period's accrued overage into its invoice. Best-effort; a collection
         // hiccup must never fail the renewal webhook.
+        // A paid invoice is the moment subscription money exists. Book it, or
+        // the platform's whole income in a subscription country stays invisible
+        // to every report.
+        if (($event['type'] ?? '') === 'invoice.paid' && $this->revenue !== null) {
+            $this->revenue->recordForSubscription(
+                $subscription,
+                (int) ($event['amount_paid_minor'] ?? 0),
+                $event['provider_invoice_id'] ?? null,
+                $event['currency'] ?? null
+            );
+        }
+
         if (($event['type'] ?? '') === 'invoice.paid' && $this->overage !== null) {
             try {
+                // Order matters: overage already pushed to Stripe rode along on
+                // THIS invoice, so it is collected now — while the period being
+                // closed below bills on the NEXT one.
+                $this->overage->markStripeCollectedForOffice((int) $subscription->office_id);
                 $this->overage->closeElapsedForOffice((int) $subscription->office_id);
             } catch (Throwable $e) {
             }
@@ -158,9 +181,12 @@ class SubscriptionWebhookService
             return;
         }
 
+        // The fleet desk has to hear a failed renewal too: the sweep already
+        // told it about expired trials, while a provider-reported failure went
+        // only to the office — the one party that cannot chase itself.
         $this->events->emit(new DomainEvent(
             $eventType,
-            [Channel::office((int) $subscription->office_id)],
+            [Channel::office((int) $subscription->office_id), Channel::admin()],
             [
                 'office_id' => (int) $subscription->office_id,
                 'plan_key' => $subscription->plan_key,

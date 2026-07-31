@@ -2,6 +2,8 @@
 
 namespace App\Http\Services\Panel\Bookings\Logic;
 
+use App\Http\Core\Const\Ride\BookingStatus;
+
 class ScheduledTripPresenter
 {
     public static function toArray($row, string $entity): array
@@ -11,9 +13,25 @@ class ScheduledTripPresenter
         $time   = $row->scheduled_time;
         $r      = fn (string $name) => "panel.{$entity}.{$name}";
 
-        // App rides (isRide) open the RideBooking detail page and are view-only on
-        // this board — the legacy assign/cancel routes target the old Booking id.
+        // App rides (isRide) open the RideBooking detail page. Manual driver
+        // assignment runs through the RideBooking-aware route; the legacy
+        // assign/cancel routes target the old Booking id, so cancel stays on the
+        // legacy pipeline only.
         $showUrl = $isRide ? route($r('rides.show'), $row->id) : route($r('booking.show'), $row->id);
+
+        $status = (string) $row->status;
+
+        $assignable = in_array($group, ['upcoming', 'active'], true)
+            && ! in_array($status, [BookingStatus::ARRIVED, BookingStatus::ON_TRIP], true);
+
+        // Fixed corridor trips await the office's acceptance in PENDING_ACCEPTANCE.
+        $acceptable = $isRide && $status === BookingStatus::PENDING_ACCEPTANCE;
+
+        // Cancellable until the trip is closed OR the driver is already en route
+        // (those cancel from the live board so the meter/settlement is handled).
+        $cancellable = $isRide
+            && ! in_array($status, BookingStatus::TERMINAL, true)
+            && ! in_array($status, BookingStatus::LIVE_SUB, true);
 
         return [
             'id'               => (int) $row->id,
@@ -39,11 +57,16 @@ class ScheduledTripPresenter
                 'name'  => trim((string) $row->driver),
                 'phone' => $row->driver_phone,
             ] : null,
-            'editable'         => ! $isRide && in_array($group, ['upcoming', 'active'], true),
+            'editable'         => $assignable,
             'urls'             => [
                 'show'   => $showUrl,
-                'assign' => $isRide ? null : route($r('booking.assign'), $row->id),
-                'cancel' => $isRide ? null : route($r('booking.cancel'), $row->id),
+                'assign' => $assignable
+                    ? ($isRide ? route($r('booking.rides.assign'), $row->id) : route($r('booking.assign'), $row->id))
+                    : null,
+                'accept' => $acceptable ? route($r('booking.rides.accept'), $row->id) : null,
+                'cancel' => $isRide
+                    ? ($cancellable ? route($r('booking.rides.cancel'), $row->id) : null)
+                    : ($assignable ? route($r('booking.cancel'), $row->id) : null),
             ],
         ];
     }

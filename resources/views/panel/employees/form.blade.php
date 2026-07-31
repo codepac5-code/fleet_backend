@@ -47,7 +47,19 @@
             <div class="p-form-grid">
                 <x-panel.field name="jobName" :label="textByLanguage('المسمى الوظيفي', 'Job title')" :value="$jobName" required />
                 <x-panel.field name="role" type="select" :label="textByLanguage('الدور', 'Role')" :value="$employee?->role"
-                    :options="['agent' => textByLanguage('وكيل', 'Agent'), 'admin' => textByLanguage('مسؤول', 'Admin'), 'viewer' => textByLanguage('مشاهد', 'Viewer')]" required />
+                    :options="\App\Http\Services\Panel\Employees\Logic\EmployeeRole::options()" required />
+                <div class="p-field p-field--full" style="background:var(--p-bg);border-radius:var(--p-radius-sm);padding:12px 14px;">
+                    @foreach(\App\Http\Services\Panel\Employees\Logic\EmployeeRole::ALL as $roleKey)
+                        <p style="margin:0 0 6px;font-size:.82rem;">
+                            <strong>{{ \App\Http\Services\Panel\Employees\Logic\EmployeeRole::label($roleKey) }}</strong>
+                            <span style="color:var(--p-text-muted);"> — {{ \App\Http\Services\Panel\Employees\Logic\EmployeeRole::description($roleKey) }}</span>
+                        </p>
+                    @endforeach
+                    <p style="margin:8px 0 0;font-size:.78rem;color:var(--p-text-muted);">
+                        <i class="bi bi-info-circle"></i>
+                        {{ textByLanguage('تُطبَّق صلاحيات الدور فور الحفظ، ويمكن تعديلها لاحقاً لكل موظف من شاشة الصلاحيات.', 'The role grants its permissions on save; you can fine-tune any employee afterwards from the permissions screen.') }}
+                    </p>
+                </div>
                 @if($isAdmin)
                     <x-panel.field name="officeId" type="select" :label="textByLanguage('المكتب', 'Office')" :value="$employee?->officeId"
                         :options="$officeOptions" required />

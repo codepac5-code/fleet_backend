@@ -52,8 +52,10 @@ class RideLifecycleTest extends FleetTestCase
         // Digital = PSP → fleet distributes to wallets. No customer escrow.
         $this->rides->settle($this->booking(), 'digital');
 
-        $this->assertSame(8200, $this->wallet->walletBalanceMinor('driver', 9, 'USD'));
-        $this->assertSame(1800, $this->wallet->revenueBalanceMinor('fleet', 0, 'USD'));
+        // 5% to the platform, and with the office taking nothing the driver
+        // keeps the whole 95.
+        $this->assertSame(9500, $this->wallet->walletBalanceMinor('driver', 9, 'USD'));
+        $this->assertSame(500, $this->wallet->revenueBalanceMinor('fleet', 0, 'USD'));
         $this->assertSame(0, $this->wallet->revenueBalanceMinor('office', 3, 'USD'));
 
         $this->assertSame(1, (int) DB::table('commission_snapshots')->where('booking_id', 5001)->count());
@@ -64,8 +66,8 @@ class RideLifecycleTest extends FleetTestCase
     {
         $this->rides->settle($this->booking(6001, 10000), 'cash');
 
-        $this->assertSame(1800, $this->wallet->duesBalanceMinor(9, 'USD'));
-        $this->assertSame(1800, $this->wallet->revenueBalanceMinor('fleet', 0, 'USD'));
+        $this->assertSame(500, $this->wallet->duesBalanceMinor(9, 'USD'));
+        $this->assertSame(500, $this->wallet->revenueBalanceMinor('fleet', 0, 'USD'));
     }
 
     public function test_settlement_is_idempotent_including_the_event(): void
@@ -74,7 +76,7 @@ class RideLifecycleTest extends FleetTestCase
         $this->rides->settle($this->booking(), 'digital');
         $this->rides->settle($this->booking(), 'digital');
 
-        $this->assertSame(8200, $this->wallet->walletBalanceMinor('driver', 9, 'USD'));
+        $this->assertSame(9500, $this->wallet->walletBalanceMinor('driver', 9, 'USD'));
         $this->assertSame(1, (int) DB::table('ledger_transactions')->where('kind', 'ride_release')->count());
         $this->assertSame(1, (int) EventOutbox::query()->where('type', EventType::RIDE_RELEASED)->count());
     }

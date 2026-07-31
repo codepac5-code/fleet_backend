@@ -11,6 +11,7 @@ class LedgerKind
     const COMMISSION = 'commission';
     const DUES_SETTLE = 'dues_settle';
     const PAYOUT = 'payout';
+    const SUBSCRIPTION = 'subscription';
     const REFUND = 'refund';
     const ADJUSTMENT = 'adjustment';
 }

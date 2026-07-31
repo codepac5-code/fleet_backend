@@ -70,6 +70,11 @@
                         </td>
                         <td>
                             <div class="p-row-actions">
+                                @if(\Illuminate\Support\Facades\Route::has($r('user.show')))
+                                    <a href="{{ route($r('user.show'), $u->id) }}" class="p-icon-btn" title="{{ textByLanguage('الملف الشخصي', 'Profile') }}">
+                                        <i class="bi bi-person-lines-fill"></i>
+                                    </a>
+                                @endif
                                 <a href="{{ route($r('user.edit'), $u->id) }}" class="p-icon-btn" title="{{ textByLanguage('تعديل', 'Edit') }}">
                                     <i class="bi bi-pencil"></i>
                                 </a>

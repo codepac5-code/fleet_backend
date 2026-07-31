@@ -57,6 +57,8 @@ Route::middleware('user-api')->group(function () {
         Route::get('wallet', [DriverWalletController::class, 'wallet']);
         Route::get('wallet/transactions', [DriverWalletController::class, 'transactions']);
         Route::post('wallet/payouts', [DriverWalletController::class, 'payout']);
+        Route::get('dues', [DriverWalletController::class, 'dues']);
+        Route::post('dues/settle', [DriverWalletController::class, 'settleDues']);
 
         // Scheduled-ride marketplace (offers / claim / committed / release / reminder)
         Route::get('scheduled/offers', [DriverScheduledController::class, 'offers']);
@@ -130,6 +132,7 @@ Route::middleware('user-api')->group(function () {
         Route::get('trips/{id}/cancel-impact', [DriverTripQueryController::class, 'cancelImpact'])->whereNumber('id');
         Route::get('trips/cancellation-reasons', [CancellationReasonsController::class, 'index']);
         Route::get('trips/rating-tags', [\App\Http\Services\Driver\Controllers\RatingTagsController::class, 'index']);
+        Route::get('incentives', [\App\Http\Services\Driver\Controllers\IncentivesController::class, 'index']);
 
         // Ride lifecycle — each emits booking.status_changed to the rider
         Route::post('trips/{id}/navigate-pickup', [DriverTripController::class, 'navigatePickup'])->whereNumber('id');

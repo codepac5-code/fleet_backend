@@ -230,14 +230,23 @@ class V1HttpTest extends FleetTestCase
                 return null;
             }
 
-            public function paymentIntent(int $userId, int $amountMinor, string $currency, ?int $paymentMethodId, string $idempotencyKey): array
+            public function paymentIntent(int $userId, int $amountMinor, string $currency, ?int $paymentMethodId, string $idempotencyKey, array $metadata = [], bool $manualCapture = false): array
             {
                 return [
                     'id' => 'pi_test_' . $idempotencyKey,
-                    'status' => 'requires_payment_method',
+                    'status' => $manualCapture ? 'requires_capture' : 'requires_payment_method',
                     'clientSecret' => 'pi_secret',
                     'requiresAction' => false,
                 ];
+            }
+
+            public function capturePaymentIntent(string $paymentIntentId, int $amountToCaptureMinor): string
+            {
+                return 'succeeded';
+            }
+
+            public function cancelPaymentIntent(string $paymentIntentId): void
+            {
             }
 
             public function paymentIntentStatus(string $paymentIntentId): ?string
@@ -535,32 +544,60 @@ class V1HttpTest extends FleetTestCase
         $this->postJson('driver/wallet/payouts', ['amount_minor' => 5000])->assertStatus(401);
     }
 
-    // ── driver dues — NO LIVE EQUIVALENT ────────────────────────────────────
+    // ── driver dues ─────────────────────────────────────────────────────────
     //
-    // `GET driver/dues` and `POST driver/dues/settle` do not exist on the live
-    // router in any renamed form: there is no dues/outstanding-commission
-    // surface for drivers at all (driver money is `driver/wallet`,
-    // `driver/wallet/transactions`, `driver/wallet/payouts`, `driver/earnings`,
-    // none of which model an amount the driver OWES the fleet).
-    //
-    // These are kept, not deleted, so the coverage gap stays visible. They are
-    // skipped rather than repointed because inventing an assertion against an
-    // endpoint that was never built is exactly the phantom coverage this repair
-    // is meant to remove.
+    // `GET driver/dues` / `POST driver/dues/settle` surface the outstanding
+    // cash-trip commission the driver OWES the fleet and let them settle it from
+    // their wallet — the money-out mirror of the panel's staff-side settle.
+
+    /** Cash-trip commission booked as driver dues (mirror of DriverDuesTest). */
+    private function seedDriverDues(int $driverId, int $totalMinor = 10000): void
+    {
+        (new \App\Http\Core\Classes\Ledger\FleetWalletService(new \App\Http\Core\Classes\Ledger\LedgerService()))
+            ->cashCommission([
+                'booking_id' => 7100 + $driverId,
+                'office_id' => 3,
+                'driver_id' => $driverId,
+                'currency_code' => 'USD',
+                'total_minor' => $totalMinor,
+                'fleet_rate' => 18.0,
+                'office_rate' => 0.0,
+            ]);
+    }
 
     public function test_driver_dues_show_starts_zero(): void
     {
-        $this->markTestSkipped('No live equivalent: GET driver/dues does not exist on the current router.');
+        $this->asDriver(9)
+            ->getJson('driver/dues?currency_code=USD')
+            ->assertStatus(200)
+            ->assertJsonPath('data.dues_minor', 0);
     }
 
-    public function test_driver_dues_settle_requires_idempotency_key(): void
+    public function test_driver_dues_settle_from_wallet_clears_debt(): void
     {
-        $this->markTestSkipped('No live equivalent: POST driver/dues/settle does not exist on the current router.');
+        $this->seedDriverDues(9);          // 1,800 dues (18% of 10,000)
+
+        // The driver wallet is normally funded by a released ride; credit it
+        // directly through the ledger here so there is balance to settle from.
+        (new \App\Http\Core\Classes\Ledger\FleetWalletService(new \App\Http\Core\Classes\Ledger\LedgerService()))
+            ->adjustment([
+                ['owner_type' => 'fleet', 'owner_id' => 0, 'account_type' => 'revenue', 'direction' => 'debit', 'amount_minor' => 5000],
+                ['owner_type' => 'driver', 'owner_id' => 9, 'account_type' => 'wallet', 'direction' => 'credit', 'amount_minor' => 5000],
+            ], 'USD', 'seed-driver-wallet-9');
+
+        $this->asDriver(9)
+            ->postJson('driver/dues/settle', ['currency_code' => 'USD'])
+            ->assertStatus(200)
+            ->assertJsonPath('data.settled_minor', 1800)
+            ->assertJsonPath('data.remaining_dues_minor', 0);
     }
 
     public function test_driver_dues_settle_with_no_dues_is_422(): void
     {
-        $this->markTestSkipped('No live equivalent: POST driver/dues/settle does not exist on the current router.');
+        $this->asDriver(9)
+            ->postJson('driver/dues/settle', ['currency_code' => 'USD'])
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'no_dues');
     }
 
     // ── fare quoting ────────────────────────────────────────────────────────

@@ -27,9 +27,37 @@
                     @endforeach
                 </select>
             </form>
+
+            @if(!empty($sharedDatabaseGroups))
+                @php
+                    $sharedLabel = collect($sharedDatabaseGroups)->map(fn ($names) => implode(' + ', $names))->implode('، ');
+                @endphp
+                <span class="panel-shared-db" title="{{ textByLanguage(
+                        'هذه الدول مُعدّة على قاعدة بيانات واحدة، فبياناتها مشتركة و«كل الدول» يحسب صفوفها مرة واحدة: ' . $sharedLabel,
+                        'These countries are configured on one database, so they share data and “All countries” counts their rows once: ' . $sharedLabel
+                    ) }}">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>{{ $sharedLabel }}</span>
+                </span>
+            @endif
         @endif
 
         @php $cur = app()->getLocale(); $other = $cur === 'ar' ? 'en' : 'ar'; $nr = fn ($n) => "panel.{$entity}.{$n}"; @endphp
+
+        @if(!empty($panelBilling) && \Illuminate\Support\Facades\Route::has($nr('subscription.show')))
+            <a class="panel-billing panel-billing--{{ $panelBilling['tone'] }}" href="{{ route($nr('subscription.show')) }}">
+                @if($panelBilling['status'] === 'trialing')
+                    <i class="bi bi-hourglass-split"></i>
+                    <span>{{ textByLanguage('التجربة', 'Trial') }}: {{ $panelBilling['days'] }} {{ textByLanguage('يوم', 'd') }}</span>
+                @elseif($panelBilling['status'] === 'past_due')
+                    <i class="bi bi-exclamation-octagon"></i>
+                    <span>{{ textByLanguage('دفعة متعثّرة', 'Payment failed') }}</span>
+                @else
+                    <i class="bi bi-award"></i>
+                    <span>{{ textByLanguage('بلا اشتراك', 'No subscription') }}</span>
+                @endif
+            </a>
+        @endif
 
         <div class="panel-bell" id="panelBell">
             <button type="button" class="panel-bell__btn" onclick="document.getElementById('panelBell').classList.toggle('open')" title="{{ textByLanguage('الإشعارات', 'Notifications') }}">
@@ -69,12 +97,50 @@
             <i class="bi bi-translate"></i>
             <span>{{ $other === 'ar' ? 'العربية' : 'English' }}</span>
         </a>
+
+        @php
+            $me = auth()->guard($entity)->user();
+            $myName = $me->displayName ?? $me->officeName ?? trim(($me->firstName ?? '') . ' ' . ($me->lastName ?? ''));
+            $myEmail = $me->email ?? $me->phoneNumber ?? null;
+            $roleLabel = ['admin' => textByLanguage('مدير النظام', 'Super Admin'), 'office' => textByLanguage('مكتب', 'Office'), 'employee' => textByLanguage('موظف', 'Employee')][$entity] ?? $entity;
+        @endphp
+        <div class="panel-account" id="panelAccount">
+            <button type="button" class="panel-account__btn" onclick="document.getElementById('panelAccount').classList.toggle('open')" title="{{ textByLanguage('حسابي', 'My account') }}">
+                <span class="panel-account__initial">{{ mb_substr($myName ?: $roleLabel, 0, 1) }}</span>
+                <i class="bi bi-chevron-down"></i>
+            </button>
+            <div class="panel-account__menu">
+                <div class="panel-account__head">
+                    <strong>{{ $myName ?: $roleLabel }}</strong>
+                    <span>{{ $myEmail ?: $roleLabel }}</span>
+                </div>
+                @if(\Illuminate\Support\Facades\Route::has($nr('security.index')))
+                    <a class="panel-account__item" href="{{ route($nr('security.index')) }}">
+                        <i class="bi bi-shield-lock"></i> {{ textByLanguage('أمان الحساب', 'Account security') }}
+                    </a>
+                @endif
+                @if(\Illuminate\Support\Facades\Route::has($nr('notifications.index')))
+                    <a class="panel-account__item" href="{{ route($nr('notifications.index')) }}">
+                        <i class="bi bi-bell"></i> {{ textByLanguage('الإشعارات', 'Notifications') }}
+                    </a>
+                @endif
+                <form method="POST" action="{{ route('panel.logout') }}">
+                    @csrf
+                    <button type="submit" class="panel-account__item panel-account__item--danger">
+                        <i class="bi bi-box-arrow-right"></i> {{ textByLanguage('تسجيل الخروج', 'Sign out') }}
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </header>
 <script>
     document.addEventListener('click', function (e) {
         var bell = document.getElementById('panelBell');
         if (bell && !bell.contains(e.target)) bell.classList.remove('open');
+
+        var account = document.getElementById('panelAccount');
+        if (account && !account.contains(e.target)) account.classList.remove('open');
     });
 
     function panelToggleFullscreen() {

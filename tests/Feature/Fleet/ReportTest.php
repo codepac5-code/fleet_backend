@@ -13,6 +13,8 @@ class ReportTest extends FleetTestCase
         '2026_06_24_000002_create_ledger_transactions_table.php',
         '2026_06_24_000003_create_ledger_entries_table.php',
         '2026_06_24_000004_create_commission_snapshots_table.php',
+        '2026_06_25_000002_create_office_subscriptions_table.php',
+        '2026_07_13_000006_add_billing_lifecycle_to_office_subscriptions.php',
     ];
 
     private ReportService $reports;

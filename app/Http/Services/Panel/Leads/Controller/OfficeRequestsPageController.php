@@ -28,6 +28,7 @@ class OfficeRequestsPageController extends Controller
             'counts' => [
                 'new' => OfficeRequest::query()->where('status', 'new')->count(),
                 'reviewed' => OfficeRequest::query()->where('status', 'reviewed')->count(),
+                'approved' => OfficeRequest::query()->where('status', 'approved')->count(),
                 'total' => OfficeRequest::query()->count(),
             ],
         ]);

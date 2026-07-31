@@ -340,9 +340,20 @@
 @endsection
 
 @push('scripts')
+@php
+    $cxProfiles = [];
+    foreach (\App\Http\Core\GeoServices\CountryProfiles::all() as $iso => $prof) {
+        $cxProfiles[$iso] = [
+            'currency_code'   => $prof['currency_code'] ?? '',
+            'currency_symbol' => $prof['currency_symbol'] ?? '',
+            'city'            => $prof['provinces'][0]['en'] ?? '',
+        ];
+    }
+@endphp
 <script>
 (function () {
     const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+    const CX_PROFILES = @json($cxProfiles);
     const T = {
         testWorking: @json(textByLanguage('جارٍ اختبار الاتصال…', 'Testing connection…')),
         provisioning: @json(textByLanguage('جارٍ تجهيز المخطط… قد يستغرق دقائق', 'Provisioning schema… this may take minutes')),
@@ -355,6 +366,23 @@
     let step = 1, editId = null;
     const modal = document.getElementById('cxModal');
     const form = document.getElementById('cxForm');
+
+    // Typing an ISO2 code prefills the currency (and a sample city) from the
+    // bundled country profiles — a known country is set up from its code alone.
+    (function () {
+        const code = form ? form.querySelector('[name="country_code"]') : null;
+        if (!code) return;
+        code.addEventListener('input', function () {
+            const p = CX_PROFILES[(this.value || '').toUpperCase().trim()];
+            if (!p) return;
+            const cc = form.querySelector('[name="currency_code"]');
+            const cs = form.querySelector('[name="currency_symbol"]');
+            const ct = form.querySelector('[name="city"]');
+            if (cc && !cc.value) cc.value = p.currency_code;
+            if (cs && !cs.value) cs.value = p.currency_symbol;
+            if (ct && !ct.value) ct.value = p.city;
+        });
+    })();
 
     function q(sel, root) { return (root || document).querySelector(sel); }
     function qa(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }

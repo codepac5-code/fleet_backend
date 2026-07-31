@@ -75,14 +75,16 @@ use App\Http\Services\Panel\Payouts\Controller\PayoutsPageController;
 use App\Http\Services\Panel\Reports\Controller\ReportsPageController;
 use App\Http\Services\Panel\Subscriptions\Controller\SubscriptionPageController;
 use App\Http\Services\Panel\Subscriptions\Controller\StartCheckoutController;
-use App\Http\Services\Panel\Tariffs\Controller\TariffsPageController;
-use App\Http\Services\Panel\Tariffs\Controller\SaveOfficeTariffController;
-use App\Http\Services\Panel\Tariffs\Controller\DeleteOfficeTariffController;
+use App\Http\Services\Panel\Pricing\Controller\CorridorsPageController;
+use App\Http\Services\Panel\Pricing\Controller\SaveCorridorController;
+use App\Http\Services\Panel\Pricing\Controller\DeleteCorridorController;
 use App\Http\Services\Panel\Chat\Controller\OfficeChatPageController;
 use App\Http\Services\Panel\Chat\Controller\OfficeChatThreadPageController;
 use App\Http\Services\Panel\Chat\Controller\OfficeChatReplyController;
 
-Route::middleware(['auth:office', 'set-language', 'panel.country-db'])
+// Same rule as the admin group: every write is single-country by default (see
+// the note in routes/panel/admin.php); session-only toggles opt out below.
+Route::middleware(['set-language', 'panel.country-db', 'auth:office', 'panel.2fa', 'panel.single-shard'])
     ->group(function () {
 
         Route::get('/', HomeController::class)->name('home');
@@ -91,10 +93,15 @@ Route::middleware(['auth:office', 'set-language', 'panel.country-db'])
         Route::get('map/drivers', MapDriversController::class)->name('map.drivers');
 
         Route::get('notifications', NotificationsPageController::class)->name('notifications.index');
-        Route::post('notifications/read', MarkNotificationsReadController::class)->name('notifications.read');
+        Route::post('notifications/read', MarkNotificationsReadController::class)->withoutMiddleware('panel.single-shard')->name('notifications.read');
 
-        Route::post('wallet/reveal', RevealWalletController::class)->name('wallet.reveal');
-        Route::post('wallet/hide', HideWalletController::class)->name('wallet.hide');
+        Route::post('wallet/reveal', RevealWalletController::class)->withoutMiddleware('panel.single-shard')->name('wallet.reveal');
+        Route::post('wallet/hide', HideWalletController::class)->withoutMiddleware('panel.single-shard')->name('wallet.hide');
+
+        Route::get('security', \App\Http\Services\Panel\Security\Controller\SecurityPageController::class)->name('security.index');
+        Route::post('security/two-factor', \App\Http\Services\Panel\Security\Controller\StartTwoFactorController::class)->withoutMiddleware('panel.single-shard')->name('security.two-factor.start');
+        Route::post('security/two-factor/confirm', \App\Http\Services\Panel\Security\Controller\ConfirmTwoFactorController::class)->withoutMiddleware('panel.single-shard')->name('security.two-factor.confirm');
+        Route::post('security/two-factor/disable', \App\Http\Services\Panel\Security\Controller\DisableTwoFactorController::class)->withoutMiddleware('panel.single-shard')->name('security.two-factor.disable');
 
         Route::get('employees', EmployeesPageController::class)->middleware('permission:' . Perm::VIEW_EMPLOYEE_LIST)->name('employee.index');
         Route::get('employees/create', CreateEmployeeController::class)->middleware('permission:' . Perm::ADD_EMPLOYEE)->name('employee.create');
@@ -105,6 +112,7 @@ Route::middleware(['auth:office', 'set-language', 'panel.country-db'])
         Route::delete('employees/{employee}', DeleteEmployeeController::class)->middleware('permission:' . Perm::DELETE_EMPLOYEE)->whereNumber('employee')->name('employee.destroy');
         Route::get('employees/{employee}/permissions', EditEmployeePermissionsController::class)->middleware('permission:' . Perm::ASSIGN_PERMISSIONS)->whereNumber('employee')->name('employee.permissions.edit');
         Route::put('employees/{employee}/permissions', UpdateEmployeePermissionsController::class)->middleware('permission:' . Perm::ASSIGN_PERMISSIONS)->whereNumber('employee')->name('employee.permissions.update');
+        Route::post('employees/{employee}/permissions/reset', \App\Http\Services\Panel\Employees\Controller\ResetEmployeePermissionsController::class)->middleware('permission:' . Perm::ASSIGN_PERMISSIONS, 'panel.single-shard')->whereNumber('employee')->name('employee.permissions.reset');
 
         Route::get('drivers/export', \App\Http\Services\Panel\Drivers\Controller\ExportDriversController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->name('driver.export');
         Route::get('drivers', DriversPageController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->name('driver.index');
@@ -113,6 +121,8 @@ Route::middleware(['auth:office', 'set-language', 'panel.country-db'])
         Route::get('drivers/{driver}', ShowDriverController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->whereNumber('driver')->name('driver.show');
         Route::get('drivers/{driver}/stats', DriverStatsController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->whereNumber('driver')->name('driver.stats');
         Route::get('drivers/{driver}/ratings', DriverRatingsController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->whereNumber('driver')->name('driver.ratings');
+        Route::post('drivers/{driver}/commission', \App\Http\Services\Panel\Drivers\Controller\UpdateDriverCommissionController::class)->middleware('permission:' . Perm::EDIT_COMMISSION, 'panel.single-shard')->whereNumber('driver')->name('driver.commission');
+        Route::post('drivers/{driver}/dues/settle', \App\Http\Services\Panel\Drivers\Controller\SettleDriverDuesController::class)->middleware('permission:' . Perm::VIEW_PAYMENTS, 'panel.single-shard')->whereNumber('driver')->name('driver.dues.settle');
         Route::post('drivers/{driver}/documents', StoreDriverDocumentController::class)->middleware('permission:' . Perm::EDIT_DRIVER)->whereNumber('driver')->name('driver.documents.store');
         Route::put('drivers/{driver}/documents/{document}', UpdateDriverDocumentStatusController::class)->middleware('permission:' . Perm::EDIT_DRIVER)->whereNumber('driver')->whereNumber('document')->name('driver.documents.status');
         Route::delete('drivers/{driver}/documents/{document}', DeleteDriverDocumentController::class)->middleware('permission:' . Perm::EDIT_DRIVER)->whereNumber('driver')->whereNumber('document')->name('driver.documents.destroy');
@@ -151,6 +161,9 @@ Route::middleware(['auth:office', 'set-language', 'panel.country-db'])
         Route::get('bookings/{booking}', ShowBookingController::class)->middleware('permission:' . Perm::ORDER_HISTORY)->whereNumber('booking')->name('booking.show');
         Route::post('bookings/{booking}/refund', \App\Http\Services\Panel\Bookings\Controller\RefundBookingController::class)->middleware('permission:' . Perm::EDIT_COMMISSION, 'panel.single-shard')->whereNumber('booking')->name('booking.refund');
         Route::put('bookings/{booking}/status', UpdateBookingStatusController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('booking')->name('booking.status.update');
+        Route::post('bookings/rides/{ride}/assign', \App\Http\Services\Panel\Bookings\Controller\AssignRideDriverController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('ride')->name('booking.rides.assign');
+        Route::post('bookings/rides/{ride}/accept', \App\Http\Services\Panel\Bookings\Controller\AcceptRideController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('ride')->name('booking.rides.accept');
+        Route::post('bookings/rides/{ride}/cancel', \App\Http\Services\Panel\Bookings\Controller\CancelRideController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('ride')->name('booking.rides.cancel');
         Route::post('bookings/{booking}/assign', AssignDriverController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('booking')->name('booking.assign');
         Route::post('bookings/{booking}/cancel', CancelBookingController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('booking')->name('booking.cancel');
         Route::post('bookings/{booking}/settle', SettleBookingController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('booking')->name('booking.settle');
@@ -169,14 +182,21 @@ Route::middleware(['auth:office', 'set-language', 'panel.country-db'])
 
         Route::get('subscription', SubscriptionPageController::class)->name('subscription.show');
         Route::post('subscription/checkout', StartCheckoutController::class)->name('subscription.checkout');
+        Route::post('subscription/trial', \App\Http\Services\Panel\Subscriptions\Controller\StartTrialController::class)->name('subscription.trial');
         Route::get('reports/summary', ReportsPageController::class)->middleware('permission:' . Perm::VIEW_COMMISSION)->name('reports.summary');
 
         Route::get('payouts', PayoutsPageController::class)->middleware('permission:' . Perm::VIEW_COMMISSION)->name('payouts.index');
         Route::post('payouts', RequestOfficePayoutController::class)->middleware('permission:' . Perm::VIEW_COMMISSION)->name('payouts.request');
 
-        Route::get('tariffs', TariffsPageController::class)->middleware('permission:' . Perm::VIEW_SUB_SERVICE_LIST)->name('tariffs.index');
-        Route::post('tariffs', SaveOfficeTariffController::class)->middleware('permission:' . Perm::EDIT_SUB_SERVICE)->name('tariffs.save');
-        Route::delete('tariffs/{serviceClass}', DeleteOfficeTariffController::class)->middleware('permission:' . Perm::EDIT_SUB_SERVICE)->name('tariffs.delete');
+        Route::get('services', \App\Http\Services\Panel\Services\Controller\MyServicesPageController::class)->middleware('permission:' . Perm::VIEW_SUB_SERVICE_LIST)->name('services.mine');
+        Route::put('services', \App\Http\Services\Panel\Services\Controller\UpdateMyServicesController::class)->middleware('permission:' . Perm::EDIT_SUB_SERVICE, 'panel.single-shard')->name('services.mine.update');
+
+        Route::get('commission', \App\Http\Services\Panel\Commissions\Controller\OfficeCommissionPageController::class)->middleware('permission:' . Perm::VIEW_COMMISSION)->name('commission.index');
+        Route::put('commission', \App\Http\Services\Panel\Commissions\Controller\UpdateOfficeCommissionController::class)->middleware('permission:' . Perm::EDIT_COMMISSION, 'panel.single-shard')->name('commission.update');
+
+        Route::get('pricing/corridors', CorridorsPageController::class)->middleware('permission:' . Perm::VIEW_SUB_SERVICE_LIST)->name('pricing.corridors.index');
+        Route::post('pricing/corridors', SaveCorridorController::class)->middleware('permission:' . Perm::EDIT_SUB_SERVICE, 'panel.single-shard')->name('pricing.corridors.save');
+        Route::delete('pricing/corridors/{route}', DeleteCorridorController::class)->whereNumber('route')->middleware('permission:' . Perm::EDIT_SUB_SERVICE, 'panel.single-shard')->name('pricing.corridors.delete');
 
         Route::get('rider-support', RiderSupportPageController::class)->name('rider-support.index');
         Route::get('rider-support/{ticket}', RiderSupportThreadPageController::class)->whereNumber('ticket')->name('rider-support.show');
@@ -197,6 +217,7 @@ Route::middleware(['auth:office', 'set-language', 'panel.country-db'])
         Route::post('announcements/send', \App\Http\Services\Panel\Announcements\Controller\SendBroadcastPushController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST, 'panel.single-shard')->name('announcements.send');
 
         Route::get('driver-safety', DriverSafetyPageController::class)->name('driver-safety.index');
+        Route::post('driver-safety/{event}', \App\Http\Services\Panel\DriverOps\Controller\UpdateDriverSafetyStatusController::class)->whereNumber('event')->middleware('panel.single-shard')->name('driver-safety.status');
         Route::get('driver-presence', DriverPresencePageController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->name('driver-presence.index');
         Route::post('driver-presence/{driver}/offline', ForceDriverOfflineController::class)->whereNumber('driver')->middleware('permission:' . Perm::EDIT_DRIVER, 'panel.single-shard')->name('driver-presence.offline');
         Route::get('driver-applications', DriverApplicationsPageController::class)->name('driver-applications.index');

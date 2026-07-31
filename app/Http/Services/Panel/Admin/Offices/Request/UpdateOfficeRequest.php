@@ -32,6 +32,9 @@ class UpdateOfficeRequest extends FormRequest
 
         return [
             'officeName'    => ['required', 'string', 'max:150'],
+            'fleet_commission_rate' => ['nullable', 'numeric', 'between:0,100'],
+            'service_ids'   => ['nullable', 'array'],
+            'service_ids.*' => ['nullable', 'integer', 'min:1'],
             'email'         => ['required', 'email', 'max:191', Rule::unique($table, 'email')->ignore($officeId)->whereNull('deleted_at')],
             'password'      => ['nullable', 'string', 'min:6', 'max:60'],
             'contactNumber' => ['nullable', 'string', 'max:20'],

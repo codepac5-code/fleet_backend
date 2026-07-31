@@ -25,7 +25,7 @@
     </x-panel.page-toolbar>
 
     <div class="p-card">
-        <div class="p-thread">
+        <div class="p-thread" id="chatThread" data-conversation="{{ $conversation['id'] }}">
             @forelse($messages as $m)
                 @php $mine = $m['sender_type'] === 'office'; @endphp
                 <div style="display:flex;flex-direction:column;margin-bottom:.75rem;{{ $mine ? 'align-items:flex-end;' : 'align-items:flex-start;' }}">
@@ -52,3 +52,39 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    // Live inbound rider messages over the realtime gateway (see panel-realtime.js).
+    // The thread was pull-only — staff had to reload to see a reply.
+    var thread = document.getElementById('chatThread');
+    if (!thread) return;
+    var convId = String(thread.getAttribute('data-conversation') || '');
+    var ar = document.documentElement.lang === 'ar';
+
+    window.addEventListener('fleet:rt:chat.message_created', function (e) {
+        var d = (e.detail && e.detail.data) || {};
+        if (String(d.conversation_id || '') !== convId) return;
+        // Only append messages FROM the rider — the office's own send re-renders on POST.
+        if ((d.sender_type || d.sender_role) === 'office') return;
+
+        var empty = thread.querySelector('.p-empty');
+        if (empty) empty.remove();
+
+        var wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex;flex-direction:column;margin-bottom:.75rem;align-items:flex-start;';
+        var bubble = document.createElement('div');
+        bubble.style.cssText = 'max-width:70%;padding:.6rem .85rem;border-radius:.75rem;background:var(--p-surface-2,#f4f5f7);';
+        var meta = document.createElement('div');
+        meta.style.cssText = 'font-size:.7rem;opacity:.6;margin-bottom:.2rem;';
+        meta.textContent = (ar ? 'الراكب' : 'Rider') + ' · ' + (ar ? 'الآن' : 'now');
+        var body = document.createElement('div');
+        body.textContent = d.body || d.preview || '';
+        bubble.appendChild(meta); bubble.appendChild(body); wrap.appendChild(bubble);
+        thread.appendChild(wrap);
+        thread.scrollTop = thread.scrollHeight;
+    });
+})();
+</script>
+@endpush

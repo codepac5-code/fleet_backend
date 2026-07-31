@@ -9,6 +9,11 @@
         $grantedSet = collect($granted)->flip();
         $totalCount = collect($groups)->sum(fn ($g) => count($g['permissions']));
         $grantedCount = collect($groups)->sum(fn ($g) => collect($g['permissions'])->filter(fn ($p) => $grantedSet->has($p['name']))->count());
+        // The office lives on a specific country shard (ids collide across shards),
+        // so the save MUST target the SAME shard this page was opened for — else
+        // ConfigureCountryDatabase falls back to the session shard and writes the
+        // permissions to the wrong office. Carry the shard through the form.
+        $shardCountry = request('country') ?: session('active_shard_id');
     @endphp
 
     <x-panel.page-toolbar
@@ -24,6 +29,7 @@
     <form method="POST" action="{{ route('panel.admin.office.permissions.update', $office->id) }}" id="permForm">
         @csrf
         @method('PUT')
+        @if($shardCountry)<input type="hidden" name="country" value="{{ $shardCountry }}">@endif
 
         <div class="p-card perm-bar">
             <div class="perm-bar__info">

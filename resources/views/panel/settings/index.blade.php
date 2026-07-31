@@ -25,8 +25,13 @@
             ['route' => 'settings.whatsapp',   'icon' => 'bi-whatsapp',   'label' => textByLanguage('واتساب / إرسال OTP', 'WhatsApp / OTP'), 'count' => null],
             ['route' => 'coupons.index',       'icon' => 'bi-ticket-perforated', 'label' => textByLanguage('الكوبونات', 'Coupons'), 'count' => null],
             ['route' => 'vehicle-brands.index','icon' => 'bi-car-front',   'label' => textByLanguage('ماركات المركبات', 'Vehicle brands'), 'count' => null],
+            ['route' => 'vehicle-catalog.index','icon' => 'bi-palette',   'label' => textByLanguage('طُرُز وألوان المركبات', 'Vehicle models & colours'), 'count' => null],
             ['route' => 'cancellation-reasons.index','icon' => 'bi-x-circle', 'label' => textByLanguage('أسباب الإلغاء', 'Cancellation reasons'), 'count' => null],
             ['route' => 'rating-tags.index',   'icon' => 'bi-tags',       'label' => textByLanguage('وسوم التقييم', 'Rating tags'), 'count' => null],
+        ]],
+        ['group' => textByLanguage('النمو والمكافآت', 'Growth & rewards'), 'items' => [
+            ['route' => 'referrals.index',     'icon' => 'bi-people',     'label' => textByLanguage('برنامج الإحالة', 'Referral programme'), 'count' => null],
+            ['route' => 'incentives.index',    'icon' => 'bi-trophy',     'label' => textByLanguage('حوافز السائقين', 'Driver incentives'), 'count' => null],
         ]],
         ['group' => textByLanguage('الدول والبنية', 'Countries & infra'), 'items' => [
             ['route' => 'countries.index',     'icon' => 'bi-hdd-network','label' => textByLanguage('الدول وقواعد البيانات', 'Countries & databases'), 'count' => $counts['countries']],
@@ -46,6 +51,7 @@
             ['route' => 'notification-templates.index', 'icon' => 'bi-chat-square-text', 'label' => textByLanguage('قوالب الإشعارات', 'Notification templates'), 'count' => null],
             ['route' => 'ops.index',           'icon' => 'bi-activity',   'label' => textByLanguage('صحة التشغيل', 'Ops health'), 'count' => null],
             ['route' => 'app-status.index',    'icon' => 'bi-phone',      'label' => textByLanguage('حالة التطبيق والإصدارات', 'App status & versions'), 'count' => null],
+            ['route' => 'settings.security',   'icon' => 'bi-shield-lock','label' => textByLanguage('سياسة الأمان (تحقق بخطوتين)', 'Security policy (2FA)'), 'count' => null],
         ]],
     ];
 @endphp
@@ -284,7 +290,7 @@
     });
     window.addEventListener('message', function (e) {
         if (e.data && typeof e.data.__panelEmbedHeight === 'number') {
-            frame.style.height = Math.max(420, e.data.__panelEmbedHeight + 4) + 'px';
+            frame.style.height = Math.max(420, e.data.__panelEmbedHeight + 24) + 'px';
         }
     });
 

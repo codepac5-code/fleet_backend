@@ -3,6 +3,7 @@
 namespace App\Http\Services\User\Fixed\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Core\Classes\Catalog\LocalizedName;
 use App\Http\Core\Classes\Ride\FixedTripService;
 use App\Http\Services\User\Support\Reply;
 use Illuminate\Http\JsonResponse;
@@ -76,6 +77,11 @@ class FixedTripController extends Controller
                 'id' => (int) $c->id,
                 'name' => $c->name,
                 'en_name' => $c->name_on_google_map ?: $c->name,
+                // Pre-resolved for clients that just want to print it — the
+                // corridor must read in ONE language end to end, and older
+                // callers picking `name` blindly showed an Arabic city inside
+                // an English screen.
+                'label' => LocalizedName::of($c),
             ]);
 
         return Reply::ok(['cities' => $cities]);
@@ -90,11 +96,20 @@ class FixedTripController extends Controller
         $query = \App\Models\SubService::query()->where('status', true);
 
         if ($request->has('travel')) {
-            $query->where('is_travel', $request->boolean('travel'));
+            // `sub_services.is_travel` is a dead column — nothing ever sets it,
+            // and the authority is `services.travel_service`. Filtering on it
+            // returned an empty list, so the app's Airport & Travel page said
+            // "no service available" while three travel classes sat published.
+            $request->boolean('travel') ? $query->travel() : $query->notTravel();
         }
 
         $subs = $query->get(['id', 'name', 'name_en'])
-            ->map(fn ($s) => ['id' => (int) $s->id, 'name' => $s->name, 'name_en' => $s->name_en]);
+            ->map(fn ($s) => [
+                'id' => (int) $s->id,
+                'name' => $s->name,
+                'name_en' => $s->name_en,
+                'label' => LocalizedName::of($s),
+            ]);
 
         return Reply::ok(['sub_services' => $subs]);
     }

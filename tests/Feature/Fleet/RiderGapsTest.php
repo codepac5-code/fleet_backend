@@ -40,6 +40,7 @@ class RiderGapsTest extends FleetTestCase
         '2024_10_26_104402_create_services_table.php',
         '2024_10_26_104427_create_sub_services_table.php',
         '2026_01_03_025343_create_office_sub_service_prices_table.php',
+        '2026_07_29_000001_add_enabled_to_office_sub_service_prices.php',
         '2026_06_24_000001_create_ledger_accounts_table.php',
         '2026_06_24_000002_create_ledger_transactions_table.php',
         '2026_06_24_000003_create_ledger_entries_table.php',
@@ -195,12 +196,13 @@ class RiderGapsTest extends FleetTestCase
             ->assertJsonPath('error.code', 'validation_failed');
     }
 
-    /** With a serviceClass on file the card carries a quoted fare from the tariff engine. */
-    public function test_offices_search_quotes_a_fare_when_a_tariff_exists(): void
+    /** The card carries a quoted fare from the office's OWN published price. */
+    public function test_offices_search_quotes_a_fare_from_the_office_price(): void
     {
         $this->office(5, 'Airport Express', 25.28, 51.53);
         $standard = $this->publish('Standard', [5]);
 
+        // A stale fixed tariff exists but the office's published price wins.
         ServiceTariff::query()->create([
             'office_id' => 5, 'service' => (string) $standard->serviceId, 'service_class' => (string) $standard->id,
             'currency_code' => 'USD', 'pricing_style' => 'fixed', 'fixed_minor' => 5000,
@@ -211,9 +213,10 @@ class RiderGapsTest extends FleetTestCase
             'serviceClass' => $standard->id,
         ]))->assertStatus(200);
 
-        $this->assertSame(5000, $res->json('data.offices.0.fare_minor'));
-        $this->assertSame('fixed', $res->json('data.offices.0.pricing_style'));
-        $this->assertSame('USD', $res->json('data.offices.0.currency_code'));
+        $this->assertSame('meter', $res->json('data.offices.0.pricing_style'));
+        $this->assertNotSame(5000, $res->json('data.offices.0.fare_minor'));
+        $this->assertGreaterThan(0, $res->json('data.offices.0.fare_minor'));
+        $this->assertNotEmpty($res->json('data.offices.0.currency_code'));
     }
 
     // ── wallet statement ────────────────────────────────────────────────────
@@ -268,5 +271,32 @@ class RiderGapsTest extends FleetTestCase
 
         $this->get($url)->assertStatus(200)->assertSee('Airport');
         $this->get('/t/900-badtoken')->assertStatus(404);
+    }
+
+    public function test_rider_can_fetch_its_own_trip_share_link(): void
+    {
+        // The signed URL and the page it opens both existed; nothing handed the
+        // link to the rider, so the app's "Copy trip link" sat disabled on top
+        // of a finished feature.
+        $booking = new RideBooking();
+        $booking->id = 901;
+        $booking->forceFill([
+            'user_id' => 7, 'office_id' => 3, 'service' => 'ride', 'service_class' => 'standard',
+            'pricing_style' => 'meter', 'status' => 'matching',
+            'pickup_lat' => 25.1, 'pickup_lng' => 51.2, 'pickup_title' => 'Home',
+            'dropoff_lat' => 25.2, 'dropoff_lng' => 51.3, 'dropoff_title' => 'Airport',
+            'currency_code' => 'USD',
+        ]);
+        $booking->save();
+
+        $url = $this->asUser(7)->getJson('user/trips/901/share')
+            ->assertStatus(200)
+            ->json('data.share_url');
+
+        $this->assertStringContainsString('/t/901-', (string) $url);
+        $this->get((string) parse_url($url, PHP_URL_PATH))->assertStatus(200);
+
+        // ...and never somebody else's trip.
+        $this->asUser(8)->getJson('user/trips/901/share')->assertStatus(404);
     }
 }

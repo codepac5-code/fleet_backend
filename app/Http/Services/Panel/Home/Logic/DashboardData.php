@@ -3,16 +3,16 @@
 namespace App\Http\Services\Panel\Home\Logic;
 
 use App\Http\Core\Classes\RedisManagerData;
-use App\Http\Core\Const\Options\OrderStatus;
+use App\Http\Core\Const\Ride\BookingStatus;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\BalanceStatus;
 use App\Http\Core\SubSystems\RedisDatabase\RedisModels\FleetWallet\FleetWalletRedisModel;
 use App\Http\Services\Panel\Shared\Scoping\EntityScope;
 use App\Http\Services\Panel\Shared\Tenant\TenantConnection;
-use App\Models\Booking;
 use App\Models\Currency;
 use App\Models\Driver;
 use App\Models\FleetOffice;
 use App\Models\Office;
+use App\Models\RideBooking;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WalletBalance;
@@ -29,13 +29,15 @@ class DashboardData
         return TenantConnection::current();
     }
 
+    // App-era rides live in `ride_bookings` (the legacy `bookings` table stopped
+    // filling). Money is MINOR units there → ÷100 wherever a sum is presented.
     private function scopedBookings(): Builder
     {
-        $query = Booking::on($this->connection());
+        $query = RideBooking::on($this->connection());
 
         return $this->scope->isAdmin()
             ? $query
-            : $query->where('officeId', $this->scope->officeId());
+            : $query->where('office_id', $this->scope->officeId());
     }
 
     public function counters(): array
@@ -148,13 +150,13 @@ class DashboardData
     public function monthlyRevenue(): array
     {
         $rows = $this->scopedBookings()
-            ->selectRaw('MONTH(created_at) as m, SUM(totalAmount) as t')
+            ->selectRaw('MONTH(created_at) as m, SUM(total_minor) as t')
             ->groupBy('m')
             ->pluck('t', 'm');
 
         $data = array_fill(1, 12, 0);
         foreach ($rows as $month => $total) {
-            $data[$month] = round((float) $total, 2);
+            $data[$month] = round((float) $total / 100, 2);
         }
 
         return array_values($data);
@@ -178,8 +180,8 @@ class DashboardData
         $today          = Carbon::today();
         $trips          = (clone $this->scopedBookings())->where('created_at', '>=', $today);
         $todayTotal     = (clone $trips)->count();
-        $todayCancelled = (clone $trips)->where('status', OrderStatus::$Cancelled)->count();
-        $revenue        = (clone $trips)->sum('totalAmount');
+        $todayCancelled = (clone $trips)->where('status', BookingStatus::CANCELLED)->count();
+        $revenue        = (clone $trips)->sum('total_minor') / 100;
         $cancelRate     = $todayTotal > 0 ? (int) round($todayCancelled / $todayTotal * 100) : 0;
 
         return [
@@ -244,7 +246,7 @@ class DashboardData
         $stats = [
             ['label' => textByLanguage('رحلات اليوم', 'Trips today'),     'icon' => 'bi-card-checklist', 'value' => number_format((clone $trips)->count())],
             ['label' => textByLanguage('سائقون جدد', 'New drivers'),      'icon' => 'bi-person-plus',     'value' => number_format($newDrivers)],
-            ['label' => textByLanguage('إيرادات اليوم', 'Revenue today'), 'icon' => 'bi-cash-stack',      'value' => getPriceFormat((clone $trips)->sum('totalAmount'))],
+            ['label' => textByLanguage('إيرادات اليوم', 'Revenue today'), 'icon' => 'bi-cash-stack',      'value' => getPriceFormat((clone $trips)->sum('total_minor') / 100)],
         ];
 
         if ($this->scope->isAdmin()) {
@@ -289,7 +291,7 @@ class DashboardData
         $trips = $this->inRange((clone $this->scopedBookings()), $from, $to);
 
         $tripsCount = (clone $trips)->count();
-        $revenue    = (clone $trips)->sum('totalAmount');
+        $revenue    = (clone $trips)->sum('total_minor') / 100;
 
         if ($this->scope->isAdmin()) {
             return [
@@ -343,19 +345,24 @@ class DashboardData
             ->groupBy('status')
             ->pluck('c', 'status');
 
-        $palette = [
-            OrderStatus::$Completed => ['label' => textByLanguage('مكتملة', 'Completed'),  'color' => '#16a34a'],
-            OrderStatus::$OnGoing   => ['label' => textByLanguage('جارية', 'Ongoing'),     'color' => '#312873'],
-            OrderStatus::$InProgress=> ['label' => textByLanguage('قيد التنفيذ', 'In progress'), 'color' => '#3b82f6'],
-            OrderStatus::$Pending   => ['label' => textByLanguage('معلّقة', 'Pending'),     'color' => '#F8A609'],
-            OrderStatus::$Cancelled => ['label' => textByLanguage('ملغاة', 'Cancelled'),    'color' => '#dc2626'],
+        // ride_bookings has granular lifecycle statuses; fold them into the five
+        // display buckets the chart shows.
+        $buckets = [
+            ['label' => textByLanguage('مكتملة', 'Completed'),      'color' => '#16a34a', 'statuses' => [BookingStatus::COMPLETED]],
+            ['label' => textByLanguage('جارية', 'Ongoing'),         'color' => '#312873', 'statuses' => [BookingStatus::ON_TRIP]],
+            ['label' => textByLanguage('قيد التنفيذ', 'In progress'), 'color' => '#3b82f6', 'statuses' => [BookingStatus::ASSIGNED, BookingStatus::ARRIVING, BookingStatus::ARRIVED, BookingStatus::CONFIRMED, BookingStatus::PENDING_ACCEPTANCE]],
+            ['label' => textByLanguage('معلّقة', 'Pending'),        'color' => '#F8A609', 'statuses' => [BookingStatus::MATCHING, BookingStatus::SCHEDULED]],
+            ['label' => textByLanguage('ملغاة', 'Cancelled'),        'color' => '#dc2626', 'statuses' => [BookingStatus::CANCELLED, BookingStatus::REJECTED, BookingStatus::DECLINED, BookingStatus::NO_DRIVER_EXPIRED]],
         ];
 
         $parts = [];
-        foreach ($palette as $status => $meta) {
-            $value = (int) ($counts[$status] ?? 0);
+        foreach ($buckets as $bucket) {
+            $value = 0;
+            foreach ($bucket['statuses'] as $s) {
+                $value += (int) ($counts[$s] ?? 0);
+            }
             if ($value > 0) {
-                $parts[] = ['label' => $meta['label'], 'value' => $value, 'color' => $meta['color']];
+                $parts[] = ['label' => $bucket['label'], 'value' => $value, 'color' => $bucket['color']];
             }
         }
 
@@ -366,28 +373,28 @@ class DashboardData
     {
         $conn = $this->connection();
 
-        $query = Booking::on($conn)
-            ->leftJoin('users', 'bookings.userId', '=', 'users.id')
-            ->leftJoin('drivers', 'bookings.driverId', '=', 'drivers.id')
+        $query = RideBooking::on($conn)
+            ->leftJoin('users', 'ride_bookings.user_id', '=', 'users.id')
+            ->leftJoin('drivers', 'ride_bookings.driver_id', '=', 'drivers.id')
             ->select([
-                'bookings.id',
-                'bookings.status',
-                'bookings.totalAmount',
-                'bookings.created_at',
+                'ride_bookings.id',
+                'ride_bookings.status',
+                'ride_bookings.total_minor',
+                'ride_bookings.created_at',
                 DB::raw("TRIM(CONCAT(COALESCE(users.firstName, ''), ' ', COALESCE(users.lastName, ''))) as customer"),
                 DB::raw("TRIM(CONCAT(COALESCE(drivers.firstName, ''), ' ', COALESCE(drivers.lastName, ''))) as driver"),
             ])
-            ->latest('bookings.created_at')
+            ->latest('ride_bookings.created_at')
             ->limit($limit);
 
         if (! $this->scope->isAdmin()) {
-            $query->where('bookings.officeId', $this->scope->officeId());
+            $query->where('ride_bookings.office_id', $this->scope->officeId());
         }
 
         return $query->get()->map(fn ($r) => [
             'id'       => $r->id,
             'status'   => $r->status,
-            'amount'   => (float) $r->totalAmount,
+            'amount'   => (float) $r->total_minor / 100,
             'customer' => trim((string) $r->customer) ?: '—',
             'driver'   => trim((string) $r->driver) ?: '—',
             'when'     => $r->created_at ? Carbon::parse($r->created_at)->diffForHumans() : '',
@@ -429,27 +436,28 @@ class DashboardData
 
     private function topDriversByDistance(int $limit = 5): array
     {
-        $query = Booking::on($this->connection())
-            ->leftJoin('drivers', 'bookings.driverId', '=', 'drivers.id')
-            ->whereNotNull('bookings.driverId');
+        $query = RideBooking::on($this->connection())
+            ->leftJoin('drivers', 'ride_bookings.driver_id', '=', 'drivers.id')
+            ->whereNotNull('ride_bookings.driver_id');
 
         if (! $this->scope->isAdmin()) {
-            $query->where('bookings.officeId', $this->scope->officeId());
+            $query->where('ride_bookings.office_id', $this->scope->officeId());
         }
 
         $rows = $query
-            ->selectRaw("TRIM(CONCAT(COALESCE(drivers.firstName, ''), ' ', COALESCE(drivers.lastName, ''))) as name, drivers.photo as photo, SUM(bookings.distance) as dist")
-            ->groupBy('bookings.driverId', 'drivers.firstName', 'drivers.lastName', 'drivers.photo')
+            ->selectRaw("TRIM(CONCAT(COALESCE(drivers.firstName, ''), ' ', COALESCE(drivers.lastName, ''))) as name, drivers.photo as photo, SUM(ride_bookings.distance_m) as dist")
+            ->groupBy('ride_bookings.driver_id', 'drivers.firstName', 'drivers.lastName', 'drivers.photo')
             ->orderByDesc('dist')
             ->limit($limit)
             ->get();
 
         $max = (float) ($rows->max('dist') ?: 1);
 
+        // distance_m is metres → km for display; pct stays a ratio so units cancel.
         return $rows->map(fn ($r) => [
             'name'   => trim((string) $r->name) ?: '—',
             'photo'  => $r->photo,
-            'metric' => number_format((float) $r->dist, 0),
+            'metric' => number_format((float) $r->dist / 1000, 0),
             'unit'   => textByLanguage('كم', 'km'),
             'pct'    => $max > 0 ? (float) $r->dist / $max * 100 : 0,
         ])->all();
@@ -459,11 +467,11 @@ class DashboardData
     {
         $from = Carbon::now()->startOfMonth();
 
-        $rows = Booking::on($this->connection())
-            ->leftJoin('offices', 'bookings.officeId', '=', 'offices.id')
-            ->where('bookings.created_at', '>=', $from)
-            ->selectRaw('offices.officeName as name, COUNT(*) as trips, SUM(bookings.totalAmount) as revenue')
-            ->groupBy('bookings.officeId', 'offices.officeName')
+        $rows = RideBooking::on($this->connection())
+            ->leftJoin('offices', 'ride_bookings.office_id', '=', 'offices.id')
+            ->where('ride_bookings.created_at', '>=', $from)
+            ->selectRaw('offices.officeName as name, COUNT(*) as trips, SUM(ride_bookings.total_minor) as revenue')
+            ->groupBy('ride_bookings.office_id', 'offices.officeName')
             ->orderByDesc('trips')
             ->limit($limit)
             ->get();
@@ -474,7 +482,7 @@ class DashboardData
             'name'   => trim((string) $r->name) ?: '—',
             'metric' => number_format((int) $r->trips),
             'unit'   => textByLanguage('رحلة', 'trips'),
-            'sub'    => getPriceFormat((float) $r->revenue),
+            'sub'    => getPriceFormat((float) $r->revenue / 100),
             'pct'    => $max > 0 ? (int) $r->trips / $max * 100 : 0,
         ])->all();
     }
@@ -485,21 +493,21 @@ class DashboardData
         $from = Carbon::now()->startOfMonth();
 
         if ($this->scope->isAdmin()) {
-            $rows = Booking::on($conn)
-                ->leftJoin('offices', 'bookings.officeId', '=', 'offices.id')
-                ->where('bookings.created_at', '>=', $from)
-                ->selectRaw('offices.officeName as name, COUNT(*) as trips, SUM(bookings.totalAmount) as revenue')
-                ->groupBy('bookings.officeId', 'offices.officeName')
+            $rows = RideBooking::on($conn)
+                ->leftJoin('offices', 'ride_bookings.office_id', '=', 'offices.id')
+                ->where('ride_bookings.created_at', '>=', $from)
+                ->selectRaw('offices.officeName as name, COUNT(*) as trips, SUM(ride_bookings.total_minor) as revenue')
+                ->groupBy('ride_bookings.office_id', 'offices.officeName')
                 ->orderByDesc('trips')
                 ->limit($limit)
                 ->get();
         } else {
-            $rows = Booking::on($conn)
-                ->leftJoin('drivers', 'bookings.driverId', '=', 'drivers.id')
-                ->where('bookings.officeId', $this->scope->officeId())
-                ->where('bookings.created_at', '>=', $from)
-                ->selectRaw("TRIM(CONCAT(COALESCE(drivers.firstName, ''), ' ', COALESCE(drivers.lastName, ''))) as name, COUNT(*) as trips, SUM(bookings.totalAmount) as revenue")
-                ->groupBy('bookings.driverId', 'drivers.firstName', 'drivers.lastName')
+            $rows = RideBooking::on($conn)
+                ->leftJoin('drivers', 'ride_bookings.driver_id', '=', 'drivers.id')
+                ->where('ride_bookings.office_id', $this->scope->officeId())
+                ->where('ride_bookings.created_at', '>=', $from)
+                ->selectRaw("TRIM(CONCAT(COALESCE(drivers.firstName, ''), ' ', COALESCE(drivers.lastName, ''))) as name, COUNT(*) as trips, SUM(ride_bookings.total_minor) as revenue")
+                ->groupBy('ride_bookings.driver_id', 'drivers.firstName', 'drivers.lastName')
                 ->orderByDesc('trips')
                 ->limit($limit)
                 ->get();
@@ -508,7 +516,7 @@ class DashboardData
         return $rows->map(fn ($r) => [
             'name'    => trim((string) $r->name) ?: '—',
             'trips'   => (int) $r->trips,
-            'revenue' => (float) $r->revenue,
+            'revenue' => (float) $r->revenue / 100,
         ])->all();
     }
 }

@@ -34,4 +34,13 @@ class TicketsController extends Controller
     {
         return Reply::ok($this->support->showTicket((int) $request->user()->id, $id));
     }
+
+    public function reply(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:2000'],
+        ]);
+
+        return Reply::ok($this->support->replyToTicket((int) $request->user()->id, $id, $data['message']), 201);
+    }
 }

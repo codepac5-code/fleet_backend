@@ -79,15 +79,24 @@ Route::middleware('user-api')->group(function () {
         Route::get('places/details', [MarketplaceController::class, 'placeDetails']);
 
         Route::get('bookings/cancellation-reasons', [CancellationReasonsController::class, 'index']);
+        // Pre-authorize (hold) a card fare BEFORE booking; the confirmed intent id
+        // is then passed to POST bookings as `card_authorization_id`.
+        Route::post('bookings/card-authorization', [\App\Http\Services\User\Payments\Controllers\RidePaymentController::class, 'authorize']);
         Route::post('bookings', [BookingController::class, 'store']);
         Route::post('bookings/{id}/cancel', [BookingController::class, 'cancel'])->whereNumber('id');
         Route::post('bookings/{id}/change-office', [BookingController::class, 'changeOffice'])->whereNumber('id');
+        Route::get('bookings/{id}/driver-contact', [BookingController::class, 'driverContact'])->whereNumber('id');
         Route::get('bookings/{id}', [BookingController::class, 'show'])->whereNumber('id');
 
         Route::get('trips/rating-tags', [\App\Http\Services\User\Trips\Controllers\RatingTagsController::class, 'index']);
         Route::get('trips', [TripsController::class, 'index']);
         Route::get('trips/{id}', [TripsController::class, 'show'])->whereNumber('id');
         Route::post('trips/{id}/rating', [TripsController::class, 'rate'])->whereNumber('id');
+        Route::get('trips/{id}/share', [TripsController::class, 'share'])->whereNumber('id');
+        // Pay a completed `card` trip's fare directly (card / Apple Pay). `pay`
+        // mints the PaymentIntent; `pay/verify` settles once the client confirms.
+        Route::post('trips/{id}/pay', [\App\Http\Services\User\Payments\Controllers\RidePaymentController::class, 'intent'])->whereNumber('id');
+        Route::post('trips/{id}/pay/verify', [\App\Http\Services\User\Payments\Controllers\RidePaymentController::class, 'verify'])->whereNumber('id');
         Route::post('trips/{id}/lost-item', [TripsController::class, 'lostItem'])->whereNumber('id');
         // Governed lost & found — the rider's own reports + withdraw.
         Route::get('trips/lost-items', [TripsController::class, 'lostItems']);
@@ -118,6 +127,9 @@ Route::middleware('user-api')->group(function () {
         Route::get('promos', [PromosController::class, 'index']);
         Route::post('promos/redeem', [PromosController::class, 'redeem']);
 
+        Route::get('referrals', [\App\Http\Services\User\Account\Controllers\ReferralsController::class, 'index']);
+        Route::post('referrals/redeem', [\App\Http\Services\User\Account\Controllers\ReferralsController::class, 'redeem']);
+
         Route::post('payments/stripe/setup-intent', [StripePaymentsController::class, 'setupIntent']);
         Route::post('payments/stripe/payment-intent', [StripePaymentsController::class, 'paymentIntent']);
 
@@ -139,6 +151,7 @@ Route::middleware('user-api')->group(function () {
         Route::get('tickets', [TicketsController::class, 'index']);
         Route::post('tickets', [TicketsController::class, 'store']);
         Route::get('tickets/{id}', [TicketsController::class, 'show'])->whereNumber('id');
+        Route::post('tickets/{id}/messages', [TicketsController::class, 'reply'])->whereNumber('id');
         Route::post('complaints', [ComplaintsController::class, 'store']);
         Route::post('complaints/photo', [ComplaintsController::class, 'uploadPhoto']);
         Route::get('help/articles', [HelpController::class, 'index']);

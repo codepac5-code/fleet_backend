@@ -35,8 +35,15 @@
             </div>
         </div>
 
-        <div class="p-card" style="margin-bottom:18px;">
-            <h3 class="p-card__title">{{ textByLanguage('الأسعار الأساسية', 'Base prices') }}</h3>
+        <div class="p-card" style="margin-bottom:18px;" id="basePricesCard">
+            <h3 class="p-card__title">{{ textByLanguage('الأسعار الأساسية (بالعدّاد)', 'Base prices (meter)') }}</h3>
+            <p id="meterUnusedNote" style="display:none;margin:-6px 0 12px;font-size:.83rem;color:var(--p-text-muted);">
+                <i class="bi bi-info-circle"></i>
+                {{ textByLanguage(
+                    'خدمة السفر تُسعَّر بخطوط ثابتة (مدينة ← مدينة) من شاشة «أسعار الخطوط» — القيم أدناه لا تؤثّر على ما يُعرض للراكب.',
+                    'A Travel sub-service is priced by fixed city-to-city corridors on the “Fixed corridors” screen — the values below do not affect what the rider is quoted.'
+                ) }}
+            </p>
             <div class="p-form-grid">
                 <x-panel.field name="openPrice" type="number" :label="textByLanguage('سعر الفتح', 'Open price')" :value="$subService?->openPrice ?? 0" required />
                 <x-panel.field name="kmPrice" type="number" :label="textByLanguage('سعر الكيلومتر', 'Per km')" :value="$subService?->kmPrice ?? 0" required />
@@ -75,3 +82,20 @@
     </form>
 
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    var travel = document.querySelector('input[name="is_travel"]');
+    var note = document.getElementById('meterUnusedNote');
+    if (!travel || !note) return;
+
+    // Meter prices are inert for a Travel sub-service; say so the moment the
+    // box is ticked instead of letting someone tune numbers that do nothing.
+    function sync() { note.style.display = travel.checked ? '' : 'none'; }
+
+    travel.addEventListener('change', sync);
+    sync();
+})();
+</script>
+@endpush

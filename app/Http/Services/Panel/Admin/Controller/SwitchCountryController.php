@@ -31,6 +31,16 @@ class SwitchCountryController extends Controller
             return back()->withErrors(['country_id' => __('auth.unsupported_region')]);
         }
 
+        // Never switch into a country whose shard isn't provisioned yet — its
+        // database doesn't exist, so every screen would crash. Send the admin to
+        // provision it first.
+        if ($node->provisioned_at === null) {
+            return back()->withErrors(['country_id' => textByLanguage(
+                'جهّز قاعدة بيانات هذه الدولة أولاً من شاشة الدول',
+                'Provision this country\'s database first (Countries screen)'
+            )]);
+        }
+
         session(['active_shard_id' => $node->id]);
 
         return redirect()->route('panel.admin.home');

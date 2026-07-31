@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Models\RideBooking;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -13,10 +14,18 @@ use Throwable;
  */
 trait StampsBookingOffice
 {
+    private static array $hasOfficeColumn = [];
+
     public static function bootStampsBookingOffice(): void
     {
         static::creating(function ($model) {
             if (! empty($model->office_id) || empty($model->booking_id)) {
+                return;
+            }
+
+            // A schema that predates the column must still accept the INSERT, so
+            // the attribute is only touched once the column is known to exist.
+            if (! self::hasOfficeColumn($model)) {
                 return;
             }
 
@@ -26,6 +35,22 @@ trait StampsBookingOffice
                 $model->office_id = $officeId;
             }
         });
+    }
+
+    private static function hasOfficeColumn($model): bool
+    {
+        $key = ($model->getConnectionName() ?? '') . ':' . $model->getTable();
+
+        if (! array_key_exists($key, self::$hasOfficeColumn)) {
+            try {
+                self::$hasOfficeColumn[$key] = Schema::connection($model->getConnectionName())
+                    ->hasColumn($model->getTable(), 'office_id');
+            } catch (Throwable $e) {
+                self::$hasOfficeColumn[$key] = false;
+            }
+        }
+
+        return self::$hasOfficeColumn[$key];
     }
 
     public static function officeOfBooking(int $bookingId): ?int

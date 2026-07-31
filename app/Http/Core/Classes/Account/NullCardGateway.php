@@ -23,9 +23,18 @@ class NullCardGateway implements CardGateway
         return null;
     }
 
-    public function paymentIntent(int $userId, int $amountMinor, string $currency, ?int $paymentMethodId, string $idempotencyKey): array
+    public function paymentIntent(int $userId, int $amountMinor, string $currency, ?int $paymentMethodId, string $idempotencyKey, array $metadata = [], bool $manualCapture = false): array
     {
         throw DomainException::make('payments_unavailable', 503, 'Payments are temporarily unavailable.');
+    }
+
+    public function capturePaymentIntent(string $paymentIntentId, int $amountToCaptureMinor): string
+    {
+        throw DomainException::make('payments_unavailable', 503, 'Payments are temporarily unavailable.');
+    }
+
+    public function cancelPaymentIntent(string $paymentIntentId): void
+    {
     }
 
     public function paymentIntentStatus(string $paymentIntentId): ?string

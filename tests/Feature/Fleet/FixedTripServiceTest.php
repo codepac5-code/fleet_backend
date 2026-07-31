@@ -264,6 +264,22 @@ class FixedTripServiceTest extends FleetTestCase
         $this->assertSame(1200, $res['cancellation_fee_minor'], '10% of the locked fare');
     }
 
+    public function test_a_trip_booked_for_now_is_not_expired_before_the_office_can_answer(): void
+    {
+        // `sla_assign_by` was `scheduled_at - 2h` flat, so a trip requested for
+        // an imminent pickup was born with a deadline in the past and the next
+        // sweep killed it — the office never saw the request at all.
+        $this->office(1, 'A');
+        $this->tariff(1, 12000);
+        $this->fund(7, 50000);
+        $id = $this->svc->select(7, $this->selectPayload(1, [
+            'scheduled_at' => Carbon::now()->toDateTimeString(),
+        ]))['id'];
+
+        $this->assertSame(0, $this->svc->expireOverdueAssignments(), 'a brand-new request must survive the first sweep');
+        $this->assertSame(BookingStatus::PENDING_ACCEPTANCE, RideBooking::query()->find($id)->status);
+    }
+
     // ── edge case: SLA — no driver assigned → expired + refunded ─────
 
     public function test_sla_expiry_refunds_and_marks_no_driver_expired(): void
@@ -271,13 +287,15 @@ class FixedTripServiceTest extends FleetTestCase
         $this->office(1, 'A');
         $this->tariff(1, 12000);
         $this->fund(7, 50000);
-        // Pickup already inside the SLA window so sla_assign_by is in the past.
         $id = $this->svc->select(7, $this->selectPayload(1, [
-            'scheduled_at' => Carbon::now()->addMinutes(10)->toDateTimeString(),
+            'scheduled_at' => Carbon::now()->addHours(4)->toDateTimeString(),
         ]))['id'];
         $this->svc->accept(1, $id);
 
+        // The deadline is two hours before pickup; stand past it.
+        Carbon::setTestNow(Carbon::now()->addHours(3));
         $count = $this->svc->expireOverdueAssignments();
+        Carbon::setTestNow();
 
         $this->assertSame(1, $count);
         $this->assertSame(BookingStatus::NO_DRIVER_EXPIRED, RideBooking::query()->find($id)->status);

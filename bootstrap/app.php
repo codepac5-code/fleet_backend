@@ -144,7 +144,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'panel.country-db'   => \App\Http\Middleware\Panel\ConfigureCountryDatabase::class,
             'panel.single-shard' => \App\Http\Middleware\Panel\RequireSingleShard::class,
+            'panel.2fa'          => \App\Http\Middleware\Panel\RequireTwoFactorEnrollment::class,
         ]);
+
+        // An unauthenticated panel request must land on the PANEL login form, not
+        // the public marketing site (`route('login')` is the landing page `/`).
+        $middleware->redirectGuestsTo(function ($request) {
+            if ($request->is('panel', 'panel/*')) {
+                return route('panel.login');
+            }
+
+            return route('login');
+        });
 
         // $middleware->append(LanguageMiddleware::class);
 

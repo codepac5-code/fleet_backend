@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Http\Core\Classes\Notification\PushSender;
+use App\Http\Core\GeoServices\ShardManager;
+use App\Models\InfrastructureNode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,13 +23,25 @@ class SendBroadcastPush implements ShouldQueue
     public function __construct(
         private array $tokens,
         private string $title,
-        private string $body
+        private string $body,
+        private ?int $nodeId = null
     ) {
         $this->onQueue('jobs');
     }
 
     public function handle(PushSender $push): void
     {
+        // Re-activate the country shard the composer targeted: the tokens live on
+        // that shard's DB, so a dead one is pruned from the right place. The
+        // worker runs with no request/shard context of its own.
+        if ($this->nodeId !== null) {
+            $node = InfrastructureNode::query()->find($this->nodeId);
+
+            if ($node !== null) {
+                ShardManager::activate($node);
+            }
+        }
+
         foreach ($this->tokens as $token) {
             $token = (string) $token;
 

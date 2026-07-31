@@ -43,4 +43,9 @@ class BookingController extends Controller
     {
         return Reply::ok($this->bookings->detail((int) $request->user()->id, $id));
     }
+
+    public function driverContact(Request $request, int $id): JsonResponse
+    {
+        return Reply::ok($this->bookings->driverContact((int) $request->user()->id, $id));
+    }
 }

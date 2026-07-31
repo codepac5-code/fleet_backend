@@ -47,6 +47,7 @@ class SupportSafetyTest extends FleetTestCase
     protected array $globalMigrations = [
         '2026_07_15_000001_add_rider_api_missing_columns.php',
         '2026_07_25_000005_add_country_to_support_tables.php',
+        '2026_07_28_000001_add_office_to_complaints.php',
     ];
 
     protected array $tenantMigrations = [
@@ -63,6 +64,7 @@ class SupportSafetyTest extends FleetTestCase
         // supplies rider_support_tickets.topic, read by SupportService::ticketRow
         '2026_07_15_000001_add_rider_api_missing_columns.php',
         '2026_07_25_000005_add_country_to_support_tables.php',
+        '2026_07_28_000001_add_office_to_complaints.php',
     ];
 
     private function asUser(int $id = 7): self

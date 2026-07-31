@@ -6,6 +6,7 @@ use App\Http\Services\Panel\Shared\Tenant\TenantConnection;
 use App\Models\InfrastructureNode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class ShardManager
 {
@@ -133,10 +134,42 @@ class ShardManager
         return DB::connection(TenantConnection::NAME);
     }
 
+    /**
+     * A country's currency, in order of authority: what the shard node was
+     * configured with, then what the ISO country row says, then the platform's
+     * default currency. USD is the last resort only — a node left without a
+     * currency used to make every price in that country read as dollars.
+     */
     private static function nodeCurrency(InfrastructureNode $node): string
     {
         $code = $node->getAttribute('currency_code');
 
-        return $code ? strtoupper((string) $code) : self::DEFAULT_CURRENCY;
+        if ($code) {
+            return strtoupper((string) $code);
+        }
+
+        $iso = strtolower((string) ($node->country_code ?? ''));
+
+        if ($iso !== '') {
+            try {
+                $fromCountry = DB::connection('global')->table('countries')->whereRaw('LOWER(iso2) = ?', [$iso])->value('currency_code');
+
+                if ($fromCountry) {
+                    return strtoupper((string) $fromCountry);
+                }
+            } catch (Throwable $e) {
+            }
+        }
+
+        try {
+            $default = DB::connection('global')->table('currencies')->where('is_default', true)->value('code');
+
+            if ($default) {
+                return strtoupper((string) $default);
+            }
+        } catch (Throwable $e) {
+        }
+
+        return self::DEFAULT_CURRENCY;
     }
 }

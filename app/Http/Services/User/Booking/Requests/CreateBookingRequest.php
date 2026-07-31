@@ -27,7 +27,10 @@ class CreateBookingRequest extends ApiFormRequest
             'stops.*.title' => ['nullable', 'string', 'max:255'],
             'distance_m' => ['nullable', 'integer', 'min:0'],
             'duration_s' => ['nullable', 'integer', 'min:0'],
-            'payment_method' => ['nullable', 'string', 'in:wallet,cash,office_wallet'],
+            'payment_method' => ['nullable', 'string', 'in:wallet,cash,office_wallet,card'],
+            // The confirmed card pre-authorization (PaymentIntent id) — required
+            // by the service when payment_method=card.
+            'card_authorization_id' => ['nullable', 'string', 'max:255'],
             'promo_code' => ['nullable', 'string', 'max:40'],
             'scheduled_at' => ['nullable', 'date'],
             'idempotency_key' => ['nullable', 'string', 'max:120'],

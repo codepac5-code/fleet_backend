@@ -6,7 +6,9 @@ use App\Http\Core\Const\Subscription\PlanKey;
 use App\Http\Core\Const\Subscription\SubscriptionStatus;
 use App\Models\OfficeSubscription;
 use App\Models\SubscriptionPlan;
+use Carbon\Carbon;
 use RuntimeException;
+use Throwable;
 
 class OfficeSubscriptionService
 {
@@ -42,6 +44,23 @@ class OfficeSubscriptionService
             'status' => SubscriptionStatus::ACTIVE,
             'started_at' => now(),
         ]);
+    }
+
+    /**
+     * Whether this office ever had a trial. A trial is a one-time offer, so the
+     * check looks at history — not just the current row, which `endCurrent()`
+     * would have closed.
+     */
+    public function hasUsedTrial(int $officeId): bool
+    {
+        try {
+            return OfficeSubscription::query()
+                ->where('office_id', $officeId)
+                ->whereNotNull('trial_ends_at')
+                ->exists();
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 
     public function startTrial(int $officeId, string $planKey, ?string $currency = null, ?float $fleetRateOverride = null): OfficeSubscription
@@ -137,6 +156,25 @@ class OfficeSubscriptionService
             ->whereIn('status', SubscriptionStatus::ENTITLED)
             ->orderByDesc('id')
             ->first();
+    }
+
+    /**
+     * Whole days left on the office's running trial, 0 when there is none.
+     *
+     * Checkout used to hand Stripe the plan's FULL trial length no matter what,
+     * so an office that had already burned 12 of its 14 days and then paid was
+     * handed a brand-new 14-day trial — a second free month, and no way to be
+     * charged today even when it asked to be.
+     */
+    public function remainingTrialDays(int $officeId): int
+    {
+        $subscription = $this->currentFor($officeId);
+
+        if ($subscription === null || $subscription->status !== SubscriptionStatus::TRIALING || $subscription->trial_ends_at === null) {
+            return 0;
+        }
+
+        return max(0, (int) ceil(Carbon::now()->floatDiffInDays($subscription->trial_ends_at, false)));
     }
 
     public function trialDaysFor(string $planKey): int

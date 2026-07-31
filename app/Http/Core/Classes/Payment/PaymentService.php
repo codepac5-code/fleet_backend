@@ -44,9 +44,18 @@ class PaymentService
             ]
         ));
 
+        $this->emitPaymentSucceeded($payment);
+    }
+
+    private function emitPaymentSucceeded(LedgerPayment $payment): void
+    {
+        if ($this->events === null || $payment->owner_type !== OwnerType::USER) {
+            return;
+        }
+
         $this->events->emit(new DomainEvent(
             EventType::PAYMENT_SUCCEEDED,
-            [Channel::user($userId)],
+            [Channel::user((int) $payment->owner_id)],
             [
                 'payment_id' => (string) $payment->uuid,
                 'booking_id' => $payment->booking_id !== null ? (int) $payment->booking_id : null,
@@ -69,6 +78,24 @@ class PaymentService
             'owner_type' => OwnerType::USER,
             'owner_id' => $userId,
             'booking_id' => null,
+            'amount_minor' => $amountMinor,
+            'currency_code' => $currency,
+            'meta' => $meta,
+        ]);
+    }
+
+    public function createRideIntent(int $userId, ?int $bookingId, int $amountMinor, string $currency, string $provider, string $idempotencyKey, ?string $providerRef = null, array $meta = []): LedgerPayment
+    {
+        $this->assertPositive($amountMinor);
+
+        return $this->firstOrCreateIntent([
+            'idempotency_key' => $idempotencyKey,
+            'provider' => $provider,
+            'provider_ref' => $providerRef,
+            'kind' => PaymentKind::RIDE,
+            'owner_type' => OwnerType::USER,
+            'owner_id' => $userId,
+            'booking_id' => $bookingId,
             'amount_minor' => $amountMinor,
             'currency_code' => $currency,
             'meta' => $meta,
@@ -106,6 +133,22 @@ class PaymentService
             }
 
             if ($eventStatus === PaymentStatus::SUCCEEDED && $payment->status === PaymentStatus::PENDING) {
+                // A `ride` payment settles the TRIP (distributes the fare to the
+                // driver/office/fleet), not the rider's wallet — the money the
+                // PSP just delivered goes straight into the three-way split, the
+                // same ledger shape as any digital ride.
+                if ($payment->kind === PaymentKind::RIDE) {
+                    $transaction = $this->settleRide($payment);
+
+                    $payment->status = PaymentStatus::SUCCEEDED;
+                    $payment->ledger_transaction_uuid = $transaction->uuid;
+                    $payment->save();
+
+                    $this->emitPaymentSucceeded($payment);
+
+                    return $payment;
+                }
+
                 // The wallet is credited in the account's LOCAL currency. For a
                 // cross-currency top-up (charged in USD, wallet in SYP) the
                 // converted local amount was computed at request time and stored
@@ -136,6 +179,35 @@ class PaymentService
 
             return $payment;
         });
+    }
+
+    /**
+     * Settle a completed `card` trip once its Stripe charge succeeds: the fare
+     * reached the fleet PSP, so the ride is distributed three-ways exactly like
+     * any digital ride (DR fleet psp_clearing → driver/office wallets + fleet
+     * revenue). Idempotent per booking (distributeDigital keys on the booking id
+     * and writes the CommissionSnapshot), so a duplicate webhook is a no-op.
+     */
+    private function settleRide(LedgerPayment $payment): \App\Models\LedgerTransaction
+    {
+        $bookingId = (int) $payment->booking_id;
+        $booking = \App\Models\RideBooking::query()->find($bookingId);
+
+        if ($booking === null) {
+            throw new RuntimeException('unknown booking for ride payment: ' . $bookingId);
+        }
+
+        return app(\App\Http\Core\Classes\Ride\RideLifecycleService::class)->settle([
+            'booking_id' => (int) $booking->id,
+            'office_id' => (int) $booking->office_id,
+            'driver_id' => (int) $booking->driver_id,
+            'currency_code' => (string) $booking->currency_code,
+            'total_minor' => (int) $booking->total_minor,
+            'fare_minor' => (int) $booking->fare_minor,
+            'discount_minor' => (int) $booking->discount_minor,
+            'pricing_style' => (string) $booking->pricing_style,
+            'source' => (string) $booking->source,
+        ], 'card');
     }
 
     public function refundBookingToWallet(int $bookingId, int $userId, int $amountMinor, string $currency, string $provider, string $idempotencyKey, bool $fromEscrow = true): LedgerPayment

@@ -20,11 +20,47 @@ class Office extends Authenticatable implements HasMedia
 
     protected $table = 'offices';
     protected $guard_name = 'office';
+
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        if ($permission instanceof \BackedEnum) {
+            $permission = $permission->value;
+        }
+
+        if (is_object($permission)) {
+            $permission = $permission->name ?? null;
+        }
+
+        if (is_string($permission)) {
+            return $this->getAllPermissions()->contains('name', $permission);
+        }
+
+        if (is_int($permission)) {
+            $resolved = Permission::on($this->getConnectionName())->find($permission);
+
+            return $resolved !== null && $this->getAllPermissions()->contains('name', $resolved->name);
+        }
+
+        return false;
+    }
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
+    /**
+     * Seeded rows carry the literal string "NULL" in `displayName`, which is not
+     * null — so every `?? $officeName` fallback in the panel printed the word
+     * NULL instead of the office's name. Normalise it at the model so every
+     * screen, export and API sees a real absence.
+     */
+    public function getDisplayNameAttribute($value)
+    {
+        $value = is_string($value) ? trim($value) : $value;
+
+        return ($value === null || $value === '' || strcasecmp((string) $value, 'null') === 0) ? null : $value;
+    }
+
     protected $fillable =
     [
         'profileImage', 'logo',  'email','officeName','limitOrders',
@@ -35,6 +71,9 @@ class Office extends Authenticatable implements HasMedia
         'initials','palette','is_verified','is_monitored',
         'on_time_percentage','avg_response_minutes','ratings_count',
         'lat','lng','working_hours',
+        // The three-way split: what the platform takes from this office, and
+        // what this office takes from its drivers. Null = follow the default.
+        'fleet_commission_rate','driver_commission_rate',
         // 'commissionType', 'commissionValue',
         'ratingExcellent',
         'ratingGood',
@@ -154,6 +193,17 @@ class Office extends Authenticatable implements HasMedia
     }
 
 
+    /**
+     * The main services this office is set up under — plural, because one
+     * company routinely runs the city meter service AND sells airport
+     * corridors. Everything it may price hangs off these: meter rates for a
+     * meter service's sub-services, a price per corridor for a travel one.
+     */
+    public function serviceIds(): array
+    {
+        return $this->services()->pluck('services.id')->map(fn ($id) => (int) $id)->all();
+    }
+
     public function drivers(){
         return $this->hasMany(Driver::class, 'officeId','id');
     }
@@ -167,7 +217,7 @@ class Office extends Authenticatable implements HasMedia
 
 public function services()
 {
-    return $this->belongsToMany(Service::class, 'office_services', 'officeId', 'serviceId');
+    return $this->belongsToMany(Service::class, 'office_services', 'officeId', 'serviceId')->withTimestamps();
 }
 
 }

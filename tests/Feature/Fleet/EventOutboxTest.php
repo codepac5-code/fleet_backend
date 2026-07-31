@@ -47,12 +47,12 @@ class EventOutboxTest extends FleetTestCase
         $pub = new CollectingPublisher();
         $relay = new OutboxRelay($pub);
         $this->assertSame(3, $relay->publishPending()['published']);
-        // 7 channel-publishes: RIDE_ASSIGNED (booking+driver+office=3) +
+        // 8 channel-publishes: RIDE_ASSIGNED (booking+driver+office=3) +
         // PRESENCE_CHANGED (driver+office=2) + DISPATCH_OFFER_CREATED
-        // (driver+office=2, the office added in T8).
-        $this->assertSame(7, $pub->count());
+        // (driver+office+admin=3 — the fleet room watches the matching wave).
+        $this->assertSame(8, $pub->count());
         $this->assertSame(0, $relay->publishPending()['published']);
-        $this->assertSame(7, $pub->count());
+        $this->assertSame(8, $pub->count());
     }
 
     public function test_failing_publish_retries_then_fails(): void

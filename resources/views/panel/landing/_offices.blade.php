@@ -29,8 +29,17 @@
                                 <div class="field"><label>{{ $t('Contact person', 'الشخص المسؤول') }} <span class="req">*</span></label><input name="contact_name" required><div class="msg"></div></div>
                                 <div class="field"><label>{{ $t('Email', 'البريد') }} <span class="req">*</span></label><input type="email" name="email" required><div class="msg"></div></div>
                                 <div class="field"><label>{{ $t('Phone', 'الهاتف') }} <span class="req">*</span></label><input name="phone" required><div class="msg"></div></div>
-                                <div class="field"><label>{{ $t('City', 'المدينة') }} <span class="req">*</span></label><input name="city" required><div class="msg"></div></div>
-                                <div class="field"><label>{{ $t('Country', 'الدولة') }} <span class="req">*</span></label><input name="country" required><div class="msg"></div></div>
+                                <div class="field"><label>{{ $t('Country', 'الدولة') }} <span class="req">*</span></label>
+                                    <select name="country" id="of_country" required>
+                                        <option value="">{{ $t('Select', 'اختر') }}</option>
+                                        @foreach(($countries ?? []) as $c)
+                                            <option value="{{ $c->name }}" data-id="{{ $c->id }}">{{ $c->name }}</option>
+                                        @endforeach
+                                    </select><div class="msg"></div></div>
+                                <div class="field"><label>{{ $t('City', 'المدينة') }} <span class="req">*</span></label>
+                                    <select name="city" id="of_city" required disabled data-ph="{{ $t('Select a country first', 'اختر الدولة أولاً') }}">
+                                        <option value="">{{ $t('Select a country first', 'اختر الدولة أولاً') }}</option>
+                                    </select><div class="msg"></div></div>
                                 <div class="field col-2"><label>{{ $t('Website (optional)', 'الموقع (اختياري)') }}</label><input type="url" name="website" placeholder="https://"><div class="msg"></div></div>
                             </div>
 
@@ -39,8 +48,10 @@
                                 <div class="field"><label>{{ $t('Business type', 'نوع النشاط') }} <span class="req">*</span></label>
                                     <select name="business_category" required><option value="">{{ $t('Select', 'اختر') }}</option><option value="New">{{ $t('New business', 'نشاط جديد') }}</option><option value="Existing">{{ $t('Existing fleet', 'أسطول قائم') }}</option><option value="Corporate">{{ $t('Corporate', 'شركة') }}</option></select><div class="msg"></div></div>
                                 <div class="field"><label>{{ $t('Fleet size', 'حجم الأسطول') }} <span class="req">*</span></label><input type="number" name="fleet_size" min="1" required><div class="msg"></div></div>
-                                <div class="field"><label>{{ $t('Service type', 'نوع الخدمة') }} <span class="req">*</span></label>
-                                    <select name="service_type" required><option value="">{{ $t('Select', 'اختر') }}</option><option value="City">{{ $t('City', 'داخل المدينة') }}</option><option value="Airport">{{ $t('Airport', 'مطار') }}</option><option value="Corporate">{{ $t('Corporate', 'شركات') }}</option><option value="Mixed">{{ $t('Mixed', 'مختلط') }}</option></select><div class="msg"></div></div>
+                                <div class="field"><label>{{ $t('Service', 'الخدمة') }} <span class="req">*</span></label>
+                                    <select name="service_type" id="of_service" required disabled>
+                                        <option value="">{{ $t('Select a country first', 'اختر الدولة أولاً') }}</option>
+                                    </select><div class="msg"></div></div>
                                 <div class="field"><label>{{ $t('Current tools', 'الأدوات الحاليّة') }}</label><input name="current_tools"><div class="msg"></div></div>
                                 <div class="field col-2"><label>{{ $t('Coverage area', 'منطقة التغطية') }}</label><input name="coverage"><div class="msg"></div></div>
                             </div>
@@ -64,4 +75,50 @@
             </div>
         </div>
     </div>
+
+    <script>
+    (function () {
+        var country = document.getElementById('of_country');
+        var city = document.getElementById('of_city');
+        var service = document.getElementById('of_service');
+        if (!country || !city || !service) return;
+
+        var URL = "{{ route('public.office-form') }}";
+        var C = {
+            city: "{{ $t('Select a city', 'اختر مدينة') }}",
+            service: "{{ $t('Select a service', 'اختر خدمة') }}",
+            loading: "{{ $t('Loading…', 'جارٍ التحميل…') }}",
+            errCity: "{{ $t('Could not load cities', 'تعذّر تحميل المدن') }}",
+            errSvc: "{{ $t('Could not load services', 'تعذّر تحميل الخدمات') }}"
+        };
+
+        function fill(sel, items, placeholder) {
+            sel.innerHTML = '';
+            var ph = new Option(placeholder, '');
+            sel.appendChild(ph);
+            (items || []).forEach(function (it) { sel.appendChild(new Option(it.name, it.name)); });
+            sel.disabled = !(items && items.length);
+        }
+
+        country.addEventListener('change', function () {
+            var opt = country.options[country.selectedIndex];
+            var id = opt ? opt.getAttribute('data-id') : '';
+            city.disabled = true; service.disabled = true;
+            city.innerHTML = '<option value="">' + C.loading + '</option>';
+            service.innerHTML = '<option value="">' + C.loading + '</option>';
+            if (!id) { city.innerHTML = '<option value=""></option>'; service.innerHTML = '<option value=""></option>'; return; }
+
+            fetch(URL + '?country=' + encodeURIComponent(id), { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    fill(city, d.cities, C.city);
+                    fill(service, d.services, C.service);
+                })
+                .catch(function () {
+                    city.innerHTML = '<option value="">' + C.errCity + '</option>';
+                    service.innerHTML = '<option value="">' + C.errSvc + '</option>';
+                });
+        });
+    })();
+    </script>
 </section>

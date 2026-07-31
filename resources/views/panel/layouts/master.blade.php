@@ -35,7 +35,7 @@
 </head>
 <body class="panel {{ $embed ? 'panel--embed' : '' }}">
     @if($embed)
-        <main class="panel-content panel-content--embed" style="padding:18px 20px;">
+        <main class="panel-content panel-content--embed" style="padding:18px 20px 40px;">
             @yield('content')
         </main>
         <script>
@@ -59,15 +59,27 @@
                     var i = document.createElement('input'); i.type = 'hidden'; i.name = 'embed'; i.value = '1'; f.appendChild(i);
                 }
             }, true);
-            // Report height to the parent so the iframe can auto-size
+            // Report height to the parent so the iframe can auto-size. Only post
+            // when the height ACTUALLY changed — otherwise animations (count-up,
+            // spinners, hover/value-flash) fired a resize on every frame and the
+            // page kept jumping on its own. Watch structural changes only (NOT
+            // attributes) and coalesce bursts into one measurement per frame.
+            var lastReported = 0, rafPending = false;
             function reportHeight() {
                 var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+                if (Math.abs(h - lastReported) < 2) return;
+                lastReported = h;
                 try { parent.postMessage({ __panelEmbedHeight: h }, '*'); } catch (e) {}
             }
+            function scheduleReport() {
+                if (rafPending) return;
+                rafPending = true;
+                requestAnimationFrame(function () { rafPending = false; reportHeight(); });
+            }
             window.addEventListener('load', reportHeight);
-            window.addEventListener('resize', reportHeight);
-            new MutationObserver(reportHeight).observe(document.body, { childList: true, subtree: true, attributes: true });
-            setInterval(reportHeight, 800);
+            window.addEventListener('resize', scheduleReport);
+            new MutationObserver(scheduleReport).observe(document.body, { childList: true, subtree: true });
+            setInterval(reportHeight, 1000);
         })();
         </script>
         @include('panel.partials.realtime')

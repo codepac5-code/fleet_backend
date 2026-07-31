@@ -89,4 +89,36 @@ class TariffBridgeTest extends FleetTestCase
         $viaSub = $this->resolver->forOfficeServiceOrSub(3, 1, 'ride', 'standard');
         $this->assertSame(500, $viaSub['base_minor']);
     }
+
+    public function test_office_published_price_wins_from_a_class_string_alone(): void
+    {
+        // An office publishes a price for the sub-service on its "my services"
+        // screen; a ServiceTariff also exists for the same class.
+        $office = Office::query()->create([
+            'officeName' => 'Souq Rides', 'email' => 's@x.sy', 'password' => 'x',
+            'contactNumber' => '1', 'address' => 'a', 'country' => 'SY', 'city' => 'Damascus', 'region' => 'r', 'status' => 1,
+        ]);
+        OfficeSubServicePrice::query()->create([
+            'office_id' => $office->id, 'sub_service_id' => 1,
+            'openPrice' => 4, 'kmPrice' => 1, 'minutePrice' => 0,
+        ]);
+        ServiceTariff::query()->create([
+            'office_id' => $office->id, 'service' => 'ride', 'service_class' => 'S1', 'currency_code' => 'SYP',
+            'pricing_style' => 'meter', 'base_minor' => 900, 'per_km_minor' => 400, 'per_minute_minor' => 90, 'minimum_minor' => 0,
+        ]);
+
+        // The caller passes only the class STRING (the sub-service name), no id —
+        // the office's published price must still win over the ServiceTariff.
+        $tariff = $this->resolver->forOfficeServiceOrSub((int) $office->id, null, 'ride', 'S1');
+        $this->assertSame(400, $tariff['base_minor']);   // office price, not the 900 tariff
+        $this->assertSame(100, $tariff['per_km_minor']);
+
+        // An office that never published a price still falls back to ServiceTariff.
+        ServiceTariff::query()->create([
+            'office_id' => 4, 'service' => 'ride', 'service_class' => 'S1', 'currency_code' => 'SYP',
+            'pricing_style' => 'meter', 'base_minor' => 900, 'per_km_minor' => 400, 'per_minute_minor' => 90, 'minimum_minor' => 0,
+        ]);
+        $fallback = $this->resolver->forOfficeServiceOrSub(4, null, 'ride', 'S1');
+        $this->assertSame(900, $fallback['base_minor']);
+    }
 }

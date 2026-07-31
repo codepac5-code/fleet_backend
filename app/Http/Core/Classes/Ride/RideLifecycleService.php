@@ -90,7 +90,9 @@ class RideLifecycleService
 
         $this->events->emit(new DomainEvent(
             EventType::RIDE_RELEASED,
-            [Channel::booking($bookingId), Channel::driver($driverId), Channel::office($officeId)],
+            // Money leaving escrow is a fleet-desk event as much as an office
+            // one — the admin room was the only party not told.
+            [Channel::booking($bookingId), Channel::driver($driverId), Channel::office($officeId), Channel::admin()],
             [
                 'booking_id' => $bookingId,
                 'driver_id' => $driverId,

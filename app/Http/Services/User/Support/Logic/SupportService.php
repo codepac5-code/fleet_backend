@@ -44,6 +44,17 @@ class SupportService
         return $this->ticketRow($ticket, true);
     }
 
+    public function replyToTicket(int $userId, int $ticketId, string $body): array
+    {
+        // RiderSupportService::reply verifies ownership, rejects a closed ticket,
+        // stores the rider message, reopens a resolved/pending case and notifies
+        // the staff layer. We return the refreshed thread so the app can render
+        // the appended message.
+        $this->support->reply($userId, $ticketId, $body);
+
+        return $this->showTicket($userId, $ticketId);
+    }
+
     public function complaint(int $userId, string $about, ?int $tripId, string $description, ?string $photoUrl): array
     {
         $routedTo = $about === 'driver' ? 'office' : 'fleetos';

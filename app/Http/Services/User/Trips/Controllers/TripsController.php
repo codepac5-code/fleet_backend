@@ -3,6 +3,7 @@
 namespace App\Http\Services\User\Trips\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Core\Classes\Ride\RideBookingService;
 use App\Http\Services\User\Booking\Logic\BookingService;
 use App\Http\Services\User\Support\Reply;
 use App\Http\Services\User\Trips\Logic\TripService;
@@ -15,7 +16,8 @@ class TripsController extends Controller
 {
     public function __construct(
         private TripService $trips,
-        private BookingService $bookings
+        private BookingService $bookings,
+        private RideBookingService $rides
     ) {
     }
 
@@ -32,6 +34,19 @@ class TripsController extends Controller
     public function show(Request $request, int $id): JsonResponse
     {
         return Reply::ok($this->bookings->detail((int) $request->user()->id, $id));
+    }
+
+    /**
+     * A public tracking link for a live trip.
+     *
+     * The signed URL and the page it opens both already existed
+     * ({@see \App\Http\Core\Classes\Ride\RideBookingService::share()} and the
+     * `public.shared-trip` route) — nothing exposed them to the rider, so the
+     * app's "Copy trip link" sat disabled on top of a finished feature.
+     */
+    public function share(Request $request, int $id): JsonResponse
+    {
+        return Reply::ok($this->rides->share((int) $request->user()->id, $id));
     }
 
     public function rate(RateTripRequest $request, int $id): JsonResponse

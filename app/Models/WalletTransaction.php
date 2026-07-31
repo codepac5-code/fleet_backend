@@ -2,10 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Legacy wallet movements are per-country money. The panel already read them
+ * with an explicit connection while `WalletManagement` wrote without one, so a
+ * Syrian transaction landed in the platform database.
+ */
 class WalletTransaction extends Model
 {
+    use ResolvesTenantConnection;
+
     protected $table = 'wallet_transactions';
     protected $fillable = [
         'from', 'to', 'amount',

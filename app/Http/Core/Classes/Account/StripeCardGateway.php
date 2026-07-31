@@ -63,7 +63,7 @@ class StripeCardGateway implements CardGateway
         });
     }
 
-    public function paymentIntent(int $userId, int $amountMinor, string $currency, ?int $paymentMethodId, string $idempotencyKey): array
+    public function paymentIntent(int $userId, int $amountMinor, string $currency, ?int $paymentMethodId, string $idempotencyKey, array $metadata = [], bool $manualCapture = false): array
     {
         $user = User::query()->find($userId);
 
@@ -71,28 +71,33 @@ class StripeCardGateway implements CardGateway
             throw new RuntimeException('payments_unavailable');
         }
 
-        return $this->guardStripe(function () use ($user, $userId, $amountMinor, $currency, $paymentMethodId, $idempotencyKey) {
+        return $this->guardStripe(function () use ($user, $userId, $amountMinor, $currency, $paymentMethodId, $idempotencyKey, $metadata, $manualCapture) {
             $customerId = $this->ensureCustomer($user);
 
             // Client-confirmed flow: the app confirms the intent with the returned
-            // clientSecret + card (PaymentSheet). `allow_redirects: never` keeps it
-            // return_url-free for wallet top-ups.
+            // clientSecret + card/Apple Pay (PaymentSheet). `allow_redirects: never`
+            // keeps it return_url-free. Callers pass `purpose`/`booking_id` in
+            // $metadata; `idempotency_key` is always ours and cannot be overridden.
+            // `capture_method: manual` authorizes (holds) the amount so a ride's
+            // final fare can be captured at completion.
             $intent = $this->stripe->paymentIntents->create(
                 [
                     'amount' => $amountMinor,
                     'currency' => strtolower($currency),
                     'customer' => $customerId,
-                    'metadata' => [
+                    'metadata' => array_merge([
                         'user_id' => (string) $userId,
                         'purpose' => 'topup',
                         'payment_method_id' => $paymentMethodId !== null ? (string) $paymentMethodId : '',
+                    ], $metadata, [
                         // The gateway webhook matches the ledger payment by this key
                         // (StripeGateway::verifyAndNormalize reads metadata.idempotency_key).
                         'idempotency_key' => $idempotencyKey,
-                    ],
+                    ]),
                     'automatic_payment_methods' => ['enabled' => true, 'allow_redirects' => 'never'],
+                    'capture_method' => $manualCapture ? 'manual' : 'automatic',
                 ],
-                $idempotencyKey !== '' ? ['idempotency_key' => 'topup_pi_' . $idempotencyKey] : []
+                $idempotencyKey !== '' ? ['idempotency_key' => 'pi_' . $idempotencyKey] : []
             );
 
             return [
@@ -102,6 +107,30 @@ class StripeCardGateway implements CardGateway
                 'requiresAction' => in_array($intent->status, ['requires_action', 'requires_confirmation'], true),
             ];
         });
+    }
+
+    public function capturePaymentIntent(string $paymentIntentId, int $amountToCaptureMinor): string
+    {
+        return $this->guardStripe(function () use ($paymentIntentId, $amountToCaptureMinor) {
+            $intent = $this->stripe->paymentIntents->capture(
+                $paymentIntentId,
+                ['amount_to_capture' => $amountToCaptureMinor],
+                ['idempotency_key' => 'capture_' . $paymentIntentId]
+            );
+
+            return (string) ($intent->status ?? '');
+        });
+    }
+
+    public function cancelPaymentIntent(string $paymentIntentId): void
+    {
+        try {
+            $this->stripe->paymentIntents->cancel($paymentIntentId);
+        } catch (Throwable $e) {
+            // Releasing a hold must never fail the caller (cancel/refund path);
+            // an already-cancelled or captured intent is a no-op for us.
+            Log::warning('Stripe cancel authorization failed', ['message' => $e->getMessage()]);
+        }
     }
 
     /**

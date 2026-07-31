@@ -68,7 +68,11 @@
 
         <div class="reg__form">
             <h2>{{ $t('Create your office account', 'أنشئ حساب مكتبك') }}</h2>
-            <p class="sub">{{ $t('Start free — pick a plan after signup.', 'ابدأ مجاناً — اختر خطة بعد التسجيل.') }}</p>
+            @if(!empty($selectedPlan))
+                <p class="sub">{{ $t('You picked the', 'اخترت خطة') }} <b style="color:var(--brand,#F8A609)">{{ $selectedPlan['name'] }}</b> {{ $t('plan — create your account to start its free trial.', '— أنشئ حسابك لبدء تجربتها المجانية.') }}</p>
+            @else
+                <p class="sub">{{ $t('Start free — pick a plan after signup.', 'ابدأ مجاناً — اختر خطة بعد التسجيل.') }}</p>
+            @endif
 
             @if($errors->any() && !$errors->has('office_name') && !$errors->has('email') && !$errors->has('password') && !$errors->has('country_id'))
                 <div class="flash-err"><i class="bi bi-exclamation-triangle"></i> {{ $errors->first() }}</div>
@@ -79,6 +83,9 @@
             @else
                 <form method="POST" action="{{ route('office.register.store') }}">
                     @csrf
+                    @if(!empty($selectedPlan))
+                        <input type="hidden" name="plan" value="{{ $selectedPlan['key'] }}">
+                    @endif
                     <div class="grid">
                         <div class="fld full">
                             <label>{{ $t('Office name', 'اسم المكتب') }}</label>
@@ -112,7 +119,9 @@
                         </div>
                         <div class="fld">
                             <label>{{ $t('City', 'المدينة') }}</label>
-                            <input name="city" value="{{ old('city') }}">
+                            <select name="city" id="reg_city" disabled data-old="{{ old('city') }}">
+                                <option value="">{{ $t('Select a country first', 'اختر الدولة أولاً') }}</option>
+                            </select>
                         </div>
                         <div class="fld">
                             <label>{{ $t('Password', 'كلمة المرور') }}</label>
@@ -131,5 +140,38 @@
             <p class="signin">{{ $t('Already have an account?', 'لديك حساب بالفعل؟') }} <a href="{{ url('/') }}">{{ $t('Sign in', 'تسجيل الدخول') }}</a></p>
         </div>
     </div>
+
+    <script>
+    (function () {
+        var country = document.querySelector('select[name="country_id"]');
+        var city = document.getElementById('reg_city');
+        if (!country || !city) return;
+
+        var URL = "{{ route('public.office-form') }}";
+        var oldCity = city.getAttribute('data-old') || '';
+
+        function loadCities(id, keep) {
+            city.disabled = true;
+            city.innerHTML = '<option value="">{{ $t('Loading…', 'جارٍ التحميل…') }}</option>';
+            if (!id) { city.innerHTML = '<option value="">{{ $t('Select a country first', 'اختر الدولة أولاً') }}</option>'; return; }
+            fetch(URL + '?country=' + encodeURIComponent(id), { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    city.innerHTML = '<option value="">{{ $t('Select a city', 'اختر مدينة') }}</option>';
+                    (d.cities || []).forEach(function (c) {
+                        var o = new Option(c.name, c.name);
+                        if (keep && c.name === keep) o.selected = true;
+                        city.appendChild(o);
+                    });
+                    city.disabled = !(d.cities && d.cities.length);
+                })
+                .catch(function () { city.innerHTML = '<option value="">{{ $t('Could not load cities', 'تعذّر تحميل المدن') }}</option>'; });
+        }
+
+        country.addEventListener('change', function () { loadCities(country.value, ''); });
+        // Repopulate on a validation bounce-back so the chosen city survives.
+        if (country.value) { loadCities(country.value, oldCity); }
+    })();
+    </script>
 </body>
 </html>

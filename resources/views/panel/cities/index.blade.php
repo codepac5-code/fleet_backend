@@ -25,6 +25,21 @@
         </form>
     </div>
 
+    <div class="p-card" style="margin-bottom:16px;">
+        <h3 class="p-card__title" style="margin:0 0 4px;"><i class="bi bi-magic"></i> {{ textByLanguage('استيراد المحافظات دفعة واحدة', 'Bulk import provinces') }}</h3>
+        <p style="margin:0 0 12px;font-size:.82rem;color:var(--p-text-muted);">{{ textByLanguage('عبّئ محافظات هذه الدولة تلقائياً من القائمة المدمجة، أو الصق قائمة — محافظة في كل سطر، ويمكن "العربية | English".', 'Fill this country\'s provinces from the built-in list, or paste your own — one per line, optionally "Arabic | English".') }}</p>
+        <form method="POST" action="{{ route($r('cities.import')) }}" style="margin-bottom:12px;">
+            @csrf
+            <input type="hidden" name="use_bundled" value="1">
+            <button type="submit" class="p-btn p-btn--soft"><i class="bi bi-stars"></i> {{ textByLanguage('تعبئة من القائمة المدمجة', 'Fill from built-in list') }}</button>
+        </form>
+        <form method="POST" action="{{ route($r('cities.import')) }}">
+            @csrf
+            <textarea name="provinces" rows="5" placeholder="{{ textByLanguage('دمشق | Damascus&#10;حلب | Aleppo', 'Riyadh&#10;Makkah | Makkah') }}" style="width:100%;padding:10px 12px;border:1.5px solid var(--p-border);border-radius:var(--p-radius-sm);font-family:inherit;"></textarea>
+            <div style="margin-top:10px;"><button type="submit" class="p-btn p-btn--primary"><i class="bi bi-upload"></i> {{ textByLanguage('استيراد القائمة', 'Import list') }}</button></div>
+        </form>
+    </div>
+
     <div class="p-card">
         @if($cities->count())
             <x-panel.table :headers="['#', textByLanguage('الاسم', 'Name'), textByLanguage('الإنجليزية', 'Latin'), '']">

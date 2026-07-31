@@ -20,6 +20,9 @@ class StartCheckoutController extends Controller
 
         $data = $request->validate([
             'plan_key' => ['required', 'string', 'max:32'],
+            // "now" = end the trial and start paying today; anything else keeps
+            // the remaining trial days and bills when they run out.
+            'billing_starts' => ['nullable', 'in:now,after_trial'],
         ]);
 
         $back = route('panel.' . $scope->guard() . '.subscription.show');
@@ -29,9 +32,12 @@ class StartCheckoutController extends Controller
             $url = $billing->createCheckoutSession(
                 (int) $scope->officeId(),
                 $data['plan_key'],
-                $back . '?checkout=success',
+                // Stripe fills the placeholder in, and the id lets the return
+                // trip activate the plan itself when no webhook arrives.
+                $back . '?checkout=success&session_id={CHECKOUT_SESSION_ID}',
                 $back . '?checkout=cancel',
-                $email !== null ? (string) $email : null
+                $email !== null ? (string) $email : null,
+                ($data['billing_starts'] ?? null) === 'now'
             );
         } catch (Throwable $e) {
             return back()->with('error', textByLanguage('تعذّر بدء الدفع: ', 'Could not start checkout: ') . $e->getMessage());

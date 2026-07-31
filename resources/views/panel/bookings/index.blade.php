@@ -2,8 +2,8 @@
 
 @use('App\Http\Services\Panel\Bookings\Logic\BookingStatus')
 
-@section('title', __('messages.orders'))
-@section('page-title', __('messages.orders'))
+@section('title', textByLanguage('أرشيف الطلبات القديم', 'Legacy order archive'))
+@section('page-title', textByLanguage('أرشيف الطلبات القديم', 'Legacy order archive'))
 
 @php $r = fn ($name) => "panel.{$entity}.{$name}"; @endphp
 
@@ -13,8 +13,31 @@
         <div class="p-flash p-flash--ok"><i class="bi bi-check-circle"></i> {{ session('status') }}</div>
     @endif
 
-    <x-panel.page-toolbar :title="__('messages.orders')"
-        :subtitle="textByLanguage('متابعة الطلبات وتعديل حالتها', 'Track orders and update their status')" />
+    <x-panel.page-toolbar :title="textByLanguage('أرشيف الطلبات القديم', 'Legacy order archive')"
+        :subtitle="textByLanguage('طلبات لوحة التحكّم القديمة — للاطّلاع والمعالجة التاريخية', 'Orders from the old dashboard — kept for history and clean-up')">
+        <x-slot:actions>
+            @if(\Illuminate\Support\Facades\Route::has($r('rides.index')))
+                <a href="{{ route($r('rides.index')) }}" class="p-btn p-btn--primary">
+                    <i class="bi bi-card-checklist"></i> {{ textByLanguage('الطلبات الحالية', 'Current orders') }}
+                </a>
+            @endif
+        </x-slot:actions>
+    </x-panel.page-toolbar>
+
+    @if(($appRideCount ?? 0) > 0)
+        <div class="p-flash p-flash--warn">
+            <i class="bi bi-info-circle"></i>
+            <div>
+                <strong>{{ textByLanguage('هذه ليست طلبات التطبيق', 'These are not the app’s orders') }}</strong>
+                <div style="font-size:.83rem;margin-top:3px;">
+                    {{ textByLanguage(
+                        'الطلبات القادمة من تطبيقَي الراكب والسائق تُحفَظ في جدول آخر ولا تظهر هنا إطلاقاً — عددها الآن ' . number_format($appRideCount) . '. افتح «الطلبات» من القائمة لمتابعتها.',
+                        'Orders created by the rider and driver apps are stored in a different table and never appear here — there are ' . number_format($appRideCount) . ' of them right now. Open “Orders” in the menu to work with those.'
+                    ) }}
+                </div>
+            </div>
+        </div>
+    @endif
 
     <div class="p-card">
         <form method="GET" action="{{ route($r('booking.index')) }}" class="p-search">

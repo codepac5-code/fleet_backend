@@ -13,7 +13,7 @@ class ExportTransactionsController extends Controller
     {
         return CsvExport::stream(
             'transactions.csv',
-            ['ID', 'Reference', 'Amount', 'Status', 'From', 'To', 'Date'],
+            ['ID', 'Reference', 'Amount', 'Type', 'From', 'To', 'Date'],
             $transactions->exportRows()
         );
     }

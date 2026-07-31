@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Panel\Admin\Offices\Logic\OfficeRepository;
 use App\Http\Services\Panel\Drivers\Logic\DriverRepository;
 use App\Http\Services\Panel\Shared\Scoping\EntityScope;
+use App\Http\Services\Panel\Vehicles\Logic\VehicleCatalog;
 use Illuminate\Contracts\View\View;
 
 class CreateVehicleController extends Controller
 {
-    public function __invoke(EntityScope $scope, OfficeRepository $offices, DriverRepository $drivers): View
+    public function __invoke(EntityScope $scope, OfficeRepository $offices, DriverRepository $drivers, VehicleCatalog $catalog): View
     {
         return view('panel.vehicles.form', [
             'entity'        => $scope->guard(),
@@ -19,6 +20,7 @@ class CreateVehicleController extends Controller
             'vehicle'       => null,
             'officeOptions' => $scope->isAdmin() ? $offices->options() : [],
             'driverOptions' => $drivers->options(),
+            'catalog'       => $catalog->suggestions(),
         ]);
     }
 }

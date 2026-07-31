@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToOffice;
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,6 +13,7 @@ class Vehicle extends Model
 {
     use HasFactory , SoftDeletes ;
     use BelongsToOffice;
+    use ResolvesTenantConnection;
 
     protected $table = 'vehicles';
     protected $fillable = [

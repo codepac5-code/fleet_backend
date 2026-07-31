@@ -14,6 +14,12 @@ class PartyLabel
         Driver::class      => ['ar' => 'سائق', 'en' => 'Driver', 'icon' => 'bi-taxi-front'],
         User::class        => ['ar' => 'عميل', 'en' => 'Customer', 'icon' => 'bi-person'],
         FleetOffice::class => ['ar' => 'المنصّة', 'en' => 'Platform', 'icon' => 'bi-hexagon-fill'],
+        // Double-entry ledger owner types (see App\Http\Core\Const\Ledger\OwnerType).
+        'office'  => ['ar' => 'مكتب', 'en' => 'Office', 'icon' => 'bi-building'],
+        'driver'  => ['ar' => 'سائق', 'en' => 'Driver', 'icon' => 'bi-taxi-front'],
+        'user'    => ['ar' => 'عميل', 'en' => 'Customer', 'icon' => 'bi-person'],
+        'fleet'   => ['ar' => 'المنصّة', 'en' => 'Platform', 'icon' => 'bi-hexagon-fill'],
+        'booking' => ['ar' => 'حجز', 'en' => 'Booking', 'icon' => 'bi-receipt'],
     ];
 
     public static function label(?string $type): string

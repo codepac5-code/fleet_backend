@@ -128,6 +128,30 @@ class PlanOverageTest extends FleetTestCase
         $this->assertSame(1, PlanOverageCharge::query()->where('status', 'collected')->count());
     }
 
+    public function test_stripe_billed_overage_is_collected_at_the_next_paid_invoice(): void
+    {
+        // Stripe items ride on the office's UPCOMING invoice, so the next
+        // invoice.paid means the already-handed-off overage is now paid.
+        $this->overage->recordDriverOverage(5, 99, 1000, 'USD');
+        $ref = $this->overage->closeOffice(5)['invoice_ref'];
+        PlanOverageCharge::query()->where('invoice_ref', $ref)->update(['collection_method' => 'stripe']);
+
+        $collected = $this->overage->markStripeCollectedForOffice(5);
+
+        $this->assertSame(1, $collected);
+        $this->assertCount(1, $this->overage->invoices('collected'));
+        $this->assertSame(0, $this->overage->markStripeCollectedForOffice(5), 'collecting twice is a no-op');
+    }
+
+    public function test_manual_overage_is_never_auto_collected(): void
+    {
+        $this->overage->recordDriverOverage(6, 99, 1000, 'USD');
+        $this->overage->closeOffice(6);
+
+        $this->assertSame(0, $this->overage->markStripeCollectedForOffice(6), 'manual invoices wait for a human to confirm the money');
+        $this->assertCount(1, $this->overage->invoices('invoiced'));
+    }
+
     public function test_invoices_listing_groups_by_ref_and_filters_status(): void
     {
         $this->overage->recordDriverOverage(5, 99, 1000, 'USD');

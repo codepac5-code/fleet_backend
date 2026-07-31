@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Cache;
 class RiderAuthTest extends FleetTestCase
 {
     protected array $globalMigrations = [
+        '2026_07_16_000001_create_rider_refresh_tokens_table.php',
         // UserPresenter reads rider_profiles for email/locale, and currencies
         // for the wallet currency block.
         '2026_07_11_000007_create_rider_account_tables.php',
@@ -37,7 +38,6 @@ class RiderAuthTest extends FleetTestCase
 
     protected array $tenantMigrations = [
         '2024_10_23_085910_create_users_table.php',
-        '2026_07_16_000001_create_rider_refresh_tokens_table.php',
         // UserPresenter counts open tickets + favourite offices on every present().
         '2026_07_11_000006_create_rider_support_tables.php',
         '2026_06_25_000012_create_favorite_offices_table.php',

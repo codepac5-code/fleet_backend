@@ -28,8 +28,18 @@ class InfrastructureNode extends Model
         'redis_host',
         'redis_db',
         'redis_prefix',
-        'is_active'
+        'is_active',
+        'provisioned_at',
     ];
+
+    protected $casts = [
+        'provisioned_at' => 'datetime',
+    ];
+
+    public function isProvisioned(): bool
+    {
+        return $this->provisioned_at !== null;
+    }
 
     public function parent()
     {

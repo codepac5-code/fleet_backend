@@ -3,6 +3,7 @@
 namespace App\Http\Services\Driver\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Core\Const\Ride\BookingStatus;
 use App\Http\Core\Classes\Auth\PhoneNumber;
 use App\Http\Core\Const\Dispatch\OfferStatus;
 use App\Http\Core\Exceptions\DomainException;
@@ -144,7 +145,7 @@ class DriverTripQueryController extends Controller
         // directly. `masked_phone` is for display; `proxy_number` carries the
         // dialable E.164 so the app's Call button actually works. Only active
         // trips expose it (a completed/cancelled trip returns no number).
-        $dialable = ($rider !== null && $e164 !== '+' && in_array($booking->status, ['assigned', 'arrived', 'in_progress'], true))
+        $dialable = ($rider !== null && $e164 !== '+' && in_array((string) $booking->status, BookingStatus::CONTACTABLE, true))
             ? $e164
             : null;
 

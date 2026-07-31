@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Panel\Employees\Request;
 
+use App\Http\Services\Panel\Employees\Logic\EmployeeRole;
 use App\Http\Services\Panel\Shared\Scoping\EntityScope;
 use App\Http\Services\Panel\Shared\Tenant\TenantConnection;
 use Illuminate\Foundation\Http\FormRequest;
@@ -31,7 +32,7 @@ class UpdateEmployeeRequest extends FormRequest
             'jobName'        => ['required', 'string', 'max:60'],
             'jobDescription' => ['nullable', 'string', 'max:60'],
             'gender'         => ['required', 'in:male,female'],
-            'role'           => ['required', 'in:agent,admin,viewer'],
+            'role'           => ['required', Rule::in(EmployeeRole::ALL)],
             'officeId'       => [$isAdmin ? 'required' : 'nullable', 'integer', Rule::exists($offices, 'id')->whereNull('deleted_at')],
             'country'        => ['required', 'string', 'max:100'],
             'region'         => ['required', 'string', 'max:100'],

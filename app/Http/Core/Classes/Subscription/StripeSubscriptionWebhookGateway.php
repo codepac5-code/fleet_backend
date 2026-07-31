@@ -64,8 +64,12 @@ class StripeSubscriptionWebhookGateway
                 'handled' => true,
                 'type' => $type,
                 'country' => $this->country($object),
-                'provider_subscription_id' => isset($object->subscription) ? (string) $object->subscription : '',
+                'provider_subscription_id' => $this->invoiceSubscription($object),
                 'current_period_end' => $object->lines->data[0]->period->end ?? null,
+                // What was actually collected — the ledger has to book it.
+                'provider_invoice_id' => isset($object->id) ? (string) $object->id : null,
+                'amount_paid_minor' => isset($object->amount_paid) ? (int) $object->amount_paid : 0,
+                'currency' => isset($object->currency) ? strtoupper((string) $object->currency) : null,
             ];
         }
 
@@ -75,9 +79,54 @@ class StripeSubscriptionWebhookGateway
             'country' => $this->country($object),
             'provider_subscription_id' => isset($object->id) ? (string) $object->id : '',
             'status' => isset($object->status) ? (string) $object->status : null,
-            'current_period_end' => $object->current_period_end ?? null,
+            // Stripe is the authority on when the trial ends — an office that
+            // paid early has no trial left, and the record must say so.
+            'trial_end' => $object->trial_end ?? null,
+            'current_period_end' => $this->periodEnd($object),
             'cancel_at_period_end' => $object->cancel_at_period_end ?? null,
         ];
+    }
+
+    /**
+     * The subscription an invoice belongs to. Stripe moved this off the invoice
+     * and under `parent.subscription_details`, the same way it moved the period
+     * end onto the items; reading one place only is how a renewal silently
+     * stops matching any subscription we hold.
+     */
+    private function invoiceSubscription($object): string
+    {
+        $candidates = [
+            $object->subscription ?? null,
+            $object->parent->subscription_details->subscription ?? null,
+            $object->lines->data[0]->parent->subscription_item_details->subscription ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && $candidate !== '') {
+                return $candidate;
+            }
+
+            if (is_object($candidate) && isset($candidate->id)) {
+                return (string) $candidate->id;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * When the current billing period ends.
+     *
+     * Stripe moved this off the subscription and onto its items: reading only
+     * the top-level field returned null on the current API version, so the
+     * renewal date never advanced and the panel told a subscriber it renews
+     * today, every day.
+     */
+    private function periodEnd($object)
+    {
+        return $object->current_period_end
+            ?? $object->items->data[0]->current_period_end
+            ?? null;
     }
 
     private function country($object): ?string

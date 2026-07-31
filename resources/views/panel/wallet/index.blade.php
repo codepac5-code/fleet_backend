@@ -31,6 +31,37 @@
         @endforeach
     </div>
 
+    @if(!empty($subscriptionPayments))
+        <div class="p-card" style="margin-bottom:18px;">
+            <div class="p-card__head">
+                <h3 class="p-card__title" style="margin:0;"><i class="bi bi-award"></i> {{ textByLanguage('دفعات الاشتراكات', 'Subscription payments') }}</h3>
+                @if($isAdmin && \Illuminate\Support\Facades\Route::has('panel.admin.subscriptions.index'))
+                    <a href="{{ route('panel.admin.subscriptions.index') }}" class="p-btn p-btn--soft"><i class="bi bi-box-arrow-up-right"></i> {{ textByLanguage('الاشتراكات', 'Subscriptions') }}</a>
+                @endif
+            </div>
+
+            <x-panel.table :headers="[
+                textByLanguage('المكتب', 'Office'),
+                textByLanguage('الخطة', 'Plan'),
+                textByLanguage('المبلغ', 'Amount'),
+                textByLanguage('التاريخ', 'Date'),
+            ]">
+                @foreach($subscriptionPayments as $p)
+                    <tr>
+                        <td><strong>{{ $p['office'] }}</strong></td>
+                        <td>{{ ucfirst($p['plan']) }}</td>
+                        <td><span class="tx-in">+{{ number_format($p['amount_minor'] / 100, 2) }} {{ $p['currency'] }}</span></td>
+                        <td style="color:var(--p-text-muted);white-space:nowrap;">{{ $p['at'] ?: '—' }}</td>
+                    </tr>
+                @endforeach
+            </x-panel.table>
+
+            <p class="p-cell-sub" style="margin-top:8px;">
+                {{ textByLanguage('دفعات مُحصَّلة عبر مزوّد الدفع ومقيَّدة في دفتر الأستاذ — ليست حركات محفظة، لذلك لا تظهر في الجدول أدناه.', 'Collected through the payment provider and posted to the ledger — these are not wallet movements, so they are not in the table below.') }}
+            </p>
+        </div>
+    @endif
+
     <div class="p-card">
         <form method="GET" action="{{ route($r('wallet.transactions')) }}" class="p-search">
             <i class="bi bi-search"></i>

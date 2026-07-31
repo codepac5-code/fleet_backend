@@ -6,6 +6,8 @@ use App\Models\CancellationReason;
 use App\Models\Document;
 use App\Models\RatingTag;
 use App\Models\Service;
+use Database\Seeders\Production\PermissionGroupSeeder;
+use Database\Seeders\Production\RolesAndPermissionsSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Schema;
 
@@ -34,6 +36,11 @@ class ShardSeeder extends Seeder
         ['code' => 'wrong_address', 'label_en' => 'Wrong pickup address', 'label_ar' => 'عنوان انطلاق خاطئ', 'audience' => 'driver', 'stars_min' => 1, 'stars_max' => 3, 'sort' => 4],
         ['code' => 'polite', 'label_en' => 'Polite', 'label_ar' => 'لبق ومحترم', 'audience' => 'both', 'stars_min' => 4, 'stars_max' => 5, 'sort' => 10],
         ['code' => 'rude', 'label_en' => 'Rude behaviour', 'label_ar' => 'تصرّف غير لائق', 'audience' => 'both', 'stars_min' => 1, 'stars_max' => 3, 'sort' => 11],
+        ['code' => 'fast_response', 'label_en' => 'Fast response', 'label_ar' => 'استجابة سريعة', 'audience' => 'office', 'stars_min' => 4, 'stars_max' => 5, 'sort' => 1],
+        ['code' => 'fair_price', 'label_en' => 'Fair price', 'label_ar' => 'سعر عادل', 'audience' => 'office', 'stars_min' => 4, 'stars_max' => 5, 'sort' => 2],
+        ['code' => 'great_support', 'label_en' => 'Great support', 'label_ar' => 'دعم ممتاز', 'audience' => 'office', 'stars_min' => 4, 'stars_max' => 5, 'sort' => 3],
+        ['code' => 'slow_support', 'label_en' => 'Slow support', 'label_ar' => 'دعم بطيء', 'audience' => 'office', 'stars_min' => 1, 'stars_max' => 3, 'sort' => 4],
+        ['code' => 'price_too_high', 'label_en' => 'Price too high', 'label_ar' => 'السعر مرتفع', 'audience' => 'office', 'stars_min' => 1, 'stars_max' => 3, 'sort' => 5],
     ];
 
     private const SERVICES = [
@@ -50,6 +57,16 @@ class ShardSeeder extends Seeder
 
     public function run(): void
     {
+        // The permission CATALOG has to exist in the same database as the rows
+        // that point at it: employees live per shard, so spatie writes their
+        // `model_has_permissions` there — while `permissions` was only ever
+        // seeded into the platform DB. Every employee on a non-reference shard
+        // therefore resolved to ZERO permissions no matter what was granted.
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+            PermissionGroupSeeder::class,
+        ]);
+
         if (Schema::hasTable('services')) {
             foreach (self::SERVICES as $service) {
                 Service::query()->firstOrCreate(

@@ -19,6 +19,9 @@
     .pill-off { background: rgba(220,53,69,.12); color: var(--p-danger); }
     .pill-default { background: rgba(49,40,115,.1); color: var(--p-primary); }
     .toggle-btn { border: 1.5px solid var(--p-border); background: #fff; border-radius: var(--p-radius-sm); padding: 6px 14px; font-family: inherit; font-weight: 600; cursor: pointer; font-size: .82rem; }
+    .cur-edit-row { display: none; }
+    .cur-edit-row.open { display: table-row; }
+    .cur-edit-row td { background: var(--p-bg-soft, #f7f7fb); }
     @media (max-width: 992px) { .cur-form { grid-template-columns: 1fr 1fr; } }
 </style>
 @endpush
@@ -95,13 +98,48 @@
                                 {{ $currency->is_active ? textByLanguage('مفعّلة', 'Active') : textByLanguage('معطّلة', 'Inactive') }}
                             </span>
                         </td>
-                        <td>
+                        <td style="display:flex; gap:8px;">
+                            <button type="button" class="toggle-btn" onclick="document.getElementById('cur-edit-{{ $currency->id }}').classList.toggle('open')">
+                                {{ textByLanguage('تعديل', 'Edit') }}
+                            </button>
                             <form method="POST" action="{{ route('panel.admin.currencies.toggle', $currency->id) }}">
                                 @csrf
                                 <button type="submit" class="toggle-btn">
                                     {{ $currency->is_active ? textByLanguage('تعطيل', 'Disable') : textByLanguage('تفعيل', 'Enable') }}
                                 </button>
                             </form>
+                        </td>
+                    </tr>
+                    <tr id="cur-edit-{{ $currency->id }}" class="cur-edit-row">
+                        <td colspan="6">
+                            <form method="POST" action="{{ route('panel.admin.currencies.update', $currency->id) }}" class="cur-form">
+                                @csrf
+                                @method('PUT')
+                                <div class="field">
+                                    <label>{{ textByLanguage('الاسم', 'Name') }}</label>
+                                    <input type="text" name="name" value="{{ $currency->name }}" required>
+                                </div>
+                                <div class="field">
+                                    <label>{{ textByLanguage('العلامة', 'Symbol') }}</label>
+                                    <input type="text" name="symbol" value="{{ $currency->symbol }}">
+                                </div>
+                                <div class="field">
+                                    <label>{{ textByLanguage('الخانات العشرية', 'Decimals') }}</label>
+                                    <input type="number" name="decimals" value="{{ $currency->decimals }}" min="0" max="4">
+                                </div>
+                                <div class="field">
+                                    <label>{{ textByLanguage('سعر الصرف', 'Exchange rate') }}</label>
+                                    <input type="number" step="0.000001" name="exchange_rate" value="{{ rtrim(rtrim(number_format($currency->exchange_rate, 6, '.', ''), '0'), '.') }}" min="0" {{ $currency->is_default ? 'readonly' : '' }}>
+                                </div>
+                                <div class="field cur-check" style="align-self:center;">
+                                    <input type="checkbox" name="is_default" value="1" @checked($currency->is_default) {{ $currency->is_default ? 'disabled' : '' }}>
+                                    <span>{{ textByLanguage('افتراضية', 'Default') }}</span>
+                                </div>
+                                <button type="submit" class="cur-add-btn">{{ textByLanguage('حفظ', 'Save') }}</button>
+                            </form>
+                            @if($currency->is_default)
+                                <p style="margin:8px 0 0;color:var(--p-text-muted);font-size:.8rem;">{{ textByLanguage('العملة الافتراضية سعر صرفها ثابت = 1', 'The default currency rate is fixed at 1') }}</p>
+                            @endif
                         </td>
                     </tr>
                 @empty

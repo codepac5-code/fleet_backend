@@ -2,6 +2,7 @@
 
 namespace App\Http\Core\Classes\Ride;
 
+use App\Http\Core\Classes\Catalog\LocalizedName;
 use App\Http\Core\Classes\Event\BookingEvents;
 use App\Http\Core\Classes\Event\EventBus;
 use App\Http\Core\Classes\Ledger\FleetWalletService;
@@ -116,7 +117,10 @@ class FixedTripService
         $pLng = isset($in['pickup']['lng']) ? (float) $in['pickup']['lng'] : 0.0;
         $dLat = isset($in['dropoff']['lat']) ? (float) $in['dropoff']['lat'] : 0.0;
         $dLng = isset($in['dropoff']['lng']) ? (float) $in['dropoff']['lng'] : 0.0;
-        $subServiceName = optional($route->subService)->name ?? (string) ($in['service_class'] ?? '');
+        // The class is shown to the rider on the trip, the receipt and every
+        // list, so it is stored in the language they booked in — reading the
+        // native column outright put "استقبال من المطار" on an English receipt.
+        $subServiceName = LocalizedName::of($route->subService) ?? (string) ($in['service_class'] ?? '');
 
         return DB::transaction(function () use (
             $userId, $officeId, $subServiceId, $departureCityId, $arrivalCityId, $subServiceName,
@@ -164,9 +168,7 @@ class FixedTripService
                 'currency_code' => $currency,
                 'offer_expires_at' => Carbon::now()->addMinutes(self::OFFER_TTL_MINUTES),
                 'offered_office_ids' => [$officeId],
-                'sla_assign_by' => $scheduledAt
-                    ? Carbon::parse($scheduledAt)->subMinutes(self::DRIVER_SLA_MINUTES)
-                    : null,
+                'sla_assign_by' => $this->assignDeadline($scheduledAt),
             ]);
 
             if ($held > 0) {
@@ -479,6 +481,28 @@ class FixedTripService
     }
 
     /** The specific corridor row an office publishes, or null if it has none. */
+    /**
+     * When a driver must be assigned by.
+     *
+     * Normally two hours before pickup — but that alone put the deadline in the
+     * PAST for anything booked for soon: a trip requested at 06:22 for 06:22 was
+     * born with an 04:22 deadline and the next SLA sweep killed it before the
+     * office could even open the request. The office gets at least as long to
+     * assign as it has to accept the offer, so the deadline can never precede
+     * the request itself.
+     */
+    private function assignDeadline($scheduledAt): ?Carbon
+    {
+        if (! $scheduledAt) {
+            return null;
+        }
+
+        $floor = Carbon::now()->addMinutes(self::OFFER_TTL_MINUTES);
+        $fromPickup = Carbon::parse($scheduledAt)->subMinutes(self::DRIVER_SLA_MINUTES);
+
+        return $fromPickup->greaterThan($floor) ? $fromPickup : $floor;
+    }
+
     private function corridorFor(int $officeId, int $subServiceId, int $departureCityId, int $arrivalCityId): ?TravelRoutes
     {
         return TravelRoutes::query()

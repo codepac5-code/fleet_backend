@@ -23,6 +23,29 @@ class Employee extends Authenticatable implements HasMedia
 
     protected $table = 'employees';
 
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        if ($permission instanceof \BackedEnum) {
+            $permission = $permission->value;
+        }
+
+        if (is_object($permission)) {
+            $permission = $permission->name ?? null;
+        }
+
+        if (is_string($permission)) {
+            return $this->getAllPermissions()->contains('name', $permission);
+        }
+
+        if (is_int($permission)) {
+            $resolved = Permission::on($this->getConnectionName())->find($permission);
+
+            return $resolved !== null && $this->getAllPermissions()->contains('name', $resolved->name);
+        }
+
+        return false;
+    }
+
     // protected $guard_name = 'employee';
 
 
@@ -61,7 +84,30 @@ class Employee extends Authenticatable implements HasMedia
 
     public function roles()
     {
-        return $this->morphToMany(Role::class, 'model', 'model_has_roles', 'model_id', 'role_id');
+        return $this->morphToMany(PlatformRole::class, 'model', 'model_has_roles', 'model_id', 'role_id');
+    }
+
+    /**
+     * Employees are PER SHARD while the permission catalog is platform-wide, so
+     * both the lookup and the pivot are pinned to the platform connection — see
+     * [PlatformPermission] for what went wrong when they were split.
+     */
+    public function permissions()
+    {
+        return $this->morphToMany(PlatformPermission::class, 'model', 'model_has_permissions', 'model_id', 'permission_id');
+    }
+
+    /**
+     * Employee ids REPEAT across country databases, so a shared pivot table
+     * would let office #26 in one country inherit the permissions of employee
+     * #26 in another. Qualifying the morph class with the active shard keeps
+     * each country's grants separate inside the one table.
+     */
+    public function getMorphClass(): string
+    {
+        $shard = \App\Http\Core\GeoServices\ShardManager::shardKey();
+
+        return $shard !== '' ? static::class . '@' . $shard : static::class;
     }
 
 

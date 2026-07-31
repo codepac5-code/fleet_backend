@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Groups the per-country wallet movements; it has to live beside them.
+ */
 class WalletTransactionGroup extends Model
 {
+    use ResolvesTenantConnection;
+
     protected $table = 'wallet_transaction_groups';
 
     protected $fillable = [

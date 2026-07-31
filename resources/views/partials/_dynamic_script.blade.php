@@ -149,14 +149,16 @@
             var status = $(this).prop('checked') == true ? 1 : 0;
             var key_name = $(this).attr('data-name');
             var id = $(this).attr('data-id');
-            var type = $(this).attr('data-type'); 
+            var type = $(this).attr('data-type');
+            var country = $(this).attr('data-country'); // owning shard in "All countries" view
 
-            var data = { 
-                'status': status, 
+            var data = {
+                'status': status,
                 'id': id,
-                'type': type,  
-                [key_name]: key_name // 
+                'type': type,
+                [key_name]: key_name //
             };
+            if (country) { data.country = country; }
 
             $.ajax({
                 type: "GET",

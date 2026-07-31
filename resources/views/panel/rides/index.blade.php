@@ -1,7 +1,7 @@
 @extends('panel.layouts.master')
 
 @section('title', textByLanguage('رحلات الركّاب', 'Rider rides'))
-@section('page-title', textByLanguage('رحلات الركّاب', 'Rider rides'))
+@section('page-title', __('messages.orders'))
 
 @php
     $r = fn ($n) => "panel.{$entity}.{$n}";
@@ -15,8 +15,8 @@
 @section('content')
 
     <x-panel.page-toolbar
-        :title="textByLanguage('رحلات الركّاب (السوق)', 'Rider rides (marketplace)')"
-        :subtitle="textByLanguage('حجوزات الركّاب لهذه الدولة', 'Rider-booked rides for this country')" />
+        :title="__('messages.orders')"
+        :subtitle="textByLanguage('كل الرحلات القادمة من التطبيقات في هذه الدولة', 'Every ride the apps created in this country')" />
 
     @if(session('status'))<div class="p-flash p-flash--ok"><i class="bi bi-check-circle"></i> {{ session('status') }}</div>@endif
     @if(session('error'))<div class="p-flash p-flash--err"><i class="bi bi-exclamation-triangle"></i> {{ session('error') }}</div>@endif
@@ -31,14 +31,19 @@
 
     <div class="p-card">
         <form method="GET" action="{{ route($r('rides.index')) }}" class="p-search">
-            <i class="bi bi-funnel"></i>
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" value="{{ $search ?? '' }}"
+                placeholder="{{ textByLanguage('ابحث برقم الرحلة أو نقطة الانطلاق/الوصول', 'Search by ride # or pickup/drop-off') }}">
             <select name="status" onchange="this.form.submit()" class="p-search__select">
                 <option value="">{{ textByLanguage('كل الحالات', 'All statuses') }}</option>
                 @foreach($statuses as $s)
                     <option value="{{ $s }}" @selected($statusFilter === $s)>{{ ucfirst(str_replace('_', ' ', $s)) }}</option>
                 @endforeach
             </select>
-            @if($statusFilter)<a href="{{ route($r('rides.index')) }}" class="p-search__clear">{{ textByLanguage('مسح', 'Clear') }}</a>@endif
+            @if($statusFilter || ($search ?? '') !== '')
+                <a href="{{ route($r('rides.index')) }}" class="p-search__clear">{{ textByLanguage('مسح', 'Clear') }}</a>
+            @endif
+            <button type="submit" class="p-btn p-btn--ghost">{{ textByLanguage('بحث', 'Search') }}</button>
         </form>
 
         @if($rows->count())

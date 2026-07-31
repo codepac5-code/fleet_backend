@@ -23,6 +23,9 @@ class TransactionsPageController extends Controller
             'statusFilter' => $status,
             'summary'      => $transactions->summary(),
             'transactions' => $transactions->paginate($search ?: null, $status),
+            // Subscription money is a ledger posting, not a legacy wallet row —
+            // it belongs on this screen even though it cannot page with them.
+            'subscriptionPayments' => $transactions->subscriptionPayments(),
         ]);
     }
 }

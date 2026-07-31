@@ -40,8 +40,8 @@
             box-shadow: var(--p-shadow-lg);
             padding: 34px 30px;
         }
-        .auth-brand { text-align: center; font-weight: 700; font-size: 1.6rem; color: var(--p-primary); margin-bottom: 4px; }
-        .auth-brand span { color: var(--p-accent); }
+        .auth-brand { display: flex; justify-content: center; margin-bottom: 6px; }
+        .auth-brand .p-wordmark { align-items: center; }
         .auth-sub { text-align: center; color: var(--p-text-muted); margin-bottom: 22px; font-size: .92rem; }
 
         .role-switch { display: flex; gap: 8px; margin-bottom: 18px; }
@@ -84,7 +84,8 @@
             <button type="button" class="auth-theme" onclick="panelToggleTheme()" title="{{ textByLanguage('تبديل السمة', 'Toggle theme') }}"><i data-theme-icon class="bi bi-moon-stars"></i></button>
             <a href="{{ route('panel.locale', $other) }}" class="auth-lang"><i class="bi bi-translate"></i> {{ $other === 'ar' ? 'العربية' : 'English' }}</a>
         </div>
-        <div class="auth-brand">{{ config('app.name') }}<span>.</span></div>
+        {{-- One door for every product, so the platform mark is the one shown. --}}
+        <div class="auth-brand"><x-panel.wordmark product="os" tone="light" tagline size="2rem" /></div>
         <p class="auth-sub">{{ __('auth.login_continue') }}</p>
 
         @if ($errors->any())

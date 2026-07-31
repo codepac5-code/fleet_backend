@@ -28,6 +28,7 @@ class StoreOfficeBookingController extends Controller
             'fare' => ['nullable', 'numeric', 'min:0'],
             'passengers' => ['nullable', 'integer', 'min:1', 'max:20'],
             'payment_method' => ['nullable', 'in:cash,office_wallet'],
+            'scheduled_at' => ['nullable', 'date'],
             'assign_mode' => ['required', 'in:driver,broadcast'],
             'driver_id' => ['nullable', 'integer', 'required_if:assign_mode,driver'],
         ]);
@@ -56,6 +57,7 @@ class StoreOfficeBookingController extends Controller
                 'fare_minor' => $fareMinor,
                 'passengers' => $data['passengers'] ?? null,
                 'payment_method' => $data['payment_method'] ?? 'cash',
+                'scheduled_at' => $data['scheduled_at'] ?? null,
                 'assign' => ['mode' => $data['assign_mode'], 'driver_id' => $data['driver_id'] ?? null],
             ], $createdBy);
         } catch (DomainException $e) {

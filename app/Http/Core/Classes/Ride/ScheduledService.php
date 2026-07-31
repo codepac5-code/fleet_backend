@@ -38,7 +38,7 @@ class ScheduledService
         $offers = [];
 
         foreach ($this->tariffs->offeringOfficeIds($service, $serviceClass) as $officeId) {
-            $tariff = $this->tariffs->forOfficeService($officeId, $service, $serviceClass);
+            $tariff = $this->tariffs->forOfficeServiceOrSub($officeId, $subServiceId, $service, $serviceClass);
 
             if ($tariff === null) {
                 continue;
@@ -75,7 +75,7 @@ class ScheduledService
         $subServiceId = isset($in['sub_service_id']) ? (int) $in['sub_service_id'] : null;
         $scheduledAt = $this->parseTime($in['scheduled_at'] ?? null);
 
-        $tariff = $this->tariffs->forOfficeService($officeId, $service, $serviceClass);
+        $tariff = $this->tariffs->forOfficeServiceOrSub($officeId, $subServiceId, $service, $serviceClass);
 
         // Meter pricing comes from the sub-service, not a tariff — so a meter
         // booking only needs a tariff to fall through the legacy path. The tariff

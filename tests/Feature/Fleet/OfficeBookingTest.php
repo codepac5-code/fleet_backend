@@ -21,12 +21,14 @@ use App\Http\Core\Const\Ledger\AccountType;
 use App\Http\Core\Const\Ledger\Direction;
 use App\Http\Core\Const\Ledger\OwnerType;
 use App\Http\Core\Const\Ride\BookingSource;
+use App\Http\Core\Const\Ride\BookingStatus;
 use App\Http\Core\Exceptions\DomainException;
 use App\Models\CommissionSnapshot;
 use App\Models\DispatchJob;
 use App\Models\DispatchOffer;
 use App\Models\DriverPresence;
 use App\Models\RideBooking;
+use Illuminate\Support\Carbon;
 use App\Models\ServiceTariff;
 use App\Models\SiteSetting;
 use App\Models\User;
@@ -129,6 +131,62 @@ class OfficeBookingTest extends FleetTestCase
         $job = DispatchJob::query()->where('booking_id', $result['booking_id'])->first();
         $this->assertSame(55, (int) $job->assigned_driver_id);
         $this->assertSame(DispatchStatus::ASSIGNED, $job->status);
+    }
+
+    public function test_a_manual_booking_for_later_becomes_a_scheduled_trip(): void
+    {
+        // The manual form carried no time at all, so a ride an office booked for
+        // tomorrow morning was broadcast to drivers the moment it was typed in.
+        $this->seedTariff();
+
+        $when = Carbon::now()->addHours(6);
+
+        $result = $this->service()->create($this->payload([
+            'fare_minor' => 8000,
+            'scheduled_at' => $when->toDateTimeString(),
+            'assign' => ['mode' => 'broadcast'],
+        ]), 'office:3');
+
+        $booking = RideBooking::query()->find($result['booking_id']);
+
+        $this->assertSame(BookingStatus::SCHEDULED, $booking->status);
+        $this->assertSame($when->toDateTimeString(), Carbon::parse($booking->scheduled_at)->toDateTimeString());
+        $this->assertNull(
+            DispatchJob::query()->where('booking_id', $result['booking_id'])->first(),
+            'a trip for later must not be dispatched the moment it is booked'
+        );
+    }
+
+    public function test_a_manual_scheduled_booking_with_a_named_driver_is_his_to_keep(): void
+    {
+        $this->seedTariff();
+
+        $result = $this->service()->create($this->payload([
+            'fare_minor' => 8000,
+            'scheduled_at' => Carbon::now()->addDay()->toDateTimeString(),
+            'assign' => ['mode' => 'driver', 'driver_id' => 55],
+        ]), 'office:3');
+
+        $booking = RideBooking::query()->find($result['booking_id']);
+
+        $this->assertSame(BookingStatus::SCHEDULED, $booking->status);
+        $this->assertSame(55, (int) $booking->driver_id, 'the named driver owns it before it goes live');
+    }
+
+    public function test_a_manual_booking_for_now_still_dispatches_immediately(): void
+    {
+        // "Now" must not be parked in the scheduled pool, where it would sit
+        // until a sweep noticed it.
+        $this->seedTariff();
+
+        $result = $this->service()->create($this->payload([
+            'fare_minor' => 8000,
+            'scheduled_at' => Carbon::now()->addMinute()->toDateTimeString(),
+            'assign' => ['mode' => 'driver', 'driver_id' => 55],
+        ]), 'office:3');
+
+        $this->assertSame('assigned', $result['status']);
+        $this->assertNotNull(DispatchJob::query()->where('booking_id', $result['booking_id'])->first());
     }
 
     public function test_auto_prices_from_tariff_when_no_manual_fare(): void

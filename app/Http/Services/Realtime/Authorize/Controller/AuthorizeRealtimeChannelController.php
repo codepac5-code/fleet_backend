@@ -53,6 +53,13 @@ class AuthorizeRealtimeChannelController
      */
     private function resolveIdentity(Request $request): ?array
     {
+        // Read the bearer BEFORE the Passport guards run. On a token it cannot
+        // validate, Passport does `$request->headers->set('Authorization', '')`
+        // — it ERASES the header — so a panel's StaffRealtimeToken was already
+        // gone by the time the staff path looked for it. Every panel room came
+        // back DENIED and no live view in the dashboard received an event.
+        $bearer = (string) $request->bearerToken();
+
         $candidates = [
             [Guard::$User, TokenAudience::USER, 'user'],
             [Guard::$Driver, TokenAudience::DRIVER, 'driver'],
@@ -72,7 +79,7 @@ class AuthorizeRealtimeChannelController
             }
         }
 
-        return $this->resolveStaffIdentity($request);
+        return $this->resolveStaffIdentity($bearer);
     }
 
     /**
@@ -82,11 +89,9 @@ class AuthorizeRealtimeChannelController
      * token's baked-in shard must match the shard resolved for this request,
      * blocking cross-country replay.
      */
-    private function resolveStaffIdentity(Request $request): ?array
+    private function resolveStaffIdentity(string $bearer): ?array
     {
-        $bearer = $request->bearerToken();
-
-        if ($bearer === null || $bearer === '') {
+        if ($bearer === '') {
             return null;
         }
 

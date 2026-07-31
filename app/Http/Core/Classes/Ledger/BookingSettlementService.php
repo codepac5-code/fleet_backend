@@ -63,8 +63,18 @@ class BookingSettlementService
     {
         $officeId = (int) ($booking['office_id'] ?? 0);
 
-        return ($booking['source'] ?? BookingSource::APP) === BookingSource::OFFICE
+        $rates = ($booking['source'] ?? BookingSource::APP) === BookingSource::OFFICE
             ? $this->commission->forOfficeBooking($officeId)
             : $this->commission->forOffice($officeId);
+
+        // A driver on negotiated terms overrides the office's rate. Applied here
+        // so it lands in the frozen snapshot like any other resolved rate.
+        $override = $this->commission->driverOverride((int) ($booking['driver_id'] ?? 0));
+
+        if ($override !== null) {
+            $rates['office_rate'] = $override;
+        }
+
+        return $rates;
     }
 }

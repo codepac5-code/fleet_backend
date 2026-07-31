@@ -2,6 +2,7 @@
 
 namespace App\Http\Core\Classes\Notification;
 
+use App\Models\DeviceToken;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -17,9 +18,26 @@ class FcmPushSender implements PushSender
                 return;
             }
 
-            $this->dispatch($config['project_id'], self::buildMessage($token, $title, $body, $data));
+            $dead = $this->dispatch($config['project_id'], self::buildMessage($token, $title, $body, $data));
+
+            // A token FCM reports as UNREGISTERED (app uninstalled / token rotated)
+            // or malformed will never deliver — drop it so it stops bloating every
+            // future broadcast and the "sent to N devices" count stays honest.
+            if ($dead) {
+                $this->pruneToken($token);
+            }
         } catch (Throwable $e) {
             Log::warning('fcm push failed: ' . $e->getMessage());
+        }
+    }
+
+    /** Delete a dead device token on the active shard (best-effort). */
+    private function pruneToken(string $token): void
+    {
+        try {
+            DeviceToken::query()->where('token', $token)->delete();
+        } catch (Throwable $e) {
+            Log::warning('fcm token prune failed: ' . $e->getMessage());
         }
     }
 
@@ -55,7 +73,8 @@ class FcmPushSender implements PushSender
         return ['project_id' => $other->project_id];
     }
 
-    private function dispatch(string $projectId, array $message): void
+    /** Sends the message; returns true when FCM says the token is dead. */
+    private function dispatch(string $projectId, array $message): bool
     {
         $accessToken = getAccessToken();
 
@@ -76,8 +95,20 @@ class FcmPushSender implements PushSender
         curl_setopt($ch, CURLOPT_TIMEOUT, 4);
 
         $response = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         Log::info('fcm response: ' . $response);
         curl_close($ch);
+
+        // 404 NOT_FOUND / UNREGISTERED = the token no longer exists; 400
+        // INVALID_ARGUMENT on our fixed, valid payload = a malformed token. Both
+        // are permanently undeliverable, so the caller should drop the token.
+        if ($status !== 404 && $status !== 400) {
+            return false;
+        }
+
+        $errorStatus = (string) (json_decode((string) $response, true)['error']['status'] ?? '');
+
+        return in_array($errorStatus, ['NOT_FOUND', 'UNREGISTERED', 'INVALID_ARGUMENT'], true);
     }
 
     private static function stringify(array $data): array

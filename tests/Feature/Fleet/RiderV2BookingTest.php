@@ -4,7 +4,10 @@ namespace Tests\Feature\Fleet;
 
 use App\Http\Core\Classes\Ledger\FleetWalletService;
 use App\Http\Core\Classes\Ledger\LedgerService;
+use App\Http\Core\Const\Ride\BookingStatus;
+use App\Models\Driver;
 use App\Models\EventOutbox;
+use App\Models\RideBooking;
 use App\Models\Office;
 use App\Models\ServiceTariff;
 use App\Models\User;
@@ -13,6 +16,8 @@ class RiderV2BookingTest extends FleetTestCase
 {
     protected array $tenantMigrations = [
         '2024_10_29_211028_create_offices_table.php',
+        '2024_11_6_212751_create_vehicles_table.php',
+        '2024_11_10_085532_create_drivers_table.php',
         '2026_06_24_000001_create_ledger_accounts_table.php',
         '2026_06_24_000002_create_ledger_transactions_table.php',
         '2026_06_24_000003_create_ledger_entries_table.php',
@@ -169,6 +174,53 @@ class RiderV2BookingTest extends FleetTestCase
             ->assertJsonPath('data.office.officeName', 'Al Fleet');
 
         $this->asUser(8)->getJson("user/bookings/{$id}")->assertStatus(404);
+    }
+
+    public function test_driver_contact_is_silent_until_a_driver_is_on_the_way(): void
+    {
+        // The rider app's Call button was inert because nothing returned a
+        // number; it had previously dialled a hardcoded demo line.
+        $this->office();
+        $this->seedTariff();
+        $this->fund(7, 8000);
+
+        $id = $this->asUser(7)->postJson('user/bookings', $this->payload(['idempotency_key' => 'b-call']))->json('data.id');
+
+        // Still matching: no driver, so nothing to dial.
+        $this->asUser(7)->getJson("user/bookings/{$id}/driver-contact")
+            ->assertStatus(200)
+            ->assertJsonPath('data.proxy_number', null)
+            ->assertJsonPath('data.masked_phone', null);
+
+        Driver::query()->create([
+            'firstName' => 'Sami', 'lastName' => 'Nour', 'password' => 'x',
+            'phoneNumber' => '55500600', 'dialCode' => '+974', 'officeId' => 1,
+            'address' => 'Al Sadd', 'country' => 'QA', 'city' => 'Doha', 'region' => 'Doha',
+        ]);
+
+        $booking = RideBooking::query()->find($id);
+        $booking->driver_id = 1;
+        $booking->status = BookingStatus::ON_TRIP;
+        $booking->save();
+
+        $this->asUser(7)->getJson("user/bookings/{$id}/driver-contact")
+            ->assertStatus(200)
+            ->assertJsonPath('data.proxy_number', '+97455500600')
+            ->assertJsonPath('data.masked_phone', '+974555006••')
+            ->assertJsonPath('data.call_via', 'direct');
+
+        // Trip over: the driver's phone is nobody's business any more.
+        $booking->status = BookingStatus::COMPLETED;
+        $booking->save();
+
+        $this->asUser(7)->getJson("user/bookings/{$id}/driver-contact")
+            ->assertStatus(200)
+            ->assertJsonPath('data.proxy_number', null);
+
+        // And never another rider's driver.
+        $this->asUser(8)->getJson("user/bookings/{$id}/driver-contact")
+            ->assertStatus(200)
+            ->assertJsonPath('data.masked_phone', null);
     }
 
     public function test_create_persists_multi_stops_and_returns_them(): void

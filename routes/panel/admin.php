@@ -28,6 +28,10 @@ use App\Http\Services\Panel\Admin\Settings\Controller\TestWhatsappController;
 use App\Http\Services\Panel\Admin\Currencies\Controller\CurrenciesPageController;
 use App\Http\Services\Panel\Admin\Currencies\Controller\StoreCurrencyController;
 use App\Http\Services\Panel\Admin\Currencies\Controller\ToggleCurrencyController;
+use App\Http\Services\Panel\Admin\Currencies\Controller\UpdateCurrencyController;
+use App\Http\Services\Panel\Pricing\Controller\CorridorsPageController;
+use App\Http\Services\Panel\Pricing\Controller\SaveCorridorController;
+use App\Http\Services\Panel\Pricing\Controller\DeleteCorridorController;
 use App\Http\Services\Panel\Shared\Wallet\Controller\RevealWalletController;
 use App\Http\Services\Panel\Shared\Wallet\Controller\HideWalletController;
 use App\Http\Services\Panel\Admin\Offices\Controller\OfficesPageController;
@@ -163,7 +167,15 @@ use App\Http\Services\Panel\Services\Controller\DeleteSubServiceController;
 use App\Http\Services\Panel\Services\Controller\EditOfficePricingController;
 use App\Http\Services\Panel\Services\Controller\UpdateOfficePricingController;
 
-Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
+/*
+| In "All countries" mode the `dynamic` connection points at cross-DB UNION
+| VIEWS, which MySQL cannot write to — a save came back as a raw
+| "target table is not updatable" SQL error. Guarding route by route left 101 of
+| 134 writes exposed, so the guard is applied to the whole group (reads pass
+| through untouched) and the handful of genuinely platform-wide writes opt OUT
+| explicitly below. A new tenant write is now protected by default.
+*/
+Route::middleware(['set-language', 'panel.country-db', 'auth:admin', 'panel.2fa', 'panel.single-shard'])
     ->group(function () {
 
         Route::get('/', HomeController::class)->name('home');
@@ -172,9 +184,9 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::get('map/drivers', MapDriversController::class)->name('map.drivers');
 
         Route::get('notifications', NotificationsPageController::class)->name('notifications.index');
-        Route::post('notifications/read', MarkNotificationsReadController::class)->name('notifications.read');
+        Route::post('notifications/read', MarkNotificationsReadController::class)->withoutMiddleware('panel.single-shard')->name('notifications.read');
 
-        Route::post('switch-country', SwitchCountryController::class)->name('switch-country');
+        Route::post('switch-country', SwitchCountryController::class)->withoutMiddleware('panel.single-shard')->name('switch-country');
 
         Route::get('offices', OfficesPageController::class)->middleware('permission:' . Perm::VIEW_OFFICE_LIST)->name('office.index');
         Route::get('offices/create', CreateOfficeController::class)->middleware('permission:' . Perm::ADD_OFFICE)->name('office.create');
@@ -208,6 +220,7 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::delete('employees/{employee}', DeleteEmployeeController::class)->middleware('permission:' . Perm::DELETE_EMPLOYEE)->whereNumber('employee')->name('employee.destroy');
         Route::get('employees/{employee}/permissions', EditEmployeePermissionsController::class)->middleware('permission:' . Perm::ASSIGN_PERMISSIONS)->whereNumber('employee')->name('employee.permissions.edit');
         Route::put('employees/{employee}/permissions', UpdateEmployeePermissionsController::class)->middleware('permission:' . Perm::ASSIGN_PERMISSIONS)->whereNumber('employee')->name('employee.permissions.update');
+        Route::post('employees/{employee}/permissions/reset', \App\Http\Services\Panel\Employees\Controller\ResetEmployeePermissionsController::class)->middleware('permission:' . Perm::ASSIGN_PERMISSIONS, 'panel.single-shard')->whereNumber('employee')->name('employee.permissions.reset');
 
         Route::get('drivers/export', \App\Http\Services\Panel\Drivers\Controller\ExportDriversController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->name('driver.export');
         Route::get('drivers', DriversPageController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->name('driver.index');
@@ -216,6 +229,8 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::get('drivers/{driver}', ShowDriverController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->whereNumber('driver')->name('driver.show');
         Route::get('drivers/{driver}/stats', DriverStatsController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->whereNumber('driver')->name('driver.stats');
         Route::get('drivers/{driver}/ratings', DriverRatingsController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->whereNumber('driver')->name('driver.ratings');
+        Route::post('drivers/{driver}/commission', \App\Http\Services\Panel\Drivers\Controller\UpdateDriverCommissionController::class)->middleware('permission:' . Perm::EDIT_COMMISSION, 'panel.single-shard')->whereNumber('driver')->name('driver.commission');
+        Route::post('drivers/{driver}/dues/settle', \App\Http\Services\Panel\Drivers\Controller\SettleDriverDuesController::class)->middleware('permission:' . Perm::VIEW_PAYMENTS, 'panel.single-shard')->whereNumber('driver')->name('driver.dues.settle');
         Route::post('drivers/{driver}/documents', StoreDriverDocumentController::class)->middleware('permission:' . Perm::EDIT_DRIVER)->whereNumber('driver')->name('driver.documents.store');
         Route::put('drivers/{driver}/documents/{document}', UpdateDriverDocumentStatusController::class)->middleware('permission:' . Perm::EDIT_DRIVER)->whereNumber('driver')->whereNumber('document')->name('driver.documents.status');
         Route::delete('drivers/{driver}/documents/{document}', DeleteDriverDocumentController::class)->middleware('permission:' . Perm::EDIT_DRIVER)->whereNumber('driver')->whereNumber('document')->name('driver.documents.destroy');
@@ -237,6 +252,7 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::get('users', UsersPageController::class)->middleware('permission:' . Perm::VIEW_USER_LIST)->name('user.index');
         Route::get('users/create', CreateUserController::class)->middleware('permission:' . Perm::ADD_USER)->name('user.create');
         Route::post('users', StoreUserController::class)->middleware('permission:' . Perm::ADD_USER)->name('user.store');
+        Route::get('users/{user}', \App\Http\Services\Panel\Users\Controller\ShowUserController::class)->middleware('permission:' . Perm::VIEW_USER_LIST)->whereNumber('user')->name('user.show');
         Route::get('users/{user}/edit', EditUserController::class)->middleware('permission:' . Perm::EDIT_USER)->whereNumber('user')->name('user.edit');
         Route::put('users/{user}', UpdateUserController::class)->middleware('permission:' . Perm::EDIT_USER)->whereNumber('user')->name('user.update');
         Route::post('users/{user}/toggle', ToggleUserStatusController::class)->middleware('permission:' . Perm::EDIT_USER)->whereNumber('user')->name('user.toggle');
@@ -262,6 +278,9 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::get('bookings/{booking}', ShowBookingController::class)->middleware('permission:' . Perm::ORDER_HISTORY)->whereNumber('booking')->name('booking.show');
         Route::post('bookings/{booking}/refund', \App\Http\Services\Panel\Bookings\Controller\RefundBookingController::class)->middleware('permission:' . Perm::EDIT_COMMISSION, 'panel.single-shard')->whereNumber('booking')->name('booking.refund');
         Route::put('bookings/{booking}/status', UpdateBookingStatusController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('booking')->name('booking.status.update');
+        Route::post('bookings/rides/{ride}/assign', \App\Http\Services\Panel\Bookings\Controller\AssignRideDriverController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('ride')->name('booking.rides.assign');
+        Route::post('bookings/rides/{ride}/accept', \App\Http\Services\Panel\Bookings\Controller\AcceptRideController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('ride')->name('booking.rides.accept');
+        Route::post('bookings/rides/{ride}/cancel', \App\Http\Services\Panel\Bookings\Controller\CancelRideController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('ride')->name('booking.rides.cancel');
         Route::post('bookings/{booking}/assign', AssignDriverController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('booking')->name('booking.assign');
         Route::post('bookings/{booking}/cancel', CancelBookingController::class)->middleware('permission:' . Perm::EDIT_ORDER_STATUS)->whereNumber('booking')->name('booking.cancel');
 
@@ -282,6 +301,7 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::post('announcements/send', \App\Http\Services\Panel\Announcements\Controller\SendBroadcastPushController::class)->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('announcements.send');
 
         Route::get('driver-safety', DriverSafetyPageController::class)->name('driver-safety.index');
+        Route::post('driver-safety/{event}', \App\Http\Services\Panel\DriverOps\Controller\UpdateDriverSafetyStatusController::class)->whereNumber('event')->middleware('panel.single-shard')->name('driver-safety.status');
         Route::get('driver-presence', DriverPresencePageController::class)->middleware('permission:' . Perm::VIEW_DRIVER_LIST)->name('driver-presence.index');
         Route::post('driver-presence/{driver}/offline', ForceDriverOfflineController::class)->whereNumber('driver')->middleware('permission:' . Perm::EDIT_DRIVER, 'panel.single-shard')->name('driver-presence.offline');
         Route::get('driver-applications', DriverApplicationsPageController::class)->name('driver-applications.index');
@@ -310,8 +330,17 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::post('services/{service}/sub-services/{subService}/toggle', ToggleSubServiceController::class)->middleware('permission:' . Perm::EDIT_SUB_SERVICE)->whereNumber('service')->whereNumber('subService')->name('service.sub.toggle');
         Route::delete('services/{service}/sub-services/{subService}', DeleteSubServiceController::class)->middleware('permission:' . Perm::DELETE_SUB_SERVICE)->whereNumber('service')->whereNumber('subService')->name('service.sub.destroy');
 
-        Route::post('wallet/reveal', RevealWalletController::class)->name('wallet.reveal');
-        Route::post('wallet/hide', HideWalletController::class)->name('wallet.hide');
+        Route::post('wallet/reveal', RevealWalletController::class)->withoutMiddleware('panel.single-shard')->name('wallet.reveal');
+        Route::post('wallet/hide', HideWalletController::class)->withoutMiddleware('panel.single-shard')->name('wallet.hide');
+
+        Route::get('security', \App\Http\Services\Panel\Security\Controller\SecurityPageController::class)->name('security.index');
+        Route::post('security/two-factor', \App\Http\Services\Panel\Security\Controller\StartTwoFactorController::class)->withoutMiddleware('panel.single-shard')->name('security.two-factor.start');
+        Route::post('security/two-factor/confirm', \App\Http\Services\Panel\Security\Controller\ConfirmTwoFactorController::class)->withoutMiddleware('panel.single-shard')->name('security.two-factor.confirm');
+        Route::post('security/two-factor/disable', \App\Http\Services\Panel\Security\Controller\DisableTwoFactorController::class)->withoutMiddleware('panel.single-shard')->name('security.two-factor.disable');
+
+        Route::get('settings/security', \App\Http\Services\Panel\Admin\Security\Controller\StaffSecurityPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.security');
+        Route::post('settings/security', \App\Http\Services\Panel\Admin\Security\Controller\SaveSecurityPolicyController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('settings.security.save');
+        Route::post('settings/security/{record}/reset', \App\Http\Services\Panel\Admin\Security\Controller\ResetStaffTwoFactorController::class)->whereNumber('record')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('settings.security.reset');
 
         Route::get('document-types', DocumentsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('document.index');
         Route::get('document-types/create', CreateDocumentController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('document.create');
@@ -323,16 +352,16 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::delete('document-types/{document}', DeleteDocumentController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->whereNumber('document')->name('document.destroy');
 
         Route::get('app-status', \App\Http\Services\Panel\Admin\AppStatus\Controller\AppStatusPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('app-status.index');
-        Route::post('app-status', \App\Http\Services\Panel\Admin\AppStatus\Controller\SaveAppStatusController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('app-status.save');
+        Route::post('app-status', \App\Http\Services\Panel\Admin\AppStatus\Controller\SaveAppStatusController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('app-status.save');
 
         Route::get('legal', \App\Http\Services\Panel\Admin\Legal\Controller\LegalContentPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('legal.index');
-        Route::post('legal', \App\Http\Services\Panel\Admin\Legal\Controller\SaveLegalContentController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('legal.save');
+        Route::post('legal', \App\Http\Services\Panel\Admin\Legal\Controller\SaveLegalContentController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('legal.save');
 
         Route::get('site-settings', SiteSettingsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.site');
-        Route::post('site-settings', SaveSiteSettingsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.site.save');
+        Route::post('site-settings', SaveSiteSettingsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('settings.site.save');
         Route::get('faqs', FaqsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('faqs.index');
-        Route::post('faqs', SaveFaqController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('faqs.save');
-        Route::delete('faqs/{faq}', DeleteFaqController::class)->whereNumber('faq')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('faqs.delete');
+        Route::post('faqs', SaveFaqController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('faqs.save');
+        Route::delete('faqs/{faq}', DeleteFaqController::class)->whereNumber('faq')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('faqs.delete');
 
         Route::get('complaints', ComplaintsPageController::class)->middleware('permission:' . Perm::VIEW_TICKETS)->name('complaints.index');
         Route::post('complaints/{complaint}/status', UpdateComplaintStatusController::class)->whereNumber('complaint')->middleware('permission:' . Perm::VIEW_TICKETS)->name('complaints.status');
@@ -344,6 +373,7 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::post('corporate/invoices/{invoice}/status', UpdateCorporateInvoiceStatusController::class)->whereNumber('invoice')->middleware('permission:' . Perm::VIEW_PAYMENTS)->name('corporate.invoices.status');
 
         Route::get('subscriptions', OfficeSubscriptionsPageController::class)->middleware('permission:' . Perm::VIEW_OFFICE_LIST)->name('subscriptions.index');
+        Route::post('subscriptions/sync', \App\Http\Services\Panel\Subscriptions\Controller\SyncSubscriptionsController::class)->middleware('permission:' . Perm::UPDATE_OFFICE, 'panel.single-shard')->name('subscriptions.sync');
 
         Route::get('overage-invoices', \App\Http\Services\Panel\Subscriptions\Controller\OverageInvoicesPageController::class)->middleware('permission:' . Perm::VIEW_PAYMENTS)->name('overage-invoices.index');
         Route::get('overage-invoices/export', \App\Http\Services\Panel\Subscriptions\Controller\ExportOverageInvoicesController::class)->middleware('permission:' . Perm::VIEW_PAYMENTS)->name('overage-invoices.export');
@@ -351,51 +381,64 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
 
         Route::get('plans', \App\Http\Services\Panel\Admin\Plans\Controller\PlansPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('plans.index');
         Route::get('plans/create', \App\Http\Services\Panel\Admin\Plans\Controller\PlanFormController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('plans.create');
-        Route::post('plans', \App\Http\Services\Panel\Admin\Plans\Controller\SavePlanController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('plans.store');
+        Route::post('plans', \App\Http\Services\Panel\Admin\Plans\Controller\SavePlanController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('plans.store');
         Route::get('plans/{plan}/edit', \App\Http\Services\Panel\Admin\Plans\Controller\PlanFormController::class)->whereNumber('plan')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('plans.edit');
-        Route::put('plans/{plan}', \App\Http\Services\Panel\Admin\Plans\Controller\SavePlanController::class)->whereNumber('plan')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('plans.update');
-        Route::post('plans/{plan}/toggle', \App\Http\Services\Panel\Admin\Plans\Controller\TogglePlanController::class)->whereNumber('plan')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('plans.toggle');
+        Route::put('plans/{plan}', \App\Http\Services\Panel\Admin\Plans\Controller\SavePlanController::class)->whereNumber('plan')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('plans.update');
+        Route::post('plans/{plan}/toggle', \App\Http\Services\Panel\Admin\Plans\Controller\TogglePlanController::class)->whereNumber('plan')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('plans.toggle');
 
         Route::get('regions/billing', RegionsBillingPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('regions.billing');
-        Route::post('regions/{node}/billing', UpdateRegionBillingController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('regions.billing.update');
+        Route::post('regions/{node}/billing', UpdateRegionBillingController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('regions.billing.update');
 
         Route::get('countries', CountriesPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('countries.index');
-        Route::post('countries', StoreCountryController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('countries.store');
-        Route::post('countries/test-connection', TestConnectionController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('countries.test');
-        Route::put('countries/{node}', UpdateCountryController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('countries.update');
-        Route::post('countries/{node}/toggle', ToggleCountryController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('countries.toggle');
-        Route::post('countries/{node}/provision', ProvisionCountryController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('countries.provision');
+        Route::post('countries', StoreCountryController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('countries.store');
+        Route::post('countries/test-connection', TestConnectionController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('countries.test');
+        Route::put('countries/{node}', UpdateCountryController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('countries.update');
+        Route::post('countries/{node}/toggle', ToggleCountryController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('countries.toggle');
+        Route::post('countries/{node}/provision', ProvisionCountryController::class)->whereNumber('node')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('countries.provision');
 
         Route::get('leads', SubmissionsHubPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('leads.hub');
         Route::get('leads/drivers', DriverLeadsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('leads.drivers');
-        Route::post('leads/drivers/{application}/status', UpdateDriverLeadStatusController::class)->whereNumber('application')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('leads.drivers.status');
+        Route::post('leads/drivers/{application}/status', UpdateDriverLeadStatusController::class)->whereNumber('application')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('leads.drivers.status');
         Route::get('leads/offices', OfficeRequestsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('leads.offices');
-        Route::post('leads/offices/{request}/review', MarkOfficeRequestReviewedController::class)->whereNumber('request')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('leads.offices.review');
+        Route::post('leads/offices/{request}/review', MarkOfficeRequestReviewedController::class)->whereNumber('request')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('leads.offices.review');
+        Route::post('leads/offices/{officeRequest}/decide', \App\Http\Services\Panel\Leads\Controller\ApproveOfficeRequestController::class)->whereNumber('officeRequest')->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('leads.offices.decide');
         Route::get('leads/contacts', ContactMessagesPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('leads.contacts');
-        Route::post('leads/contacts/{message}/review', MarkContactMessageReviewedController::class)->whereNumber('message')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('leads.contacts.review');
+        Route::post('leads/contacts/{message}/review', MarkContactMessageReviewedController::class)->whereNumber('message')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('leads.contacts.review');
         Route::get('audit-log', \App\Http\Services\Panel\Admin\Audit\Controller\AuditLogPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('audit-log.index');
         Route::get('ops-health', \App\Http\Services\Panel\Admin\Ops\Controller\OpsHealthPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('ops.index');
         Route::post('ops-health/retry', \App\Http\Services\Panel\Admin\Ops\Controller\RetryFailedJobsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('ops.retry');
         Route::get('notification-templates', \App\Http\Services\Panel\Admin\NotificationTemplates\Controller\NotificationTemplatesPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('notification-templates.index');
         Route::get('notification-templates/{key}', \App\Http\Services\Panel\Admin\NotificationTemplates\Controller\EditNotificationTemplateController::class)->where('key', '[a-z0-9_]+')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('notification-templates.edit');
-        Route::post('notification-templates/{key}', \App\Http\Services\Panel\Admin\NotificationTemplates\Controller\SaveNotificationTemplateController::class)->where('key', '[a-z0-9_]+')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('notification-templates.save');
+        Route::post('notification-templates/{key}', \App\Http\Services\Panel\Admin\NotificationTemplates\Controller\SaveNotificationTemplateController::class)->where('key', '[a-z0-9_]+')->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('notification-templates.save');
         Route::get('settings', SettingsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.index');
-        Route::put('settings/commissions', UpdateCommissionsController::class)->middleware('permission:' . Perm::EDIT_COMMISSION)->name('settings.commissions.update');
-        Route::put('settings/system', UpdateSystemController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.system.update');
+        Route::put('settings/commissions', UpdateCommissionsController::class)->middleware('permission:' . Perm::EDIT_COMMISSION)->withoutMiddleware('panel.single-shard')->name('settings.commissions.update');
+        Route::put('settings/system', UpdateSystemController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('settings.system.update');
         Route::get('settings/payments', PaymentSettingsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.payments');
-        Route::post('settings/payments', SavePaymentSettingsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.payments.save');
+        Route::post('settings/payments', SavePaymentSettingsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('settings.payments.save');
         Route::get('settings/whatsapp', WhatsappSettingsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.whatsapp');
-        Route::post('settings/whatsapp', SaveWhatsappSettingsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.whatsapp.save');
-        Route::post('settings/whatsapp/test', TestWhatsappController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('settings.whatsapp.test');
+        Route::post('settings/whatsapp', SaveWhatsappSettingsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('settings.whatsapp.save');
+        Route::post('settings/whatsapp/test', TestWhatsappController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->withoutMiddleware('panel.single-shard')->name('settings.whatsapp.test');
 
         Route::get('cities', \App\Http\Services\Panel\Admin\Cities\Controller\CitiesPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('cities.index');
         Route::post('cities', \App\Http\Services\Panel\Admin\Cities\Controller\StoreCityController::class)->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('cities.store');
+        Route::post('cities/import', \App\Http\Services\Panel\Admin\Cities\Controller\ImportCitiesController::class)->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('cities.import');
         Route::delete('cities/{city}', \App\Http\Services\Panel\Admin\Cities\Controller\DeleteCityController::class)->whereNumber('city')->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('cities.delete');
+
+        Route::get('pricing/corridors', CorridorsPageController::class)->middleware('permission:' . Perm::VIEW_SUB_SERVICE_LIST)->name('pricing.corridors.index');
+        Route::post('pricing/corridors', SaveCorridorController::class)->middleware('permission:' . Perm::EDIT_SUB_SERVICE, 'panel.single-shard')->name('pricing.corridors.save');
+        Route::delete('pricing/corridors/{route}', DeleteCorridorController::class)->whereNumber('route')->middleware('permission:' . Perm::EDIT_SUB_SERVICE, 'panel.single-shard')->name('pricing.corridors.delete');
 
         Route::get('cancellation-reasons', \App\Http\Services\Panel\Admin\CancellationReasons\Controller\CancellationReasonsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('cancellation-reasons.index');
         Route::post('cancellation-reasons', \App\Http\Services\Panel\Admin\CancellationReasons\Controller\SaveCancellationReasonController::class)->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('cancellation-reasons.store');
         Route::put('cancellation-reasons/{reason}', \App\Http\Services\Panel\Admin\CancellationReasons\Controller\SaveCancellationReasonController::class)->whereNumber('reason')->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('cancellation-reasons.update');
         Route::post('cancellation-reasons/{reason}/toggle', \App\Http\Services\Panel\Admin\CancellationReasons\Controller\ToggleCancellationReasonController::class)->whereNumber('reason')->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('cancellation-reasons.toggle');
+
+        Route::get('referrals', \App\Http\Services\Panel\Admin\Growth\Controller\ReferralsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('referrals.index');
+        Route::post('referrals', \App\Http\Services\Panel\Admin\Growth\Controller\SaveReferralSettingsController::class)->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('referrals.save');
+        Route::get('incentives', \App\Http\Services\Panel\Admin\Growth\Controller\IncentivesPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('incentives.index');
+        Route::post('incentives', \App\Http\Services\Panel\Admin\Growth\Controller\SaveIncentiveController::class)->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('incentives.store');
+        Route::put('incentives/{incentive}', \App\Http\Services\Panel\Admin\Growth\Controller\SaveIncentiveController::class)->whereNumber('incentive')->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('incentives.update');
+        Route::post('incentives/{incentive}/toggle', \App\Http\Services\Panel\Admin\Growth\Controller\ToggleIncentiveController::class)->whereNumber('incentive')->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('incentives.toggle');
 
         Route::get('rating-tags', \App\Http\Services\Panel\Admin\RatingTags\Controller\RatingTagsPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('rating-tags.index');
         Route::post('rating-tags', \App\Http\Services\Panel\Admin\RatingTags\Controller\SaveRatingTagController::class)->middleware('permission:' . Perm::VIEW_SETTINGS, 'panel.single-shard')->name('rating-tags.store');
@@ -407,13 +450,21 @@ Route::middleware(['auth:admin', 'set-language', 'panel.country-db'])
         Route::put('vehicle-brands/{brand}', \App\Http\Services\Panel\Admin\VehicleBrands\Controller\SaveVehicleBrandController::class)->whereNumber('brand')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-brands.update');
         Route::post('vehicle-brands/{brand}/toggle', \App\Http\Services\Panel\Admin\VehicleBrands\Controller\ToggleVehicleBrandController::class)->whereNumber('brand')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-brands.toggle');
 
+        Route::get('vehicle-catalog', \App\Http\Services\Panel\Admin\VehicleCatalog\Controller\VehicleCatalogPageController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-catalog.index');
+        Route::post('vehicle-models', \App\Http\Services\Panel\Admin\VehicleCatalog\Controller\SaveVehicleModelController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-models.store');
+        Route::put('vehicle-models/{model}', \App\Http\Services\Panel\Admin\VehicleCatalog\Controller\SaveVehicleModelController::class)->whereNumber('model')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-models.update');
+        Route::post('vehicle-colors', \App\Http\Services\Panel\Admin\VehicleCatalog\Controller\SaveVehicleColorController::class)->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-colors.store');
+        Route::put('vehicle-colors/{color}', \App\Http\Services\Panel\Admin\VehicleCatalog\Controller\SaveVehicleColorController::class)->whereNumber('color')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-colors.update');
+        Route::post('vehicle-catalog/{type}/{id}/toggle', \App\Http\Services\Panel\Admin\VehicleCatalog\Controller\ToggleVehicleCatalogEntryController::class)->whereIn('type', ['model', 'color'])->whereNumber('id')->middleware('permission:' . Perm::VIEW_SETTINGS)->name('vehicle-catalog.toggle');
+
         Route::get('coupons', \App\Http\Services\Panel\Admin\Coupons\Controller\CouponsPageController::class)->middleware('permission:' . Perm::VIEW_COUPON_LIST)->name('coupons.index');
         Route::post('coupons', \App\Http\Services\Panel\Admin\Coupons\Controller\StoreCouponController::class)->middleware('permission:' . Perm::VIEW_COUPON_LIST, 'panel.single-shard')->name('coupons.store');
         Route::post('coupons/{coupon}/toggle', \App\Http\Services\Panel\Admin\Coupons\Controller\ToggleCouponController::class)->whereNumber('coupon')->middleware('permission:' . Perm::VIEW_COUPON_LIST, 'panel.single-shard')->name('coupons.toggle');
         Route::delete('coupons/{coupon}', \App\Http\Services\Panel\Admin\Coupons\Controller\DeleteCouponController::class)->whereNumber('coupon')->middleware('permission:' . Perm::VIEW_COUPON_LIST, 'panel.single-shard')->name('coupons.delete');
 
         Route::get('currencies', CurrenciesPageController::class)->middleware('permission:' . Perm::MANAGE_CURRENCIES)->name('currencies.index');
-        Route::post('currencies', StoreCurrencyController::class)->middleware('permission:' . Perm::MANAGE_CURRENCIES)->name('currencies.store');
-        Route::post('currencies/{currency}/toggle', ToggleCurrencyController::class)->middleware('permission:' . Perm::MANAGE_CURRENCIES)->name('currencies.toggle');
+        Route::post('currencies', StoreCurrencyController::class)->middleware('permission:' . Perm::MANAGE_CURRENCIES)->withoutMiddleware('panel.single-shard')->name('currencies.store');
+        Route::put('currencies/{currency}', UpdateCurrencyController::class)->middleware('permission:' . Perm::MANAGE_CURRENCIES)->withoutMiddleware('panel.single-shard')->name('currencies.update');
+        Route::post('currencies/{currency}/toggle', ToggleCurrencyController::class)->middleware('permission:' . Perm::MANAGE_CURRENCIES)->withoutMiddleware('panel.single-shard')->name('currencies.toggle');
 
     });

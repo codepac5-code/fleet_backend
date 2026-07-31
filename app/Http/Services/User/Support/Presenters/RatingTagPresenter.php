@@ -11,7 +11,7 @@ use App\Models\RatingTag;
  */
 class RatingTagPresenter
 {
-    public static function forAudience(string $audience, ?int $stars = null): array
+    public static function forAudience(string|array $audience, ?int $stars = null): array
     {
         $locale = (app()->getLocale() ?: 'en') === 'ar' ? 'ar' : 'en';
 
@@ -21,6 +21,7 @@ class RatingTagPresenter
             ->map(fn ($t) => [
                 'code' => $t->code,
                 'label' => $locale === 'ar' ? $t->label_ar : $t->label_en,
+                'audience' => $t->audience,
                 'starsMin' => $t->stars_min,
                 'starsMax' => $t->stars_max,
             ])

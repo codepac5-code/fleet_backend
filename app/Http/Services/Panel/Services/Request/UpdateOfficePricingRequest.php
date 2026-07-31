@@ -18,6 +18,7 @@ class UpdateOfficePricingRequest extends FormRequest
             'prices.*.openPrice'   => ['nullable', 'numeric', 'min:0'],
             'prices.*.kmPrice'     => ['nullable', 'numeric', 'min:0'],
             'prices.*.minutePrice' => ['nullable', 'numeric', 'min:0'],
+            'prices.*.enabled'     => ['nullable', 'boolean'],
         ];
     }
 

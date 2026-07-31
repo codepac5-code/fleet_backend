@@ -10,6 +10,10 @@ use App\Http\Core\Classes\Ride\Polyline;
 use App\Http\Core\Exceptions\DomainException;
 use App\Http\Services\User\Support\Presenters\CatalogPresenter;
 use App\Http\Services\User\Support\Presenters\OfficePresenter;
+use App\Http\Core\Classes\Billing\RegionBilling;
+use App\Http\Core\Const\Subscription\SubscriptionStatus;
+use App\Models\OfficeSubscription;
+use App\Http\Core\GeoServices\ShardManager;
 use App\Models\InfrastructureNode;
 use App\Models\Office;
 use App\Models\OfficeSubServicePrice;
@@ -37,11 +41,16 @@ class MarketplaceService
     {
         $subIds = $this->matchingSubServiceIds($route['service'] ?? null, $route['serviceClass'] ?? null);
 
+        // Only offices that actually OFFER the sub-service, and — in a
+        // subscription country — only those whose subscription entitles them.
         $officeIds = OfficeSubServicePrice::query()
+            ->offered()
             ->whereIn('sub_service_id', $subIds)
             ->pluck('office_id')
             ->unique()
             ->all();
+
+        $officeIds = $this->entitledOffices($officeIds);
 
         $pLat = (float) $route['pickup']['lat'];
         $pLng = (float) $route['pickup']['lng'];
@@ -85,9 +94,14 @@ class MarketplaceService
                 $card['currency_code'] = (string) $quote['currency_code'];
                 $card['fare_breakdown'] = $quote['breakdown'];
             } else {
+                // The office's OWN published price is the truth: resolve the
+                // sub-service it offers for this class (office_sub_service_prices →
+                // sub_services), falling back to a legacy ServiceTariff only when
+                // it never set one. Every listed office offers the class (that is
+                // how discovery found it), so the card is priced from its rates.
                 $tariff = $serviceClass === ''
                     ? null
-                    : $this->tariffs->forOfficeService((int) $office->id, $service, $serviceClass);
+                    : $this->tariffs->forOfficeServiceOrSub((int) $office->id, null, $service, $serviceClass);
 
                 if ($tariff !== null) {
                     $quote = $this->pricing->quote($tariff, $tripDistance, $tripDuration);
@@ -295,12 +309,41 @@ class MarketplaceService
         return Geo::haversineMeters((float) $office->lat, (float) $office->lng, $lat, $lng);
     }
 
+    /**
+     * Drops offices that are not entitled to trade. Commission countries never
+     * gate on a subscription; subscription countries do — an office whose trial
+     * lapsed or whose payment failed should stop being offered, not keep
+     * selling for free. Fail-open: if the check itself breaks, nobody is hidden.
+     */
+    private function entitledOffices(array $officeIds): array
+    {
+        if ($officeIds === [] || ! RegionBilling::isSubscription()) {
+            return $officeIds;
+        }
+
+        try {
+            $entitled = OfficeSubscription::query()
+                ->whereIn('office_id', $officeIds)
+                ->whereIn('status', SubscriptionStatus::ENTITLED)
+                ->pluck('office_id')
+                ->unique()
+                ->all();
+        } catch (Throwable $e) {
+            return $officeIds;
+        }
+
+        return array_values(array_intersect($officeIds, $entitled));
+    }
+
     private function currency(): string
     {
+        // The country the rider is actually browsing — this used to take the
+        // FIRST active node's currency, so a Syrian rider could be quoted in
+        // whichever currency happened to be first in the table.
         try {
-            return InfrastructureNode::query()->where('is_active', true)->value('currency_code') ?: 'USD';
+            return ShardManager::currency();
         } catch (Throwable $e) {
-            return 'USD';
+            return ShardManager::DEFAULT_CURRENCY;
         }
     }
 }

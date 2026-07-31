@@ -242,9 +242,39 @@ flutter build apk --release \
 cd "$SITE"
 git pull                                  # or re-upload
 $COMPOSER install --no-dev --optimize-autoloader
-$PHP artisan migrate --force
-$PHP artisan fleet:shard-provision SY     # if new shard migrations landed
-$PHP artisan config:cache && $PHP artisan route:cache && $PHP artisan view:cache
-supervisorctl restart all
-pm2 restart fleet-gateway
+$PHP artisan fleet:upgrade                # migrations + every shard + seeds + caches
+systemctl restart php-fpm-82              # opcache serves stale code otherwise
+systemctl restart fleet-events-relay fleet-dispatch-tick fleet-queue fleet-gateway
 ```
+
+`fleet:upgrade` is idempotent and replaces the old four-step dance. It runs, in order:
+
+1. `migrate --force` on the platform database.
+2. `fleet:shard-provision --all` — clones missing TABLES into each country shard **and syncs missing COLUMNS**. That second part matters: the provisioner copies the reference migration ledger into the shard, so a migration that only ALTERs an existing table used to be marked applied without ever running. Any shard provisioned before a column was added is missing it until this runs.
+3. The idempotent reference seeds (roles/permissions, plans, currencies, vehicle colours; per shard: services, document types, cancellation reasons, rating tags).
+4. Clears then rebuilds the config/route/view caches (a `route:cache` failure is reported, not fatal).
+
+Useful flags: `--dry-run` (list the steps), `--no-seed`, `--no-cache`.
+
+Restarting php-fpm is **not** optional: opcache runs with `validate_timestamps=0`, so a graceful reload keeps serving the old bytecode.
+
+---
+
+## Scheduled work (the cron in §5 drives all of it)
+
+| Command | Cadence | What it protects |
+|---|---|---|
+| `fleet:events-relay` | every minute | realtime/push outbox drain if the daemon dies |
+| `fleet:activate-scheduled` | every minute | scheduled rides get held + dispatched on time |
+| `fleet:fixed-sla-sweep` | every minute | fixed trips with no driver are refunded, not stranded |
+| `fleet:overage-close` | 1st of the month, 00:30 | plan overage gets invoiced even if a renewal webhook never arrives |
+| `fleet:ledger-verify` | daily 03:15 | ledger invariants (balanced, in-sync, conserved, non-negative) |
+
+---
+
+## Payments checklist (before charging real money)
+
+1. Panel → Settings → **Payment settings**: publishable key, secret key, webhook secret (these override `.env`).
+2. In Stripe, point a webhook at `POST https://staging.fleetapp.net/webhooks/subscriptions/stripe` (subscription lifecycle) and at the wallet/PSP endpoint for payment intents.
+3. Leave `STRIPE_OVERAGE_BILLING=false` until a live pass. When you flip it to `true`, accrued plan overage is pushed to Stripe as invoice items and is marked **collected automatically at the next `invoice.paid`**; while it is `false`, overage waits for a staff member to press *Collect* on Settings → Overage invoices.
+4. Email: set the `MAIL_*` keys. Notification templates decide which events also send email (Settings → Notification templates).

@@ -279,6 +279,11 @@ class DispatchService
                     $offerChannels[] = Channel::office((int) $job->office_id);
                 }
 
+                // The live-ops board watches the matching wave itself; without
+                // the fleet room an admin sees a booking sit in `matching` with
+                // no way to tell whether anyone is being asked.
+                $offerChannels[] = Channel::admin();
+
                 $this->events->emit(new DomainEvent(
                     EventType::DISPATCH_OFFER_CREATED,
                     $offerChannels,
@@ -418,6 +423,58 @@ class DispatchService
                     EventType::DISPATCH_RIDE_ASSIGNED,
                     $channels,
                     $this->assignedPayload($bookingId, $driverId, (int) $job->office_id, $job->service_class)
+                ));
+            }
+
+            return true;
+        });
+    }
+
+    public function forceAssign(int $bookingId, int $driverId, int $officeId, ?string $serviceClass, float $lat, float $lng): bool
+    {
+        $connection = (new DispatchJob)->getConnectionName();
+
+        return DB::connection($connection)->transaction(function () use ($bookingId, $driverId, $officeId, $serviceClass, $lat, $lng) {
+            $job = DispatchJob::query()->firstOrCreate(
+                ['booking_id' => $bookingId],
+                [
+                    'office_id' => $officeId,
+                    'service_class' => $serviceClass,
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'status' => DispatchStatus::PENDING,
+                    'wave' => 0,
+                ]
+            );
+
+            $job->assigned_driver_id = $driverId;
+            $job->status = DispatchStatus::ASSIGNED;
+            $job->assigned_at = now();
+            $job->save();
+
+            $this->expireLosingOffers($bookingId, $driverId);
+
+            DriverPresence::query()
+                ->where('driver_id', $driverId)
+                ->update(['status' => PresenceStatus::BUSY]);
+
+            RideBooking::query()
+                ->where('id', $bookingId)
+                ->update(['driver_id' => $driverId, 'assigned_at' => now()]);
+
+            if ($this->events) {
+                $booking = RideBooking::query()->where('id', $bookingId)->first();
+
+                $channels = [Channel::booking($bookingId), Channel::driver($driverId), Channel::office($officeId)];
+
+                if ($booking !== null) {
+                    $channels[] = Channel::user((int) $booking->user_id);
+                }
+
+                $this->events->emit(new DomainEvent(
+                    EventType::DISPATCH_RIDE_ASSIGNED,
+                    $channels,
+                    $this->assignedPayload($bookingId, $driverId, $officeId, $serviceClass)
                 ));
             }
 
@@ -581,6 +638,33 @@ class DispatchService
         }
 
         return count($holders);
+    }
+
+    public function releaseAssignedDriver(int $driverId): void
+    {
+        DriverPresence::query()
+            ->where('driver_id', $driverId)
+            ->update([
+                'status' => PresenceStatus::ONLINE,
+                'busy_reason' => null,
+            ]);
+    }
+
+    public function cancelForBooking(int $bookingId, ?int $driverId, string $reason = 'cancelled', string $cancelledBy = 'office'): void
+    {
+        // Tell any drivers holding an offer the ride is gone, then cancel the job
+        // in ANY still-active state (a scheduled ride the office pre-assigned sits
+        // in ASSIGNED, which `cancelJob` deliberately leaves alone for the rider).
+        $this->withdrawOffers($bookingId, $reason, $cancelledBy);
+
+        DispatchJob::query()
+            ->where('booking_id', $bookingId)
+            ->whereIn('status', [DispatchStatus::PENDING, DispatchStatus::OFFERED, DispatchStatus::ASSIGNED])
+            ->update(['status' => DispatchStatus::CANCELLED]);
+
+        if ($driverId !== null) {
+            $this->releaseAssignedDriver($driverId);
+        }
     }
 
     /**

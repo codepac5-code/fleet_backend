@@ -249,6 +249,33 @@ class PlanOverageService
         return $invoices;
     }
 
+    /**
+     * Mark an office's STRIPE-pushed overage as collected.
+     *
+     * Stripe-billed items are attached to the office's UPCOMING subscription
+     * invoice, so the money arrives with the next `invoice.paid` — at which
+     * point every invoice already handed off to Stripe before that payment has
+     * been paid. Manual invoices are untouched: those wait for a human to
+     * confirm the transfer. Call this BEFORE closing the newly elapsed period,
+     * or the just-closed invoice (whose items go on the NEXT Stripe invoice)
+     * would be marked paid a cycle early.
+     */
+    public function markStripeCollectedForOffice(int $officeId): int
+    {
+        try {
+            return PlanOverageCharge::on(TenantConnection::current())
+                ->where('office_id', $officeId)
+                ->where('status', 'invoiced')
+                ->where('collection_method', 'stripe')
+                ->update([
+                    'status' => 'collected',
+                    'collected_at' => Carbon::now(),
+                ]);
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
+
     /** Mark a closed overage invoice as collected once its money has been received. */
     public function markCollected(string $invoiceRef): int
     {

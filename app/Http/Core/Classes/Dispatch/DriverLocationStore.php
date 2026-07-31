@@ -28,14 +28,39 @@ class DriverLocationStore
     /** Default retention for a position (seconds) — refreshed on every update. */
     public const DEFAULT_TTL = 3600; // 1 hour
 
+    /**
+     * The bucket used when no shard resolved.
+     *
+     * `fleet:geo:` — the key a blank region produced — was an UNNAMED bucket
+     * that every unresolved country shared, and six SA/QA drivers were sitting
+     * in it while dispatch searched the properly named key and found nobody.
+     * Naming it keeps such writes out of any real shard's namespace and makes
+     * them greppable instead of invisible. Every request now resolves a region
+     * (see ResolveTenantShard), so anything landing here is a bug worth seeing.
+     */
+    public const UNSCOPED = 'unscoped';
+
     public static function geoKey(string $region): string
     {
-        return 'fleet:geo:' . strtolower($region);
+        return 'fleet:geo:' . self::namespaceFor($region);
+    }
+
+    private static function namespaceFor(string $region): string
+    {
+        $region = strtolower(trim($region));
+
+        if ($region !== '') {
+            return $region;
+        }
+
+        Log::warning('DriverLocationStore: no shard resolved — using the ' . self::UNSCOPED . ' bucket.');
+
+        return self::UNSCOPED;
     }
 
     public static function locKey(string $region, int $driverId): string
     {
-        return 'fleet:loc:' . strtolower($region) . ':' . $driverId;
+        return 'fleet:loc:' . self::namespaceFor($region) . ':' . $driverId;
     }
 
     public static function ttlSeconds(): int
@@ -57,6 +82,7 @@ class DriverLocationStore
     {
         $ttl = $ttl ?? self::ttlSeconds();
 
+
         try {
             $conn = self::conn();
             $conn->executeRaw(['GEOADD', self::geoKey($region), (string) $lng, (string) $lat, (string) $driverId]);
@@ -73,6 +99,7 @@ class DriverLocationStore
     /** Drop a driver's position entirely (driver went offline). */
     public static function forget(string $region, int $driverId): void
     {
+
         try {
             $conn = self::conn();
             $conn->executeRaw(['ZREM', self::geoKey($region), (string) $driverId]);
@@ -104,6 +131,7 @@ class DriverLocationStore
      */
     public static function search(string $region, float $lat, float $lng, float $radiusMeters, int $limit = 50): array
     {
+
         try {
             $conn = self::conn();
             $geoKey = self::geoKey($region);

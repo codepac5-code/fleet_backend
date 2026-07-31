@@ -14,6 +14,7 @@ envelope `{status, statusCode, message, data, error, meta, locale}`. Money is in
 | POST | `/user/bookings` | flat: `service, service_class, office_id, pickup_lat, pickup_lng, pickup_title, pickup_note, dropoff_lat, dropoff_lng, dropoff_title, payment_method?, promo_code?, idempotency_key?` | `201` flat booking row | Idempotency via body `idempotency_key` **or** `Idempotency-Key` header. Default `payment_method=wallet` → `422 insufficient_funds` when the wallet can't cover the estimate (app shows the payment-recovery screen). `cash` skips the hold. |
 | POST | `/user/bookings/{id}/cancel` | `reason?` | `200` flat row (`status=cancelled`, `cancel_reason`) | Refunds any escrow hold. |
 | GET | `/user/bookings/{id}` | — | `200` flat row + `office` + `driver` | Snapshot for reconnect (S13). `status` is the **effective** FSM status (derives `assigned`/`completed` from dispatch/settlement). |
+| GET | `/user/bookings/{id}/driver-contact` | — | `200 {masked_phone, call_via, proxy_number, expires_at}` | The line the rider's Call button dials. `masked_phone` is for display, `proxy_number` is dialable E.164 — and is `null` unless the booking is `assigned`/`arriving`/`arrived`/`on_trip`, so a finished trip exposes no number. `call_via=direct` while no proxy gateway is configured. Mirror of the driver's `GET /trips/{id}/rider-contact`. |
 
 The booking row is the raw `ride_bookings` shape (all `*_minor`, ISO-8601-Zulu timestamps), matching
 `api_examples.json`.

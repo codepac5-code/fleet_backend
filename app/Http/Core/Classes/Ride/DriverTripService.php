@@ -7,9 +7,13 @@ use App\Http\Core\Classes\Event\BookingEvents;
 use App\Http\Core\Classes\Event\DomainEvent;
 use App\Http\Core\Classes\Event\EventBus;
 use App\Http\Core\Classes\Event\EventPublisher;
+use App\Http\Core\Classes\Incentive\IncentiveService;
 use App\Http\Core\Classes\Ledger\FleetWalletService;
 use App\Http\Core\Classes\Pricing\PricingService;
+use App\Http\Core\Classes\Referral\ReferralService;
 use App\Http\Core\Classes\Pricing\TariffResolver;
+use App\Http\Core\Classes\Settings\AppSettings;
+use Illuminate\Support\Carbon;
 use App\Http\Core\Const\Event\Channel;
 use App\Http\Core\Const\Event\EventType;
 use App\Http\Core\Const\Ride\BookingSource;
@@ -18,6 +22,7 @@ use App\Http\Core\Exceptions\DomainException;
 use App\Http\Core\Repositories\Dispatch\DispatchJobRepository;
 use App\Http\Core\Repositories\Ride\RideBookingRepository;
 use App\Models\RideBooking;
+use Throwable;
 
 class DriverTripService
 {
@@ -37,6 +42,7 @@ class DriverTripService
     public function navigateToPickup(int $driverId, int $bookingId): array
     {
         $booking = $this->assignedBooking($driverId, $bookingId);
+        $this->assertScheduledStartWindow($booking);
         // SCHEDULED = a claimed scheduled/meter trip; ASSIGNED = an office-assigned
         // fixed trip. Both start their pickup drive from here, alongside the
         // instant-dispatch MATCHING/ARRIVING states.
@@ -53,6 +59,7 @@ class DriverTripService
     public function arrived(int $driverId, int $bookingId): array
     {
         $booking = $this->assignedBooking($driverId, $bookingId);
+        $this->assertScheduledStartWindow($booking);
         $this->assertFrom($booking, [
             BookingStatus::SCHEDULED,
             BookingStatus::ASSIGNED,
@@ -72,6 +79,7 @@ class DriverTripService
     public function startTrip(int $driverId, int $bookingId): array
     {
         $booking = $this->assignedBooking($driverId, $bookingId);
+        $this->assertScheduledStartWindow($booking);
         $this->assertFrom($booking, [BookingStatus::ARRIVED]);
 
         // Start the live meter fresh: clock from now, distance from zero, no
@@ -133,7 +141,10 @@ class DriverTripService
             }
         }
 
-        if (strtolower((string) $booking->payment_method) === 'cash') {
+        // Cash is collected in the car; `card` is charged after completion — for
+        // both the final fare is just the reconciled meter total, with no escrow
+        // to draw down or refund from.
+        if (in_array(strtolower((string) $booking->payment_method), ['cash', 'card'], true)) {
             return;
         }
 
@@ -176,6 +187,11 @@ class DriverTripService
 
         if ($held > 0) {
             $this->wallet->refundFromEscrow($bookingId, (int) $booking->user_id, $held, $booking->currency_code, 'driver-cancel-refund:' . $bookingId);
+        }
+
+        // A card ride's fare is held on the card, not in escrow — void that hold.
+        if (strtolower((string) $booking->payment_method) === 'card') {
+            app(\App\Http\Services\User\Payments\Logic\RideCardPaymentService::class)->release($booking);
         }
 
         $this->dispatch->cancelJob($bookingId);
@@ -251,13 +267,57 @@ class DriverTripService
         }
     }
 
+    private function assertScheduledStartWindow(RideBooking $booking): void
+    {
+        if ($booking->scheduled_at === null) {
+            return;
+        }
+
+        if (in_array($booking->status, [BookingStatus::ARRIVING, BookingStatus::ARRIVED, BookingStatus::ON_TRIP], true)) {
+            return;
+        }
+
+        $leadMinutes = AppSettings::int('scheduled_start_lead_minutes', 60);
+        $earliest = Carbon::parse($booking->scheduled_at)->subMinutes($leadMinutes);
+
+        if (now()->lt($earliest)) {
+            throw DomainException::make(
+                'scheduled_too_early',
+                422,
+                textByLanguage('لا يمكن بدء الرحلة المجدولة قبل موعدها', 'A scheduled trip cannot be started before its time')
+            );
+        }
+    }
+
     private function transition(RideBooking $booking, string $status): array
     {
         $booking->status = $status;
         $this->bookings->save($booking);
         $this->emitStatus($booking);
 
+        if ($status === BookingStatus::COMPLETED) {
+            $this->onCompleted($booking);
+        }
+
         return $this->present($booking);
+    }
+
+    /**
+     * Programmes that pay out on a finished ride. Every one of them is
+     * best-effort: a reward that cannot be granted must never undo a ride the
+     * driver already drove.
+     */
+    private function onCompleted(RideBooking $booking): void
+    {
+        try {
+            app(ReferralService::class)->qualify((int) $booking->user_id, (int) $booking->id);
+        } catch (Throwable $e) {
+        }
+
+        try {
+            app(IncentiveService::class)->recordRide((int) $booking->driver_id, (int) $booking->id);
+        } catch (Throwable $e) {
+        }
     }
 
     private function settle(RideBooking $booking, int $driverId): void
@@ -268,6 +328,16 @@ class DriverTripService
         // "end" — e.g. a scheduled meter ride ended before any distance accrued.
         // Nothing to settle → complete the trip cleanly instead of crashing.
         if ((int) $booking->total_minor <= 0) {
+            return;
+        }
+
+        // A `card` ride was PRE-AUTHORISED on the rider's card at booking. Capture
+        // the final fare from that hold now and settle it three-ways (the excess
+        // hold is released). A failed capture leaves the trip unsettled so the
+        // rider can pay via the fallback — never a silent free ride.
+        if (strtolower((string) $booking->payment_method) === 'card') {
+            app(\App\Http\Services\User\Payments\Logic\RideCardPaymentService::class)->captureForBooking($booking);
+
             return;
         }
 

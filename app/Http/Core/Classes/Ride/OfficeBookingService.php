@@ -20,6 +20,7 @@ use App\Http\Core\Const\Ride\BookingStatus;
 use App\Http\Core\Exceptions\DomainException;
 use App\Http\Core\Repositories\Ride\RideBookingRepository;
 use App\Models\RideBooking;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -39,7 +40,7 @@ class OfficeBookingService
 
     public function quote(int $officeId, string $service, string $serviceClass, float $pLat, float $pLng, float $dLat, float $dLng, ?int $distanceM = null, ?int $durationS = null): array
     {
-        $tariff = $this->tariffs->forOfficeService($officeId, $service, $serviceClass);
+        $tariff = $this->tariffs->forOfficeServiceOrSub($officeId, null, $service, $serviceClass);
 
         if ($tariff === null) {
             throw DomainException::make('tariff_not_found', 404);
@@ -64,7 +65,7 @@ class OfficeBookingService
         $service = (string) ($in['service'] ?? 'ride');
         $serviceClass = (string) $in['service_class'];
 
-        $tariff = $this->tariffs->forOfficeService($officeId, $service, $serviceClass);
+        $tariff = $this->tariffs->forOfficeServiceOrSub($officeId, null, $service, $serviceClass);
 
         if ($tariff === null) {
             throw DomainException::make('tariff_not_found', 404);
@@ -91,9 +92,16 @@ class OfficeBookingService
         $mode = $in['assign']['mode'] ?? 'broadcast';
         $assignDriverId = ($mode === 'driver' && !empty($in['assign']['driver_id'])) ? (int) $in['assign']['driver_id'] : null;
 
+        // An office booking for LATER is a scheduled trip, exactly like one a
+        // rider books ahead: it waits in the scheduled boards, a driver takes it
+        // in advance, and it activates at its own hour. Before this the manual
+        // form carried no time at all, so a ride booked for tomorrow morning was
+        // dispatched to drivers the moment it was typed in.
+        $scheduledAt = $this->parseScheduledAt($in['scheduled_at'] ?? null);
+
         $connection = (new RideBooking)->getConnectionName();
 
-        $booking = DB::connection($connection)->transaction(function () use ($customer, $officeId, $createdBy, $service, $serviceClass, $pickup, $dropoff, $distance, $duration, $currency, $fare, $paymentMethod, $in, $assignDriverId) {
+        $booking = DB::connection($connection)->transaction(function () use ($customer, $officeId, $createdBy, $service, $serviceClass, $pickup, $dropoff, $distance, $duration, $currency, $fare, $paymentMethod, $in, $assignDriverId, $scheduledAt) {
             $booking = $this->repository->create([
                 'user_id' => (int) $customer->id,
                 'office_id' => $officeId,
@@ -102,7 +110,8 @@ class OfficeBookingService
                 'service' => $service,
                 'service_class' => $serviceClass,
                 'pricing_style' => 'manual',
-                'status' => BookingStatus::MATCHING,
+                'status' => $scheduledAt !== null ? BookingStatus::SCHEDULED : BookingStatus::MATCHING,
+                'scheduled_at' => $scheduledAt,
                 'pickup_lat' => (float) $pickup['lat'],
                 'pickup_lng' => (float) $pickup['lng'],
                 'pickup_note' => $pickup['note'] ?? null,
@@ -135,6 +144,19 @@ class OfficeBookingService
                 $this->repository->save($booking);
             }
 
+            if ($scheduledAt !== null) {
+                // Named driver → it is his committed scheduled trip. Otherwise
+                // it joins the office's scheduled pool, where any of its drivers
+                // can claim it. Either way the ride is in front of a driver now
+                // and only becomes live at its hour (fleet:activate-scheduled).
+                if ($assignDriverId !== null) {
+                    $booking->driver_id = $assignDriverId;
+                    $this->repository->save($booking);
+                }
+
+                return $booking;
+            }
+
             $this->dispatch->createJob((int) $booking->id, $officeId, $serviceClass, (float) $pickup['lat'], (float) $pickup['lng']);
 
             if ($assignDriverId !== null) {
@@ -160,6 +182,26 @@ class OfficeBookingService
             'currency_code' => $currency,
             'payment_method' => $paymentMethod,
         ];
+    }
+
+    /**
+     * A pickup time only counts as "scheduled" when it is meaningfully ahead.
+     * A clerk typing "now" (or a minute ago) means dispatch immediately, and
+     * parking that ride in the scheduled pool would strand it there.
+     */
+    private function parseScheduledAt($value): ?Carbon
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            $at = Carbon::parse($value);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return $at->greaterThan(Carbon::now()->addMinutes(5)) ? $at : null;
     }
 
     private function sendInvite($customer): void

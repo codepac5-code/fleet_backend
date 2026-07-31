@@ -56,6 +56,23 @@ class RiderV2SupportB2BTest extends FleetTestCase
         $this->asUser(8)->getJson("user/tickets/{$ticketId}")->assertStatus(404);
     }
 
+    public function test_reply_to_ticket_appends_a_user_message(): void
+    {
+        $ticketId = $this->asUser()->postJson('user/tickets', ['topic' => 'payment', 'message' => 'First message'])
+            ->assertStatus(201)
+            ->json('data.ticketId');
+
+        $this->asUser()->postJson("user/tickets/{$ticketId}/messages", ['message' => 'Any update?'])
+            ->assertStatus(201)
+            ->assertJsonPath('data.id', $ticketId)
+            ->assertJsonPath('data.messages.1.sender_type', 'user')
+            ->assertJsonPath('data.messages.1.body', 'Any update?');
+
+        // A blank reply is rejected, and a foreign user cannot reply.
+        $this->asUser()->postJson("user/tickets/{$ticketId}/messages", ['message' => ''])->assertStatus(422);
+        $this->asUser(8)->postJson("user/tickets/{$ticketId}/messages", ['message' => 'hi'])->assertStatus(404);
+    }
+
     public function test_complaint_routing(): void
     {
         $this->asUser()->postJson('user/complaints', ['about' => 'driver', 'description' => 'Rude driver'])

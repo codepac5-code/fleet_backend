@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Follows the issue it answers onto the country shard.
+ */
 class Reply extends Model
 {
+    use ResolvesTenantConnection;
+
     use HasFactory;
 
      protected $table = 'replies';

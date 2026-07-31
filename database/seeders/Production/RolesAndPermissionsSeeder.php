@@ -16,6 +16,13 @@ class RolesAndPermissionsSeeder extends Seeder
 
     public function run(): void
     {
+        // Spatie caches the permission catalog in the shared cache store, so when
+        // this seeder runs for a SECOND shard in the same deploy the cache is warm
+        // with another database's rows and `findOrCreate` skips them — leaving the
+        // new shard with ZERO permissions. Drop the cache first so lookups read
+        // the shard we're actually seeding.
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         $permissions = array_values((new ReflectionClass(PanelPermission::class))->getConstants());
 
         foreach (self::GUARDS as $guard) {

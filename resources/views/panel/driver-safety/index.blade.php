@@ -10,9 +10,27 @@
 
 @section('content')
 
+    @if(session('status'))
+        <div class="p-flash p-flash--ok"><i class="bi bi-check-circle"></i> {{ session('status') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="p-flash p-flash--err"><i class="bi bi-exclamation-triangle"></i> {{ session('error') }}</div>
+    @endif
+
     <x-panel.page-toolbar
         :title="textByLanguage('أحداث سلامة السائقين', 'Driver safety events')"
         :subtitle="textByLanguage('طوارئ SOS وبلاغات السلامة من السائقين', 'SOS emergencies and safety reports from drivers')" />
+
+    @php
+        $statusTone = fn ($s) => match ($s) {
+            'resolved' => 'success', 'acknowledged' => 'primary', default => 'danger',
+        };
+        $statusLabel = fn ($s) => match ($s) {
+            'resolved' => textByLanguage('مُعالَج', 'Resolved'),
+            'acknowledged' => textByLanguage('مُستلَم', 'Acknowledged'),
+            default => textByLanguage('مفتوح', 'Open'),
+        };
+    @endphp
 
     <div id="sosLiveAlerts" style="display:none; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
 
@@ -41,6 +59,7 @@
                 '#', textByLanguage('السائق', 'Driver'), textByLanguage('النوع', 'Kind'),
                 textByLanguage('الرحلة', 'Trip'), $isAdmin ? textByLanguage('المكتب', 'Office') : null,
                 textByLanguage('الموقع', 'Location'), textByLanguage('الوقت', 'When'),
+                textByLanguage('الحالة', 'Status'), textByLanguage('إجراء', 'Action'),
             ], fn($h) => $h !== null)">
                 @foreach($events as $e)
                     <tr @if($e->kind === 'sos') style="background:rgba(220,38,38,.06);" @endif>
@@ -66,6 +85,25 @@
                             @endif
                         </td>
                         <td>{{ $e->created_at ? \Illuminate\Support\Carbon::parse($e->created_at)->diffForHumans() : '—' }}</td>
+                        <td><x-panel.badge :tone="$statusTone($e->status)">{{ $statusLabel($e->status) }}</x-panel.badge></td>
+                        <td style="white-space:nowrap;">
+                            @if($e->status === 'resolved')
+                                <span class="p-cell-sub"><i class="bi bi-check2-all"></i> {{ textByLanguage('انتهى', 'Done') }}</span>
+                            @else
+                                <div style="display:flex; gap:6px;">
+                                    @if($e->status !== 'acknowledged')
+                                        <form method="POST" action="{{ route($r('driver-safety.status'), $e->id) }}">
+                                            @csrf<input type="hidden" name="status" value="acknowledged">
+                                            <button type="submit" class="p-btn p-btn--sm p-btn--soft"><i class="bi bi-hand-index"></i> {{ textByLanguage('استلام', 'Acknowledge') }}</button>
+                                        </form>
+                                    @endif
+                                    <form method="POST" action="{{ route($r('driver-safety.status'), $e->id) }}" onsubmit="return confirm('{{ textByLanguage('وسم كمُعالَج؟', 'Mark resolved?') }}');">
+                                        @csrf<input type="hidden" name="status" value="resolved">
+                                        <button type="submit" class="p-btn p-btn--sm p-btn--primary"><i class="bi bi-check-lg"></i> {{ textByLanguage('حل', 'Resolve') }}</button>
+                                    </form>
+                                </div>
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
             </x-panel.table>

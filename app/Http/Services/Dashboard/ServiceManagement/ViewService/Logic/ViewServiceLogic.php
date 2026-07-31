@@ -42,7 +42,10 @@ class ViewServiceLogic implements Service {
         })
         ->editColumn('status', function ($query) {
             $disabled = $query->trashed() ? 'disabled' : '';
-            return renderStatusSwitch($query->id, $query->status, 'service_status', $disabled);
+            // `_shard` is present only in the aggregate "All countries" view; it
+            // routes the toggle to the row's own country shard (the union view is
+            // not updatable). Null in a single-country context.
+            return renderStatusSwitch($query->id, $query->status, 'service_status', $disabled, $query->_shard ?? null);
         })
         ->rawColumns(['name', 'action', 'image', 'status', 'check', 'description'])
         ->toJson();

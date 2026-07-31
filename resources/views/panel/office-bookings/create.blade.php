@@ -88,7 +88,7 @@
                             @foreach($tariffs as $i => $t)
                                 <button type="button" class="ob-chip {{ $i === 0 ? 'is-on' : '' }}" data-tariff="{{ $t['service'] }}::{{ $t['service_class'] }}" data-currency="{{ $t['currency'] }}">
                                     <i class="bi bi-{{ $t['service'] === 'travel' ? 'airplane' : ($t['service'] === 'taxi' ? 'taxi-front' : 'car-front') }}"></i>
-                                    {{ ucfirst($t['service']) }} · {{ ucfirst(str_replace('_',' ',$t['service_class'])) }}
+                                    {{ $t['label'] ?? ucfirst(str_replace('_', ' ', $t['service_class'])) }}
                                 </button>
                             @endforeach
                         </div>
@@ -169,6 +169,17 @@
                             </button>
                         </div>
                         <input type="hidden" name="payment_method" id="f_payment" value="cash">
+
+                        {{-- When the ride is for. Leaving it empty dispatches
+                             now; a future time makes this a scheduled trip that
+                             waits in the boards, is taken by a driver ahead of
+                             time, and goes live at its own hour. --}}
+                        <div style="margin-top:14px;">
+                            <label class="ob-label" for="f_scheduled">
+                                <i class="bi bi-clock-history"></i> {{ $tt('Pickup time (leave empty for now)', 'موعد الانطلاق (اتركه فارغاً للآن)') }}
+                            </label>
+                            <input type="datetime-local" name="scheduled_at" id="f_scheduled" class="p-input" value="{{ old('scheduled_at') }}">
+                        </div>
                     </section>
 
                     {{-- STEP 4 — Driver --}}
@@ -280,6 +291,7 @@
     @keyframes obShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
 
     .ob-h { display:flex; align-items:center; gap:9px; font-size:1.02rem; font-weight:800; margin:0 0 16px; }
+    .ob-label { display:flex; align-items:center; gap:7px; font-size:.82rem; font-weight:700; margin-bottom:6px; }
     .ob-h i { color:#5b5bd6; }
     .ob-lbl { display:block; font-size:.8rem; font-weight:700; margin-bottom:8px; }
     .ob-req { color:#dc2626; }

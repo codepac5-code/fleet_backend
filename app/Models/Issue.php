@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\ResolvesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Support tickets belong to the country they were raised in.
+ */
 class Issue extends Model
 {
+    use ResolvesTenantConnection;
+
     use HasFactory;
 
     protected $table = 'issues';

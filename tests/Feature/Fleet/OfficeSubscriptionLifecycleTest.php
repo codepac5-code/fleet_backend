@@ -104,7 +104,7 @@ class OfficeSubscriptionLifecycleTest extends FleetTestCase
         $rates = $this->resolver->forOffice(14);
 
         $this->assertSame('free', $rates['subscription_plan']);
-        $this->assertSame(18.0, $rates['fleet_rate']);
+        $this->assertSame(5.0, $rates['fleet_rate']);
     }
 
     public function test_new_trial_supersedes_existing_current_subscription(): void

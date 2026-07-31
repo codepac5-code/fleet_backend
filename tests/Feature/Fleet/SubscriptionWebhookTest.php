@@ -3,13 +3,19 @@
 namespace Tests\Feature\Fleet;
 
 use App\Http\Core\Classes\Event\EventBus;
+use App\Http\Core\Classes\Ledger\LedgerService;
 use App\Http\Core\Classes\Subscription\OfficeSubscriptionService;
 use App\Http\Core\Classes\Subscription\StripeSubscriptionWebhookGateway;
+use App\Http\Core\Classes\Subscription\SubscriptionRevenueService;
 use App\Http\Core\Classes\Subscription\SubscriptionWebhookService;
 use App\Http\Core\Const\Event\EventType;
+use App\Http\Core\Const\Ledger\AccountType;
+use App\Http\Core\Const\Ledger\LedgerKind;
+use App\Http\Core\Const\Ledger\OwnerType;
 use App\Http\Core\Const\Subscription\PlanKey;
 use App\Http\Core\Const\Subscription\SubscriptionStatus;
 use App\Models\EventOutbox;
+use App\Models\LedgerTransaction;
 use App\Models\OfficeSubscription;
 use App\Models\SubscriptionPlan;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +31,9 @@ class SubscriptionWebhookTest extends FleetTestCase
         '2026_06_25_000002_create_office_subscriptions_table.php',
         '2026_07_13_000006_add_billing_lifecycle_to_office_subscriptions.php',
         '2026_06_25_000007_create_event_outbox_table.php',
+        '2026_06_24_000001_create_ledger_accounts_table.php',
+        '2026_06_24_000002_create_ledger_transactions_table.php',
+        '2026_06_24_000003_create_ledger_entries_table.php',
     ];
 
     protected function setUp(): void
@@ -89,6 +98,63 @@ class SubscriptionWebhookTest extends FleetTestCase
         $this->assertSame(SubscriptionStatus::PAST_DUE, $result['status']);
         $this->assertTrue($result['changed']);
         $this->assertSame(1, EventOutbox::query()->where('type', EventType::SUBSCRIPTION_PAST_DUE)->count());
+    }
+
+    public function test_a_paid_invoice_books_subscription_revenue_once(): void
+    {
+        // Nothing used to post this at all: in a subscription country the fleet
+        // report showed a platform billing every office monthly earning zero.
+        $this->seedSub('sub_11', SubscriptionStatus::TRIALING);
+
+        $ledger = new LedgerService();
+        $service = new SubscriptionWebhookService(null, null, null, new SubscriptionRevenueService($ledger));
+
+        $invoice = [
+            'type' => 'invoice.paid',
+            'provider_subscription_id' => 'sub_11',
+            'provider_invoice_id' => 'in_777',
+            'amount_paid_minor' => 35000,
+            'currency' => 'USD',
+        ];
+
+        $service->apply($invoice);
+        $service->apply($invoice);
+
+        $this->assertSame(1, LedgerTransaction::query()->where('kind', LedgerKind::SUBSCRIPTION)->count(), 'one invoice is one posting, however many times it is delivered');
+        $this->assertSame(35000, $ledger->ownerBalanceMinor(OwnerType::FLEET, OwnerType::FLEET_OWNER_ID, AccountType::REVENUE, 'USD'));
+    }
+
+    public function test_period_end_is_read_from_the_subscription_item(): void
+    {
+        // Stripe moved current_period_end off the subscription and onto its
+        // items. Reading only the old place returned null, so the renewal date
+        // never advanced and a live subscriber was told it renews today.
+        $normalized = (new StripeSubscriptionWebhookGateway())->normalize('customer.subscription.updated', (object) [
+            'id' => 'sub_9',
+            'status' => 'active',
+            'trial_end' => null,
+            'items' => (object) ['data' => [(object) ['current_period_end' => 1893456000]]],
+        ]);
+
+        $this->assertSame(1893456000, $normalized['current_period_end']);
+    }
+
+    public function test_paying_early_clears_the_trial_end(): void
+    {
+        $sub = $this->seedSub('sub_10', SubscriptionStatus::TRIALING);
+        $sub->trial_ends_at = now()->addDays(9);
+        $sub->save();
+
+        (new SubscriptionWebhookService())->apply([
+            'type' => 'customer.subscription.updated',
+            'provider_subscription_id' => 'sub_10',
+            'status' => 'active',
+            'trial_end' => null,
+        ]);
+
+        $sub->refresh();
+        $this->assertSame(SubscriptionStatus::ACTIVE, $sub->status);
+        $this->assertNull($sub->trial_ends_at, 'an office that started paying is not on a trial any more');
     }
 
     public function test_subscription_deleted_cancels(): void

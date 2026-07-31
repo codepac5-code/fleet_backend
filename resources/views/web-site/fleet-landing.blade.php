@@ -520,6 +520,7 @@
         </div>
         @php
             $planList = collect($plans ?? [])->map(fn ($p) => [
+                'key' => $p->key,
                 'name' => $p->name,
                 'price_minor' => $p->price_minor,
                 'currency' => $p->currency_code ?: 'USD',
@@ -532,6 +533,7 @@
             if (empty($planList)) {
                 foreach (\App\Http\Core\Const\Subscription\PlanKey::CATALOG as $k => $c) {
                     $planList[] = [
+                        'key' => $k,
                         'name' => $c['name'], 'price_minor' => $c['price_minor'], 'currency' => 'USD',
                         'rate' => $c['fleet_rate'], 'limit' => $c['driver_limit'], 'trial' => null,
                         'popular' => $k === 'business',
@@ -556,7 +558,7 @@
                         <li><i class="fa-solid fa-check"></i>{{ $t('Wallets & payouts', 'محافظ وسحوبات') }}</li>
                     </ul>
                     <a class="btn {{ $p['popular'] ? 'btn-primary' : 'btn-ghost' }} btn-block"
-                       href="{{ $custom ? '#contact' : route('office.register') }}">
+                       href="{{ $custom ? '#contact' : route('office.register', ['plan' => $p['key']]) }}">
                         {{ $custom ? $t('Contact sales', 'تواصل معنا') : $t('Start free', 'ابدأ مجاناً') }}
                     </a>
                 </div>

@@ -43,7 +43,20 @@ class ViewFleetLandingPageLogic implements Service {
             $plans = collect();
         }
 
-        return view('panel.fleet-landing', ['plans' => $plans]);
+        // Real operating countries for the office application form (dropdown +
+        // the anchor the cascading city/service lists load from). Best-effort so
+        // a missing infra table never breaks the landing.
+        try {
+            $countries = \App\Models\InfrastructureNode::query()
+                ->where('type', 'country')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'country_code']);
+        } catch (\Throwable $e) {
+            $countries = collect();
+        }
+
+        return view('panel.fleet-landing', ['plans' => $plans, 'countries' => $countries]);
         // return view('web-site.site'); // original landing (kept as backup)
 
    }

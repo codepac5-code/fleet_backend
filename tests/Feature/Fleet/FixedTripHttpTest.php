@@ -96,6 +96,41 @@ class FixedTripHttpTest extends FleetTestCase
         ], $over);
     }
 
+    public function test_travel_classes_are_listed_from_the_service_not_the_dead_column(): void
+    {
+        $this->seedFixture();
+
+        // `sub_services.is_travel` is never set by anything; the authority is
+        // `services.travel_service`. Filtering on the column returned nothing,
+        // so the app's Airport & Travel page said "no service available" while
+        // the travel classes sat published.
+        \App\Models\Service::query()->create(['id' => 2, 'image' => 'x.png', 'title' => 'Ride', 'title_en' => 'Ride', 'travel_service' => 0, 'status' => 1]);
+        // `sub_services.id` is not fillable, so keep what the DB assigned.
+        $cityRide = \App\Models\SubService::query()->create([
+            'name' => 'City Ride', 'name_en' => 'City Ride', 'serviceId' => 2,
+            'openPrice' => 5, 'kmPrice' => 2, 'minutePrice' => 1, 'is_travel' => false, 'status' => 1,
+        ]);
+        $airport = \App\Models\SubService::query()->create([
+            'name' => 'Airport Pickup', 'name_en' => 'Airport Pickup', 'serviceId' => 1,
+            'openPrice' => 0, 'kmPrice' => 0, 'minutePrice' => 0, 'is_travel' => false, 'status' => 1,
+        ]);
+
+        $travel = $this->asUser()->getJson('user/fixed/sub-services?travel=1')
+            ->assertStatus(200)
+            ->json('data.sub_services');
+
+        $ids = array_column($travel, 'id');
+        $this->assertContains($airport->id, $ids, 'a travel-service class must be listed even with is_travel = 0');
+        $this->assertNotContains($cityRide->id, $ids, 'a city ride class must not appear under travel');
+
+        $city = $this->asUser()->getJson('user/fixed/sub-services?travel=0')
+            ->assertStatus(200)
+            ->json('data.sub_services');
+
+        $this->assertContains($cityRide->id, array_column($city, 'id'));
+        $this->assertNotContains($airport->id, array_column($city, 'id'));
+    }
+
     public function test_offers_returns_priced_offices(): void
     {
         $this->seedFixture();

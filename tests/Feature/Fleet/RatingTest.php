@@ -6,12 +6,17 @@ use App\Http\Core\Classes\Event\EventBus;
 use App\Http\Core\Classes\Rating\RatingService;
 use App\Http\Core\Const\Event\EventType;
 use App\Http\Core\Repositories\Rating\EloquentRideRatingRepository;
+use App\Models\Driver;
 use App\Models\EventOutbox;
+use App\Models\Office;
 use RuntimeException;
 
 class RatingTest extends FleetTestCase
 {
     protected array $tenantMigrations = [
+        '2024_10_29_211028_create_offices_table.php',
+        '2024_11_6_212751_create_vehicles_table.php',
+        '2024_11_10_085532_create_drivers_table.php',
         '2026_06_25_000007_create_event_outbox_table.php',
         '2026_06_25_000017_create_ride_ratings_table.php',
     ];
@@ -32,6 +37,33 @@ class RatingTest extends FleetTestCase
 
         $this->assertNotNull($event);
         $this->assertContains('driver.9', $event->channels);
+    }
+
+    public function test_a_driver_rating_also_reaches_the_office_and_the_fleet_desk(): void
+    {
+        // A rating used to go ONLY to whoever was rated, so a one-star driver
+        // was known to that driver alone — the office responsible for them and
+        // the quality desk never heard it.
+        $office = Office::query()->create([
+            'officeName' => 'Al Fleet', 'email' => 'o@x.qa', 'password' => 'x',
+            'contactNumber' => '33001234', 'address' => 'West Bay', 'country' => 'QA',
+            'city' => 'Doha', 'region' => 'Doha', 'status' => 1,
+        ]);
+
+        Driver::query()->create([
+            'firstName' => 'Sami', 'lastName' => 'Nour', 'password' => 'x',
+            'phoneNumber' => '55500600', 'dialCode' => '+974', 'officeId' => $office->id,
+            'address' => 'Al Sadd', 'country' => 'QA', 'city' => 'Doha', 'region' => 'Doha',
+        ]);
+
+        $this->ratings->rate(5003, 'user', 7, 'driver', 1, 1);
+
+        $event = EventOutbox::query()->where('type', EventType::RATING_RECEIVED)->latest('id')->first();
+
+        $this->assertContains('driver.1', $event->channels);
+        $this->assertContains('office.' . $office->id, $event->channels);
+        $this->assertContains('admin', $event->channels);
+        $this->assertSame(1, $event->payload['stars']);
     }
 
     public function test_average_aggregates_across_bookings(): void

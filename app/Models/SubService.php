@@ -7,13 +7,42 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\ResolvesTenantConnection;
 
 class SubService extends Model implements HasMedia
 {
-    use InteractsWithMedia  , SoftDeletes  , HasFactory;
+    use InteractsWithMedia  , SoftDeletes  , HasFactory, ResolvesTenantConnection;
 
 
     protected $table = 'sub_services';
+
+    /**
+     * Sub-services of a TRAVEL service — the ones priced by fixed corridors.
+     *
+     * `sub_services.is_travel` exists but nothing ever sets it; the authority is
+     * `services.travel_service`. Filtering on the column alone matched nothing,
+     * which left the corridor picker empty AND made its save guard reject every
+     * submission with "invalid data for this country". Both now call this.
+     */
+    public function scopeTravel($query)
+    {
+        $connection = $query->getModel()->getConnectionName();
+        $travelServiceIds = Service::on($connection)->where('travel_service', 1)->pluck('id')->all();
+
+        return $query->where(fn ($q) => $q->whereIn('serviceId', $travelServiceIds)->orWhere('is_travel', 1));
+    }
+
+    /** The complement of {@see scopeTravel} — city ride classes, priced by meter. */
+    public function scopeNotTravel($query)
+    {
+        $connection = $query->getModel()->getConnectionName();
+        $travelServiceIds = Service::on($connection)->where('travel_service', 1)->pluck('id')->all();
+
+        return $query->where(function ($q) use ($travelServiceIds) {
+            $q->whereNotIn('serviceId', $travelServiceIds ?: [0])
+                ->where(fn ($w) => $w->whereNull('is_travel')->orWhere('is_travel', '!=', 1));
+        });
+    }
 
     protected $fillable = [
         'name',

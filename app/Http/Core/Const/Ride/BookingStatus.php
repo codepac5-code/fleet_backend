@@ -32,6 +32,10 @@ class BookingStatus
 
     const LIVE_SUB = [self::ARRIVING, self::ARRIVED, self::ON_TRIP];
 
+    // States in which rider and driver may still need to reach each other by
+    // phone. Both contact endpoints gate on this, so neither can drift.
+    const CONTACTABLE = [self::ASSIGNED, self::ARRIVING, self::ARRIVED, self::ON_TRIP];
+
     // Every state a fixed trip rests in before a driver is assigned — gates
     // edits, cancellation policy, and the office-acceptance transitions.
     const FIXED_PRE_DRIVER = [self::PENDING_ACCEPTANCE, self::CONFIRMED];

@@ -10,7 +10,7 @@ use App\Http\Services\Panel\Shared\Wallet\Controller\HideWalletController;
 use App\Http\Services\Panel\Shared\Notifications\Controller\NotificationsPageController;
 use App\Http\Services\Panel\Shared\Notifications\Controller\MarkNotificationsReadController;
 
-Route::middleware(['auth:employee', 'set-language', 'panel.country-db'])
+Route::middleware(['set-language', 'panel.country-db', 'auth:employee', 'panel.2fa'])
     ->group(function () {
 
         Route::get('/', HomeController::class)->name('home');
@@ -23,5 +23,10 @@ Route::middleware(['auth:employee', 'set-language', 'panel.country-db'])
 
         Route::post('wallet/reveal', RevealWalletController::class)->name('wallet.reveal');
         Route::post('wallet/hide', HideWalletController::class)->name('wallet.hide');
+
+        Route::get('security', \App\Http\Services\Panel\Security\Controller\SecurityPageController::class)->name('security.index');
+        Route::post('security/two-factor', \App\Http\Services\Panel\Security\Controller\StartTwoFactorController::class)->name('security.two-factor.start');
+        Route::post('security/two-factor/confirm', \App\Http\Services\Panel\Security\Controller\ConfirmTwoFactorController::class)->name('security.two-factor.confirm');
+        Route::post('security/two-factor/disable', \App\Http\Services\Panel\Security\Controller\DisableTwoFactorController::class)->name('security.two-factor.disable');
 
     });

@@ -23,7 +23,7 @@ class SaveRatingTagController extends Controller
             ],
             'label_en' => ['required', 'string', 'max:120'],
             'label_ar' => ['required', 'string', 'max:120'],
-            'audience' => ['required', Rule::in([RatingTag::AUDIENCE_RIDER, RatingTag::AUDIENCE_DRIVER, RatingTag::AUDIENCE_BOTH])],
+            'audience' => ['required', Rule::in(RatingTag::AUDIENCES)],
             'stars_min' => ['nullable', 'integer', 'min:1', 'max:5'],
             'stars_max' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sort' => ['nullable', 'integer', 'min:0', 'max:65000'],

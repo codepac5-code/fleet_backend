@@ -64,7 +64,9 @@ class ViewSubServiceListLogic implements Service {
             })
             ->editColumn('status' , function ($query){
                 $disabled = $query->trashed() ? 'disabled': '';
-                return renderStatusSwitch($query->id , $query->status , 'subcategory_status',$disabled);
+                // `_shard` (aggregate "All countries" only) routes the toggle to
+                // the row's own country shard; null in a single-country context.
+                return renderStatusSwitch($query->id , $query->status , 'subcategory_status',$disabled, $query->_shard ?? null);
             })
             ->addColumn('action', function ($subservice) {
                 return view('sub-service.action', compact('subservice'));

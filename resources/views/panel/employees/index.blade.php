@@ -64,7 +64,7 @@
                                 <span class="p-avatar">{{ mb_substr($emp->firstName ?: '؟', 0, 1) }}</span>
                                 <div>
                                     <strong>{{ trim($emp->firstName.' '.$emp->lastName) }}</strong>
-                                    <span class="p-cell-sub">#{{ $emp->id }} · {{ $emp->role }}</span>
+                                    <span class="p-cell-sub">#{{ $emp->id }} · {{ \App\Http\Services\Panel\Employees\Logic\EmployeeRole::label($emp->role) }}</span>
                                 </div>
                             </div>
                         </td>

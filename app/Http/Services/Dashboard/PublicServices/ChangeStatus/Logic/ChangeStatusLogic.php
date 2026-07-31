@@ -4,6 +4,9 @@ use App\Http\Core\Response\SendResponse;
 use App\Http\Repositories\RepositoryCaller;
 use App\Http\Core\InternalInterface\Service;
 use App\Http\Core\Response\Adapter\PresentersModels\ResponseModel;
+use App\Http\Core\GeoServices\ShardAggregator;
+use App\Http\Core\GeoServices\ShardManager;
+use App\Models\InfrastructureNode;
 
 class ChangeStatusLogic implements Service {
 
@@ -35,9 +38,52 @@ class ChangeStatusLogic implements Service {
         return $response->send_as_array();
    }
 
+    /**
+     * The service/sub-service/banner catalogs are per-country: in the aggregate
+     * "All countries" scope they are exposed as UNION views (not updatable), and
+     * a catalog id repeats across shards so a status flip would be ambiguous.
+     * Refuse the write with a clear instruction rather than crash on the view.
+     * Returns a response to short-circuit with, or null to proceed.
+     */
+    private function aggregateGuard() {
+        // Single-country scope: the `dynamic` connection already points at the
+        // right shard — write normally.
+        if (! ShardAggregator::isActive()) {
+            return null;
+        }
+
+        // Aggregate "All countries": the catalog tables are non-updatable UNION
+        // views and an id repeats across shards. The row carried its owning
+        // country (`_shard` → data-country); repoint `dynamic` at that real shard
+        // so the write lands in exactly one country. No shard given → refuse
+        // rather than write blind.
+        $country = request('country');
+
+        if ($country !== null && $country !== '' && $country !== ShardAggregator::SCOPE) {
+            $node = InfrastructureNode::find((int) $country);
+
+            if ($node) {
+                ShardManager::activate($node);
+                app()->instance('shard_all', false);
+
+                return null;
+            }
+        }
+
+        return comman_custom_response([
+            'message' => textByLanguage(
+                'تعذّر تحديد الدولة لهذا العنصر — افتح دولة محددة ثم غيّر الحالة.',
+                'Could not resolve this item’s country — open a specific country, then change the status.'
+            ),
+            'status' => false,
+        ]);
+    }
+
 
    public function service_status(){
-    
+
+    if ($guard = $this->aggregateGuard()) { return $guard; }
+
     $message_form = __('messages.item');
     $message = 'can\'t update status';
 
@@ -57,7 +103,9 @@ class ChangeStatusLogic implements Service {
 
 
    public function subcategory_status(){
-    
+
+    if ($guard = $this->aggregateGuard()) { return $guard; }
+
     $message_form = __('messages.item');
     $message = 'can\'t update status';
 
@@ -77,7 +125,9 @@ class ChangeStatusLogic implements Service {
    
 
    public function banner_status(){
-    
+
+    if ($guard = $this->aggregateGuard()) { return $guard; }
+
     $message_form = __('messages.item');
     $message = 'can\'t update status';
 

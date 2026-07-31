@@ -45,6 +45,7 @@ class MarketplaceTest extends FleetTestCase
         '2024_10_26_104402_create_services_table.php',
         '2024_10_26_104427_create_sub_services_table.php',
         '2026_01_03_025343_create_office_sub_service_prices_table.php',
+        '2026_07_29_000001_add_enabled_to_office_sub_service_prices.php',
         '2026_06_25_000005_create_dispatch_jobs_table.php',
         '2026_06_25_000012_create_favorite_offices_table.php',
         '2026_06_25_000017_create_ride_ratings_table.php',
@@ -228,18 +229,20 @@ class MarketplaceTest extends FleetTestCase
     }
 
     /**
-     * The card carries the fare the rider will actually be charged, quoted
-     * through the same tariff engine the booking pipeline uses — and an office
-     * with no tariff is still LISTED, just unpriced. That asymmetry is the part
-     * that is easy to break.
+     * The card carries the fare the rider will actually be charged, quoted from
+     * the OFFICE's OWN published price (office_sub_service_prices → sub_services)
+     * — the source of truth. A legacy fixed ServiceTariff no longer overrides it,
+     * and every office that offers the class is priced (none is left blank).
      */
-    public function test_offices_search_prices_cards_from_the_tariff_engine(): void
+    public function test_offices_search_prices_cards_from_the_office_price(): void
     {
         $priced = $this->office('Priced', self::CITY[0], self::CITY[1]);
-        $unpriced = $this->office('Unpriced', self::CITY[0] + 0.5, self::CITY[1]);
+        $other = $this->office('Other', self::CITY[0] + 0.5, self::CITY[1]);
 
         [$svc, $sub] = $this->catalog($priced);
-        $this->sell($unpriced, $sub);
+        $this->sell($other, $sub);
+        // A stale fixed tariff exists but MUST be ignored in favour of the price
+        // the office published on its "my services" screen.
         $this->fixedTariff($priced->id, $sub->id, 5000);
 
         $offices = collect($this->asUser()->postJson('user/offices/search', $this->searchBody([
@@ -247,11 +250,16 @@ class MarketplaceTest extends FleetTestCase
         ]))->assertStatus(200)->json('data.offices'));
 
         $card = $offices->firstWhere('id', $priced->id);
-        $this->assertSame(5000, $card['fare_minor']);
-        $this->assertSame('fixed', $card['pricing_style']);
+        // Metered from the office's own open/km/min rates, NOT the flat 5000 tariff.
+        $this->assertSame('meter', $card['pricing_style']);
+        $this->assertNotSame(5000, $card['fare_minor']);
+        $this->assertGreaterThan(0, $card['fare_minor']);
         $this->assertSame('USD', $card['currency_code']);
 
-        $this->assertArrayNotHasKey('fare_minor', $offices->firstWhere('id', $unpriced->id));
+        // The other office also offers the class → it is priced too (no blanks).
+        $otherCard = $offices->firstWhere('id', $other->id);
+        $this->assertGreaterThan(0, $otherCard['fare_minor']);
+        $this->assertSame('meter', $otherCard['pricing_style']);
     }
 
     /** With `route.meter`, cards are priced on the meter (sub-service), not tariff. */

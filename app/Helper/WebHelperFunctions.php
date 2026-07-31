@@ -16,10 +16,14 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Support\Facades\Session;
 
 
-function renderStatusSwitch($id, $status, $type, $disabled) {
+function renderStatusSwitch($id, $status, $type, $disabled, $shard = null) {
+    // In the aggregate "All countries" view each row carries its owning shard
+    // (`_shard`); emit it so the toggle routes the write back to that country's
+    // real table instead of the non-updatable union view. Null in single-country.
+    $shardAttr = ($shard !== null && $shard !== '') ? ' data-country="' . $shard . '"' : '';
     return '<div class="custom-control custom-switch custom-switch-text custom-switch-color custom-control-inline">
                 <div class="custom-switch-inner">
-                    <input type="checkbox" class="custom-control-input  change_status" data-type="'.$type.'" ' . ($status ? "checked" : "") . '  ' . $disabled . ' value="' . $id . '" id="' . $id . '" data-id="' . $id . '">
+                    <input type="checkbox" class="custom-control-input  change_status" data-type="'.$type.'" ' . ($status ? "checked" : "") . '  ' . $disabled . ' value="' . $id . '" id="' . $id . '" data-id="' . $id . '"' . $shardAttr . '>
                     <label class="custom-control-label" for="' . $id . '" data-on-label="" data-off-label=""></label>
                     </div>
                 </div>';
@@ -635,10 +639,10 @@ function envChanges($type,$value){
 
 function getPriceFormat($price , $lang = null){
 
-    $country =  SystemSetting::where('key', 'country')->first();
-
-
-       $symbol = $country ? json_decode($country->value, true)['currency_code'] : 'QAR';
+    // Money in a multi-country panel is shown in the ACTIVE country's currency.
+    // This used to read one platform-wide SystemSetting, so Syrian figures were
+    // labelled with whatever the platform default happened to be.
+    $symbol = activeCurrencyCode();
     // if($lang !=null){
     //     if($lang == 'ar'){
     //         return "د.إ " .$price;
@@ -670,11 +674,36 @@ function getPriceFormat($price , $lang = null){
     return $price;
 }
 function getPriceSymbol( $lang = null){
-    $symbol = 'USD';
-    if (app()->getLocale() == 'ar') {
-        $symbol = '$';
+    return activeCurrencyCode();
+}
+
+/**
+ * The currency of the country currently being viewed. Falls back to the
+ * platform's configured country setting, then the default currency — never to a
+ * hardcoded one, which is how every price ended up reading as USD.
+ */
+function activeCurrencyCode(): string
+{
+    try {
+        $shard = \App\Http\Core\GeoServices\ShardManager::currency();
+
+        if ($shard !== '') {
+            return strtoupper($shard);
+        }
+    } catch (\Throwable $e) {
     }
-    return $symbol;
+
+    try {
+        $country = SystemSetting::where('key', 'country')->first();
+        $code = $country ? (json_decode($country->value, true)['currency_code'] ?? null) : null;
+
+        if ($code) {
+            return strtoupper((string) $code);
+        }
+    } catch (\Throwable $e) {
+    }
+
+    return 'USD';
 }
 
 
